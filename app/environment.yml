@@ -1,0 +1,11 @@
+name: C:\Users\User\Desktop\Dev\hotak-ai\app\venv
+channels:
+  - defaults
+prefix: C:\Users\User\Desktop\Dev\hotak-ai\app\venv
+dependencies:
+  - fastapi
+  - uvicorn
+  - langchain
+  - langchain-ollama
+  - langchain-chroma
+  - langchain-text-splitters
