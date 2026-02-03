@@ -1,30 +1,27 @@
-
-# Import for LangSmith tracing
+# Import configuration
 import os
-from dotenv import load_dotenv
+from config.settings import (
+    OPENAI_API_KEY,
+    LANGSMITH_API_KEY, 
+    LANGSMITH_TRACING,
+    LANGSMITH_PROJECT,
+    LLM_MODEL,
+    LLM_TEMPERATURE,
+    LLM_MAX_TOKENS,
+    EMBEDDING_MODEL,
+    COLLECTION_NAME,
+    PERSIST_DIRECTORY,
+    CHUNK_SIZE,
+    CHUNK_OVERLAP,
+    RETRIEVAL_K
+)
+from config.prompts import SYSTEM_PROMPT
 
-# Load environment variables from .env file
-load_dotenv()
-
-# Set defaults if not in .env
-os.environ.setdefault("LANGSMITH_TRACING", "true")
-os.environ.setdefault("LANGSMITH_PROJECT", "Hotak AI")
-
-
-# Define system prompt
-SYSTEM_PROMPT = """You are an AI assistant that helps people find information.
-You are given the following extracted parts of a long document and a question. Provide a conversational answer based on the context provided.
-If you don't know the answer, just say you don't know. Don't try to make up an answer.
-If the question is not related to the context, politely inform them that you are tuned to only answer questions that are related to the context.
-
-Use the following format: 
-
-Question: <question here>
-Answer: <answer here>
-=========
-{context}
-=========
-"""
+# Set environment variables
+os.environ["LANGSMITH_TRACING"] = LANGSMITH_TRACING
+os.environ["LANGSMITH_API_KEY"] = LANGSMITH_API_KEY
+os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
+os.environ["LANGSMITH_PROJECT"] = LANGSMITH_PROJECT
 
 # Import Ollama LLM and Embeddings packages
 # from langchain_ollama import ChatOllama, OllamaEmbeddings
@@ -50,8 +47,8 @@ Answer: <answer here>
 from langchain.chat_models import init_chat_model
 from langchain_openai import OpenAIEmbeddings
 
-llm = init_chat_model("gpt-4o-mini", temperature=0.2, max_tokens=512)
-embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
+llm = init_chat_model(LLM_MODEL, temperature=LLM_TEMPERATURE, max_tokens=LLM_MAX_TOKENS)
+embeddings = OpenAIEmbeddings(model=EMBEDDING_MODEL)
 
 
 # Notes for future features:
@@ -62,10 +59,6 @@ embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
 
 # Import Chroma vector store package
 from langchain_chroma import Chroma
-
-# Define Chroma vector store parameters
-COLLECTION_NAME = "hotak_ai_collection"
-PERSIST_DIRECTORY = "data/chroma_db/"
 
 vector_store = Chroma(
     collection_name=COLLECTION_NAME,
@@ -108,10 +101,6 @@ print(f"Total characters: {len(docs[0].page_content)}")
 
 # Import text splitter package
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-
-# Define text chunking parameters
-CHUNK_SIZE = 1000
-CHUNK_OVERLAP = 200
 
 # Initialize text splitter
 text_splitter = RecursiveCharacterTextSplitter(
