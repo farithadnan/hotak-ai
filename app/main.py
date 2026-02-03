@@ -157,3 +157,8 @@ for event in agent.stream(
     stream_mode="values",
 ):
     event["messages"][-1].pretty_print()
+
+
+# Notes for future features:
+# - User can input custom queries via UI
+# - Option to set number of retrieved documents (k) via UI
