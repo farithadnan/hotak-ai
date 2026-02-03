@@ -3,12 +3,15 @@ channels:
   - conda-forge
   - defaults
 dependencies:
+  - pypdf
   - python=3.12
   - fastapi
   - uvicorn
   - langchain
+  - python-dotenv
+  - beautifulsoup4
   - langchain-community
   - langchain-ollama
+  - langchain-openai
   - langchain-chroma
   - langchain-text-splitters
-  - beautifulsoup4

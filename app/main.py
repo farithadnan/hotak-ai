@@ -1,21 +1,15 @@
 
 # Import for LangSmith tracing
-import getpass
 import os
+from dotenv import load_dotenv
 
-# Set LangSmith environment variables
-os.environ["LANGSMITH_TRACING"] = "true"
-os.environ["LANGSMITH_API_KEY"] = getpass.getpass("Enter your LangSmith API Key: ")
-os.environ["LANGSMITH_PROJECT"] = "Hotak AI"
+# Load environment variables from .env file
+load_dotenv()
 
-# Import Ollama LLM and Embeddings packages
-from langchain_ollama import ChatOllama, OllamaEmbeddings
+# Set defaults if not in .env
+os.environ.setdefault("LANGSMITH_TRACING", "true")
+os.environ.setdefault("LANGSMITH_PROJECT", "Hotak AI")
 
-# Define model parameters
-LLM_MODEL = "llama2"
-EMBEDDING_MODEL = "llama2"
-TEMPERATURE = 0.2
-MAX_TOKENS = 1024
 
 # Define system prompt
 SYSTEM_PROMPT = """You are an AI assistant that helps people find information.
@@ -32,15 +26,33 @@ Answer: <answer here>
 =========
 """
 
-# Initialize llm and embeddings
-llm = ChatOllama(
-    model=LLM_MODEL,
-    validate_model_on_init=True,
-    temperature=TEMPERATURE,
-    num_predict=MAX_TOKENS
-)
+# Import Ollama LLM and Embeddings packages
+# from langchain_ollama import ChatOllama, OllamaEmbeddings
 
-embeddings = OllamaEmbeddings(model=EMBEDDING_MODEL)
+# # Define model parameters
+# LLM_MODEL = "llama2"
+# EMBEDDING_MODEL = "llama2"
+# TEMPERATURE = 0.2
+# MAX_TOKENS = 1024
+
+# # Initialize llm and embeddings
+# llm = ChatOllama(
+#     model=LLM_MODEL,
+#     validate_model_on_init=True,
+#     temperature=TEMPERATURE,
+#     num_predict=MAX_TOKENS
+# )
+
+# embeddings = OllamaEmbeddings(model=EMBEDDING_MODEL)
+
+# Import OpenAI LLM and Embeddings packages
+# OPENAI_API_KEY is loaded from .env via load_dotenv()
+from langchain.chat_models import init_chat_model
+from langchain_openai import OpenAIEmbeddings
+
+llm = init_chat_model("gpt-4o-mini", temperature=0.2, max_tokens=512)
+embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
+
 
 # Notes for future features:
 # - User can choose model from a list of available models
@@ -129,7 +141,7 @@ from langchain.tools import tool
 @tool(response_format="content_and_artifact")
 def retrieve_context(query: str):
     """Retrieve information to help answer a query."""
-    retrieved_docs = vector_store.similarity_search(query, k=2)
+    retrieved_docs = vector_store.similarity_search(query, k=5)
     serialized = "\n\n".join(
         (f"Source: {doc.metadata}\nContent: {doc.page_content}")
         for doc in retrieved_docs
@@ -141,7 +153,7 @@ from langchain.agents import create_agent
 
 tools = [retrieve_context]
 agent = create_agent(
-    llm=llm,
+    model=llm,
     tools=tools,
     system_prompt=SYSTEM_PROMPT
 )
