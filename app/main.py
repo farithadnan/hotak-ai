@@ -88,11 +88,20 @@ loader = WebBaseLoader(
     web_paths=("https://lilianweng.github.io/posts/2023-06-23-agent/",),
     bs_kwargs={"parse_only": bs4_strainer},
 )
-docs = loader.load()
 
-# Give error if the docs length is other than 1
-assert len(docs) == 1
-logger.info(f"Total characters: {len(docs[0].page_content)}")
+try:
+    docs = loader.load()
+
+    # Validate we got exactly one document
+    if len(docs) != 1:
+        logger.error(f"Expected 1 document, got {len(docs)}")
+        exit(1)
+    
+    logger.info(f"Loaded {len(docs)} document(s) from the web.")
+    logger.info(f"Total characters: {len(docs[0].page_content)}")
+except Exception as e:
+    logger.error(f"Error loading document: {e}")
+    exit(1)
 
 # Notes for future features:
 # - Will cover not just html, but also pdf, docx, txt, etc.
@@ -106,16 +115,33 @@ logger.info(f"Total characters: {len(docs[0].page_content)}")
 # Import text splitter package
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-# Initialize text splitter
-text_splitter = RecursiveCharacterTextSplitter(
-    chunk_size=CHUNK_SIZE,
-    chunk_overlap=CHUNK_OVERLAP,
-    add_start_index=True, # track index in original document
-)
+try:
 
-# Split documents into smaller chunks
-all_splits = text_splitter.split_documents(docs)
-logger.info(f"Split blog post into {len(all_splits)} sub-documents.")
+    # Validate chunk size and overlap
+    if CHUNK_SIZE <= 0 or CHUNK_OVERLAP < 0 or CHUNK_OVERLAP >= CHUNK_SIZE:
+        logger.error("Invalid chunk size or overlap settings.")
+        exit(1)
+
+    # Initialize text splitter
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=CHUNK_SIZE,
+        chunk_overlap=CHUNK_OVERLAP,
+        add_start_index=True, # track index in original document
+    )
+
+
+    # Split documents into smaller chunks
+    all_splits = text_splitter.split_documents(docs)
+
+    if not all_splits:
+        logger.error("No document splits were created.")
+        exit(1)
+
+    logger.info(f"Split blog post into {len(all_splits)} sub-documents.")
+
+except Exception as e:
+    logger.error(f"Error splitting documents: {e}")
+    exit(1)
 
 # Notes for future features:
 # - User can set chunk size and overlap via UI
@@ -124,9 +150,19 @@ logger.info(f"Split blog post into {len(all_splits)} sub-documents.")
 # - Option to save and load custom text splitting configurations
 
 # Now to embed the chunks and add to vector store
-document_ids = vector_store.add_documents(documents=all_splits)
-logger.info(f"Added {len(document_ids)} documents to the vector store.")
-logger.info(f"Sample document IDs: {document_ids[:3]}")
+try:
+    document_ids = vector_store.add_documents(documents=all_splits)
+
+    if not document_ids:
+        logger.error("No documents were added to the vector store.")
+        exit(1)
+
+    logger.info(f"Added {len(document_ids)} documents to the vector store.")
+    logger.info(f"Sample document IDs: {document_ids[:3]}")
+
+except Exception as e:
+    logger.error(f"Error adding documents to vector store: {e}")
+    exit(1)
 
 # Now the retrieval & generation part
 from langchain.tools import tool
@@ -135,22 +171,50 @@ from langchain.tools import tool
 @tool(response_format="content_and_artifact")
 def retrieve_context(query: str):
     """Retrieve information to help answer a query."""
-    retrieved_docs = vector_store.similarity_search(query, k=5)
-    serialized = "\n\n".join(
-        (f"Source: {doc.metadata}\nContent: {doc.page_content}")
-        for doc in retrieved_docs
-    )
-    return serialized, retrieved_docs
+    try:
+        if not query:
+            raise ValueError("Query cannot be empty.")
 
+        k = int(RETRIEVAL_K)
+        if k <= 0:
+            logger.warning(f"Invalid RETRIEVAL_K value: {RETRIEVAL_K}. Defaulting to 5.")
+            k = 5
+    
+        retrieved_docs = vector_store.similarity_search(query, k=k)
+
+        if not retrieved_docs:
+            logger.warning("No documents retrieved from vector store.")
+            return "", []
+
+        serialized = "\n\n".join(
+            (f"Source: {doc.metadata}\nContent: {doc.page_content}")
+            for doc in retrieved_docs
+        )
+
+        if not serialized:
+            logger.warning("Serialized retrieved documents is empty.")
+        
+        return serialized, retrieved_docs
+
+    except Exception as e:
+        logger.error(f"Error retrieving documents: {e}")
+        return "", []
+    
 # Complete the agent
 from langchain.agents import create_agent
 
 tools = [retrieve_context]
-agent = create_agent(
-    model=llm,
-    tools=tools,
-    system_prompt=SYSTEM_PROMPT
-)
+
+try:
+    agent = create_agent(
+        model=llm,
+        tools=tools,
+        system_prompt=SYSTEM_PROMPT
+    )
+except Exception as e:
+    logger.error(f"Failed to create agent: {e}")
+    exit(1)
+
 
 # Example query to test the agent
 query = (
@@ -158,12 +222,16 @@ query = (
     "Once you get the answer, look up common extensions of that method."
 )
 
-for event in agent.stream(
-    {"messages": [{"role": "user", "content": query}]},
-    stream_mode="values",
-):
-    event["messages"][-1].pretty_print()
-
+try:
+    logger.info(f"Processing query: {query}")
+    for event in agent.stream(
+        {"messages": [{"role": "user", "content": query}]},
+        stream_mode="values",
+    ):
+        event["messages"][-1].pretty_print()
+    logger.info("Query processed successfully.")
+except Exception as e:
+    logger.error(f"Agent failed to process query: {e}")
 
 # Notes for future features:
 # - User can input custom queries via UI
