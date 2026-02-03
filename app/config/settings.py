@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 APP_NAME = "Hotak AI"
+LOGS_DIRECTORY = "logs/"
 
 # ==========================================
 # SECRETS (from .env file)

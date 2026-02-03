@@ -16,6 +16,10 @@ from config.settings import (
     RETRIEVAL_K
 )
 from config.prompts import SYSTEM_PROMPT
+from utils.logger import setup_logger
+
+# Set up logger
+logger = setup_logger()
 
 # Set environment variables
 os.environ["LANGSMITH_TRACING"] = LANGSMITH_TRACING
@@ -88,7 +92,7 @@ docs = loader.load()
 
 # Give error if the docs length is other than 1
 assert len(docs) == 1
-print(f"Total characters: {len(docs[0].page_content)}")
+logger.info(f"Total characters: {len(docs[0].page_content)}")
 
 # Notes for future features:
 # - Will cover not just html, but also pdf, docx, txt, etc.
@@ -111,7 +115,7 @@ text_splitter = RecursiveCharacterTextSplitter(
 
 # Split documents into smaller chunks
 all_splits = text_splitter.split_documents(docs)
-print(f"Split blog post into {len(all_splits)} sub-documents.")
+logger.info(f"Split blog post into {len(all_splits)} sub-documents.")
 
 # Notes for future features:
 # - User can set chunk size and overlap via UI
@@ -121,7 +125,8 @@ print(f"Split blog post into {len(all_splits)} sub-documents.")
 
 # Now to embed the chunks and add to vector store
 document_ids = vector_store.add_documents(documents=all_splits)
-print(document_ids[:3])
+logger.info(f"Added {len(document_ids)} documents to the vector store.")
+logger.info(f"Sample document IDs: {document_ids[:3]}")
 
 # Now the retrieval & generation part
 from langchain.tools import tool
