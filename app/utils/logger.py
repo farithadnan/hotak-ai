@@ -33,7 +33,7 @@ def setup_logger(name: str = APP_NAME, log_file: str = None) -> logging.Logger:
     )
 
     # File handler - save logs to file
-    file_handler = logging.FileHandler(log_file)
+    file_handler = logging.FileHandler(log_path)
     file_handler.setLevel(logging.INFO)
     file_handler.setFormatter(formatter)
 

@@ -119,7 +119,7 @@ source_url = loader.web_paths[0]
 # If YES → Skip loading/splitting/embedding (saves time & API costs)
 # If NO → Process normally
 if is_document_cached(vector_store, source_url):
-    logger.info(f"✓ Document from {source_url} is already cached.")
+    logger.info(f"[CACHED] Document from {source_url} is already cached.")
     logger.info("Skipping document loading, splitting, and embedding.")
     logger.info("Proceeding directly to query processing...\n")
 else:
