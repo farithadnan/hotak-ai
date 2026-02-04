@@ -15,7 +15,5 @@ dependencies:
   - python-dotenv
   - pypdf
   - langchain-openai
-  - pip
-  - pip:
-    - python-docx
+  - python-docx
 prefix: C:\Users\User\miniconda3\envs\hotak-ai-venv
