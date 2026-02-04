@@ -47,7 +47,22 @@ app/
 
 **Priority:** HIGH  
 **Time estimate:** 2-3 days  
-**Deliverable:** Modular codebase
+**Deliverable:** Modular codebase  
+**Status:** ✅ Complete!
+
+**Completed Work:**
+- [x] Extract LLM initialization to `models/llm.py`
+- [x] Move vector store operations to `storage/vector_storage.py`
+- [x] Move web loading logic to `loaders/web_loader.py`
+- [x] Move text splitting to `utils/text_splitter.py`
+- [x] Move agent creation to `agents/rag_agent.py`
+- [x] Update main.py to import from new modules
+
+**Results:**
+- ✅ main.py reduced from ~270 lines to ~90 lines
+- ✅ All modules are reusable and testable
+- ✅ Clean separation of concerns
+- ✅ Proper error handling in all modules
 
 #### 2. Configuration System
 - [x] Create `config/settings.py` and extract constants
@@ -63,12 +78,22 @@ app/
 #### 3. Error Handling & Logging
 - [x] Add try/except blocks around critical operations
 - [x] Implement structured logging (replace print statements)
+- [x] Create logger utility with file and console output
 - [ ] Create custom exception classes
 - [ ] Add graceful degradation
+- [ ] Improve error messages with more context
+- [ ] Add retry logic for transient failures (network, API)
 
 **Priority:** MEDIUM  
-**Time estimate:** 1 day  
+**Time estimate:** 1 day (basic) / 2 days (complete)  
 **Status:** ✅ Basic implementation complete!
+
+**Remaining Issues:**
+- **No custom exceptions:** Using generic `Exception` everywhere
+- **No retry logic:** Network/API failures immediately fail
+- **Limited error context:** Some error messages don't include enough debugging info
+- **is_document_cached() errors:** Returns False on error, might mask real issues
+- **No graceful degradation:** If one component fails, entire app exits
 
 **⚠️ IMPORTANT NOTE:**  
 Current error handling uses `exit(1)` for critical failures (doc loading, splitting, vector store, agent creation). This is fine for CLI/testing but **MUST be refactored for API/UI integration** (Phase 5). When building the FastAPI server:
@@ -78,13 +103,28 @@ Current error handling uses `exit(1)` for critical failures (doc loading, splitt
 - See Phase 5 notes for API error handling strategy
 
 #### 4. Document Caching
-- [ ] Check if documents already exist before re-loading
-- [ ] Add metadata tracking (last updated, source URL)
-- [ ] Implement incremental updates
+- [x] Check if documents already exist before re-loading
+- [x] Add metadata tracking (source URL)
+- [ ] Add timestamp metadata (last updated)
+- [ ] Implement incremental updates (re-load if source changed)
 - [ ] Add collection versioning
+- [ ] Add document hash for change detection
 
 **Priority:** HIGH  
-**Time estimate:** 2 days
+**Time estimate:** 2 days  
+**Status:** ✅ Basic implementation complete!
+
+**Current Implementation:**
+- ✅ `is_document_cached()` checks if source URL exists in vector store
+- ✅ Source URL added to document metadata
+- ✅ Skips loading/splitting/embedding if cached
+- ✅ Logs cache hits for visibility
+
+**Remaining Work:**
+- **No timestamp tracking:** Can't detect if source document was updated
+- **No hash comparison:** Can't detect content changes
+- **No versioning:** Can't manage multiple versions of same document
+- **No cache invalidation:** No way to force re-load if document updated
 
 ---
 
@@ -98,17 +138,40 @@ Current error handling uses `exit(1)` for critical failures (doc loading, splitt
 ### Tasks
 
 #### 1. Multi-format Document Loading
-- [ ] PDF loader (PyPDF2 or pdfplumber)
+- [x] PDF loader (pypdf)
 - [ ] DOCX loader (python-docx)
-- [ ] TXT loader
+- [x] TXT loader
 - [ ] Markdown loader
-- [ ] Create unified loader interface
-- [ ] Add file type detection
+- [x] Create unified loader interface
+- [x] Add file type detection
 - [ ] Handle loading errors gracefully
 
 **Priority:** HIGH  
 **Time estimate:** 3-4 days  
-**Dependencies:** Phase 0 refactoring
+**Dependencies:** Phase 0 refactoring  
+**Status:** 🔄 In Progress (PDF done, unified loader in progress)
+
+**⚠️ IMPORTANT NOTE - Scanned PDFs & OCR:**  
+Current PDF loader (pypdf) only extracts text from text-based PDFs. For **scanned PDFs** (images), you'll need OCR:
+- **Problem:** Scanned documents are just images - no extractable text
+- **Solution:** Use OCR (Optical Character Recognition)
+- **Recommended libraries:**
+  - `pytesseract` + `Tesseract OCR` (free, open-source)
+  - `pdf2image` (convert PDF pages to images first)
+  - `pdfplumber` (better table extraction)
+  - Azure Document Intelligence / AWS Textract (cloud, paid, very accurate)
+- **Implementation approach:**
+  1. Try pypdf first (fast for text-based PDFs)
+  2. If no text extracted, fall back to OCR
+  3. Add config option: `USE_OCR = True/False`
+- **Future task:** Add to Phase 1 or Phase 2 as enhancement
+- **Time estimate:** 1-2 days for basic OCR, 3-4 days for advanced features
+
+**Current Implementation:**
+- ✅ PDF loader created (`loaders/pdf_loader.py`)
+- ✅ Source metadata added to all pages
+- ✅ Error handling with proper exceptions
+- 🔄 Unified loader interface in progress
 
 #### 2. Document Management
 - [ ] Support multiple URLs/files in one run
@@ -375,15 +438,32 @@ Before building the API, refactor error handling from Phase 0:
 
 ## Recommended Starting Path
 
-### Week 1-2: Foundation
-1. 🔄 Phase 0, Task 1: Refactor into modules (folders created, configs extracted ✅)
-2. ✅ Phase 0, Task 2: Configuration system (basic implementation complete)
-3. ⏭️ Phase 0, Task 4: Document caching
+### Week 1-2: Foundation ✅ COMPLETED!
+1. ✅ Phase 0, Task 1: Refactor into modules
+2. ✅ Phase 0, Task 2: Configuration system
+3. ✅ Phase 0, Task 3: Error handling & logging (basic)
+4. ✅ Phase 0, Task 4: Document caching (basic)
+
+### Current Status:
+**✅ Phase 0 Complete (Core Tasks):**
+- ✅ Configuration extracted to settings.py and prompts.py
+- ✅ Logger utility with file and console output
+- ✅ Error handling for all critical operations
+- ✅ Document caching with source URL metadata
+- ✅ All modules refactored and working
+- ✅ main.py uses clean module imports
+- ✅ All Quick Wins 1-5 done
+
+**⏭️ Phase 0 Enhancements (Optional):**
+- ⏭️ Custom exception classes
+- ⏭️ Retry logic for API/network failures
+- ⏭️ Cache invalidation and versioning
+- ⏭️ Timestamp tracking for documents
 
 ### Week 3-4: Core Features
-4. ✅ Phase 1, Task 1: Multi-format loaders
-5. ✅ Phase 1, Task 4: Citations
-6. ✅ Phase 0, Task 3: Error handling
+4. ⏭️ Phase 1, Task 1: Multi-format loaders (PDF, DOCX, TXT)
+5. ⏭️ Phase 1, Task 4: Citations
+6. ⏭️ Phase 0, Task 1: Complete module refactoring
 
 ### Week 5-6: API Layer
 7. ✅ Phase 5, Task 1: Core API endpoints
@@ -399,11 +479,13 @@ Before building the API, refactor error handling from Phase 0:
 ## Quick Wins (Do These First)
 
 1. ✅ **Extract config to settings.py** (1 hour) - DONE!
-2. **Replace hardcoded values in main.py with imports** (30 min) - IN PROGRESS
-3. **Add logging instead of print** (30 min)
-4. **Add error handling for document loading** (1 hour)
-5. **Check if docs exist before re-embedding** (2 hours)
-6. **Add PDF support** (2-3 hours)
+2. ✅ **Replace hardcoded values in main.py with imports** (30 min) - DONE!
+3. ✅ **Add logging instead of print** (30 min) - DONE!
+4. ✅ **Add error handling for document loading** (1 hour) - DONE!
+5. ✅ **Check if docs exist before re-embedding** (2 hours) - DONE!
+6. ✅ **Refactor code into modules** (1 day) - DONE!
+7. ⏭️ **Add PDF support** (2-3 hours) - NEXT RECOMMENDED
+8. ⏭️ **Add custom exception classes** (2 hours) - RECOMMENDED
 
 ---
 
