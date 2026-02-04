@@ -1,5 +1,6 @@
 name: hotak-ai-venv
 channels:
+  - conda-forge
   - defaults
 dependencies:
   - langchain-ollama
@@ -14,4 +15,7 @@ dependencies:
   - python-dotenv
   - pypdf
   - langchain-openai
+  - pip
+  - pip:
+    - python-docx
 prefix: C:\Users\User\miniconda3\envs\hotak-ai-venv
