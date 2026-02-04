@@ -139,17 +139,17 @@ Current error handling uses `exit(1)` for critical failures (doc loading, splitt
 
 #### 1. Multi-format Document Loading
 - [x] PDF loader (pypdf)
-- [ ] DOCX loader (python-docx)
+- [x] DOCX loader (python-docx)
 - [x] TXT loader
-- [ ] Markdown loader
+- [ ] Markdown loader (optional)
 - [x] Create unified loader interface
 - [x] Add file type detection
-- [ ] Handle loading errors gracefully
+- [x] Handle loading errors gracefully
 
 **Priority:** HIGH  
 **Time estimate:** 3-4 days  
 **Dependencies:** Phase 0 refactoring  
-**Status:** 🔄 In Progress (PDF done, unified loader in progress)
+**Status:** ✅ Complete!
 
 **⚠️ IMPORTANT NOTE - Scanned PDFs & OCR:**  
 Current PDF loader (pypdf) only extracts text from text-based PDFs. For **scanned PDFs** (images), you'll need OCR:
@@ -169,9 +169,12 @@ Current PDF loader (pypdf) only extracts text from text-based PDFs. For **scanne
 
 **Current Implementation:**
 - ✅ PDF loader created (`loaders/pdf_loader.py`)
-- ✅ Source metadata added to all pages
+- ✅ TXT loader created (`loaders/txt_loader.py`)
+- ✅ DOCX loader created (`loaders/docx_loader.py`)
+- ✅ Unified loader with auto-detection (`loaders/document_loader.py`)
+- ✅ Source metadata added to all documents
 - ✅ Error handling with proper exceptions
-- 🔄 Unified loader interface in progress
+- ✅ Supports: Web URLs, PDF, TXT, DOCX files
 
 #### 2. Document Management
 - [ ] Support multiple URLs/files in one run
@@ -460,10 +463,42 @@ Before building the API, refactor error handling from Phase 0:
 - ⏭️ Cache invalidation and versioning
 - ⏭️ Timestamp tracking for documents
 
-### Week 3-4: Core Features
-4. ⏭️ Phase 1, Task 1: Multi-format loaders (PDF, DOCX, TXT)
+### Week 3-4: Core Features ✅ COMPLETED!
+4. ✅ Phase 1, Task 1: Multi-format loaders (PDF, DOCX, TXT)
 5. ⏭️ Phase 1, Task 4: Citations
-6. ⏭️ Phase 0, Task 1: Complete module refactoring
+6. ⏭️ Phase 1, Task 2: Document Management
+
+### Current Status:
+**✅ Phase 1, Task 1 Complete!**
+- ✅ PDF, TXT, DOCX loaders created
+- ✅ Unified loader with auto file-type detection
+- ✅ Proper error handling and logging
+- ✅ Metadata tracking for all document types
+
+**⏭️ RECOMMENDED NEXT STEPS (Choose One Path):**
+
+**Option A: Continue Phase 1 - Document Features** (Easiest)
+- Task 4: Add citations to agent responses (2 days)
+- Task 2: Support multiple files at once (3 days)
+- Task 3: Better text splitting strategies (2-3 days)
+
+**Option B: Phase 5 - FastAPI (Most Impact)** (Recommended for UI)
+- Build REST API endpoints (3-4 days)
+- Enable document upload via API
+- Query endpoint with streaming
+- Sets foundation for web UI
+
+**Option C: Phase 2 - Vector Store Management** (Technical)
+- Add collection management (2 days)
+- Clear/export/import operations (2-3 days)
+- View statistics and document counts
+
+**Option D: Phase 4 - CLI Interface** (User-Friendly)
+- Create CLI commands (2-3 days)
+- Interactive query mode (2 days)
+- Better user experience for terminal use
+
+**💡 RECOMMENDATION:** If you want to build a UI eventually, go with **Option B (FastAPI)**. Otherwise, **Option A (Citations)** is quick and adds immediate value to responses.
 
 ### Week 5-6: API Layer
 7. ✅ Phase 5, Task 1: Core API endpoints
@@ -484,8 +519,12 @@ Before building the API, refactor error handling from Phase 0:
 4. ✅ **Add error handling for document loading** (1 hour) - DONE!
 5. ✅ **Check if docs exist before re-embedding** (2 hours) - DONE!
 6. ✅ **Refactor code into modules** (1 day) - DONE!
-7. ⏭️ **Add PDF support** (2-3 hours) - NEXT RECOMMENDED
-8. ⏭️ **Add custom exception classes** (2 hours) - RECOMMENDED
+7. ✅ **Add PDF support** (2-3 hours) - DONE!
+8. ✅ **Add TXT support** (1 hour) - DONE!
+9. ✅ **Add DOCX support** (2 hours) - DONE!
+10. ⏭️ **Add citations to responses** (2 hours) - NEXT RECOMMENDED
+11. ⏭️ **Support multiple documents at once** (3 hours) - RECOMMENDED
+12. ⏭️ **Add custom exception classes** (2 hours) - RECOMMENDED
 
 ---
 
