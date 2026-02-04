@@ -82,6 +82,28 @@ vector_store = Chroma(
 import bs4
 from langchain_community.document_loaders import WebBaseLoader 
 
+def is_document_cached(vector_store: Chroma, source_url: str) -> bool:
+    """Check if a doc from the given source URL is already in the vector store."""
+    try:
+
+        # Query the vector store for documents with matching source URL
+        results = vector_store.get(
+            where={"source": source_url},
+        )
+
+        # If any documents are found, it is cached
+        if results and results['ids']:
+            logger.info(f"Document from {source_url} is already cached in vector store.")
+            return True
+        
+        # Otherwise, not cached
+        logger.info(f"Document from {source_url} is not cached in vector store.")
+        return False
+
+    except Exception as e:
+        logger.error(f"Error checking document cache: {e}")
+        return False
+
 # Only keep post title, headers, and content from the full HTML
 bs4_strainer = bs4.SoupStrainer(class_=("post-title", "post-header", "post-content"))
 loader = WebBaseLoader(
@@ -89,80 +111,108 @@ loader = WebBaseLoader(
     bs_kwargs={"parse_only": bs4_strainer},
 )
 
-try:
-    docs = loader.load()
+# Get source URL for caching check
+source_url = loader.web_paths[0]
 
-    # Validate we got exactly one document
-    if len(docs) != 1:
-        logger.error(f"Expected 1 document, got {len(docs)}")
-        exit(1)
+# CACHING LOGIC:
+# Check if we've already processed this URL before.
+# If YES → Skip loading/splitting/embedding (saves time & API costs)
+# If NO → Process normally
+if is_document_cached(vector_store, source_url):
+    logger.info(f"✓ Document from {source_url} is already cached.")
+    logger.info("Skipping document loading, splitting, and embedding.")
+    logger.info("Proceeding directly to query processing...\n")
+else:
+    # Document is NEW - process it
+    logger.info(f"Document from {source_url} not found in cache.")
+    logger.info("Loading and processing document...\n")
     
-    logger.info(f"Loaded {len(docs)} document(s) from the web.")
-    logger.info(f"Total characters: {len(docs[0].page_content)}")
-except Exception as e:
-    logger.error(f"Error loading document: {e}")
-    exit(1)
+    try:
+        # Load the document from the web
+        docs = loader.load()
 
-# Notes for future features:
-# - Will cover not just html, but also pdf, docx, txt, etc.
-# - User can input multiple URLs or file uploads via UI
-# - Option to preview loaded documents before processing
-# - Option to fetch metadata like title, author, date, etc.
-# - Need to handle loading errors and invalid URLs/files
-# - Need to add references to the docs then somehow interconnect with vector store
-# - The reference will be used as a citation when answering questions
+        # Validate we got exactly one document
+        if len(docs) != 1:
+            logger.error(f"Expected 1 document, got {len(docs)}")
+            exit(1)
 
-# Import text splitter package
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-
-try:
-
-    # Validate chunk size and overlap
-    if CHUNK_SIZE <= 0 or CHUNK_OVERLAP < 0 or CHUNK_OVERLAP >= CHUNK_SIZE:
-        logger.error("Invalid chunk size or overlap settings.")
+        # IMPORTANT: Add source URL to metadata
+        # This metadata is stored with each chunk in the vector store
+        # It's used later to check if document is cached (via .get(where={"source": url}))
+        for doc in docs:
+            doc.metadata["source"] = source_url
+        
+        logger.info(f"Loaded {len(docs)} document(s) from the web.")
+        logger.info(f"Total characters: {len(docs[0].page_content)}")
+    except Exception as e:
+        logger.error(f"Error loading document: {e}")
         exit(1)
 
-    # Initialize text splitter
-    text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=CHUNK_SIZE,
-        chunk_overlap=CHUNK_OVERLAP,
-        add_start_index=True, # track index in original document
-    )
+    # Notes for future features:
+    # - Will cover not just html, but also pdf, docx, txt, etc.
+    # - User can input multiple URLs or file uploads via UI
+    # - Option to preview loaded documents before processing
+    # - Option to fetch metadata like title, author, date, etc.
+    # - Need to handle loading errors and invalid URLs/files
+    # - Need to add references to the docs then somehow interconnect with vector store
+    # - The reference will be used as a citation when answering questions
 
+    # Import text splitter package
+    from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-    # Split documents into smaller chunks
-    all_splits = text_splitter.split_documents(docs)
+    try:
+        # Validate chunk size and overlap
+        if CHUNK_SIZE <= 0 or CHUNK_OVERLAP < 0 or CHUNK_OVERLAP >= CHUNK_SIZE:
+            logger.error("Invalid chunk size or overlap settings.")
+            exit(1)
 
-    if not all_splits:
-        logger.error("No document splits were created.")
+        # Initialize text splitter
+        text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=CHUNK_SIZE,
+            chunk_overlap=CHUNK_OVERLAP,
+            add_start_index=True, # track index in original document
+        )
+
+        # Split documents into smaller chunks
+        all_splits = text_splitter.split_documents(docs)
+
+        if not all_splits:
+            logger.error("No document splits were created.")
+            exit(1)
+
+        logger.info(f"Split blog post into {len(all_splits)} sub-documents.")
+
+    except Exception as e:
+        logger.error(f"Error splitting documents: {e}")
         exit(1)
 
-    logger.info(f"Split blog post into {len(all_splits)} sub-documents.")
+    # Notes for future features:
+    # - User can set chunk size and overlap via UI
+    # - Option to choose different text splitting strategies (e.g., sentence-based, paragraph-based)
+    # - Option to preview how a sample text would be split
+    # - Option to save and load custom text splitting configurations
 
-except Exception as e:
-    logger.error(f"Error splitting documents: {e}")
-    exit(1)
+    # Now to embed the chunks and add to vector store
+    try:
+        # This is where the magic happens:
+        # 1. Each chunk is embedded using OpenAI's embedding model (costs $$)
+        # 2. Embeddings are stored in ChromaDB with metadata (including source URL)
+        # 3. Next time we run, is_document_cached() will find these and skip this step!
+        document_ids = vector_store.add_documents(documents=all_splits)
 
-# Notes for future features:
-# - User can set chunk size and overlap via UI
-# - Option to choose different text splitting strategies (e.g., sentence-based, paragraph-based)
-# - Option to preview how a sample text would be split
-# - Option to save and load custom text splitting configurations
+        if not document_ids:
+            logger.error("No documents were added to the vector store.")
+            exit(1)
 
-# Now to embed the chunks and add to vector store
-try:
-    document_ids = vector_store.add_documents(documents=all_splits)
+        logger.info(f"Added {len(document_ids)} documents to the vector store.")
+        logger.info(f"Sample document IDs: {document_ids[:3]}")
 
-    if not document_ids:
-        logger.error("No documents were added to the vector store.")
+    except Exception as e:
+        logger.error(f"Error adding documents to vector store: {e}")
         exit(1)
 
-    logger.info(f"Added {len(document_ids)} documents to the vector store.")
-    logger.info(f"Sample document IDs: {document_ids[:3]}")
-
-except Exception as e:
-    logger.error(f"Error adding documents to vector store: {e}")
-    exit(1)
+# END OF CACHING IF/ELSE BLOCK
+# From here on, code runs whether document was cached or not
 
 # Now the retrieval & generation part
 from langchain.tools import tool
