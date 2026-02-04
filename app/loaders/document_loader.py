@@ -73,3 +73,27 @@ def load_document(source: str) -> List[Document]:
             f"Unsupported file type: {extension}. "
             f"Supported types: {', '.join(supported)}"
         )
+
+
+def load_documents(sources: List[str]) -> List[Document]:
+    """
+    Load documents from multiple sources (URLs or file paths).
+
+    Args:
+        sources: List of URLs or file paths to load
+
+    Returns:
+        Combined list of LangChain Documents
+    """
+    all_docs: List[Document] = []
+
+    for source in sources:
+        try:
+            docs = load_document(source)
+            all_docs.extend(docs)
+        except Exception as e:
+            logger.error(f"Skipping source due to error: {source}. Error: {e}")
+            continue
+
+    logger.info(f"Loaded total documents from batch: {len(all_docs)}")
+    return all_docs

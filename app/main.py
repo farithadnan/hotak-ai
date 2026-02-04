@@ -19,8 +19,12 @@ from config.prompts import SYSTEM_PROMPT
 from utils.logger import setup_logger
 
 from models.llm import initialize_models
-from storage.vector_storage import initialize_vector_store, is_document_cached, add_documents_to_store
-from loaders.document_loader import load_document
+from storage.vector_storage import (
+    initialize_vector_store,
+    filter_uncached_sources,
+    add_documents_to_store,
+)
+from loaders.document_loader import load_documents
 from utils.text_splitter import split_documents
 from agents.rag_agent import create_rag_agent
 
@@ -39,35 +43,41 @@ llm, embeddings = initialize_models()
 # Initialize vector store
 vector_store = initialize_vector_store(embeddings)
 
-# Define source - can be URL, PDF, or TXT file
+# Define sources - can be URLs, PDFs, or TXT/DOCX files
 # Examples:
-# source_url = "https://lilianweng.github.io/posts/2023-06-23-agent/"  # Web URL
-# source_url = r"C:\Users\User\Desktop\Dev\hotak-ai\app\data\test\sample.pdf"  # PDF file (raw string)
-# source_url = "C:/Users/User/Desktop/Dev/hotak-ai/app/data/test/notes.txt"  # TXT file (forward slashes)
-source_url = r"C:\Users\User\Desktop\Dev\hotak-ai\app\data\test\sample.docx"
+# "https://lilianweng.github.io/posts/2023-06-23-agent/"  # Web URL
+# r"C:\Users\User\Desktop\Dev\hotak-ai\app\data\test\sample.pdf"  # PDF file (raw string)
+# "C:/Users/User/Desktop/Dev/hotak-ai/app/data/test/notes.txt"  # TXT file (forward slashes)
+# r"C:\Users\User\Desktop\Dev\hotak-ai\app\data\test\sample.docx"  # DOCX file
+sources = [
+    r"https://lilianweng.github.io/posts/2023-06-23-agent/",
+]
 
-# CACHING LOGIC: Check if document already processed
-if is_document_cached(vector_store, source_url):
-    logger.info(f"[CACHED] Document from {source_url} is already cached.")
-    logger.info("Skipping document loading, splitting, and embedding.\n")
-else:
-    # Document is NEW - process it
-    logger.info(f"Document from {source_url} not found in cache.")
-    logger.info("Processing document...\n")
-    
+# CACHING LOGIC: Check which sources are already processed
+cached_sources, uncached_sources = filter_uncached_sources(vector_store, sources)
+for cached in cached_sources:
+    logger.info(f"[CACHED] Document from {cached} is already cached.")
+
+if uncached_sources:
+    logger.info(f"Processing {len(uncached_sources)} new source(s)...\n")
     try:
-        # Load document (auto-detects type: web, PDF, or TXT)
-        docs = load_document(source_url)
-        
-        # Split into chunks
-        all_splits = split_documents(docs)
-        
-        # Add to vector store
-        add_documents_to_store(vector_store, all_splits)
-        
+        # Load documents (auto-detects type: web, PDF, TXT, or DOCX)
+        docs = load_documents(uncached_sources)
+
+        if docs:
+            # Split into chunks
+            all_splits = split_documents(docs)
+
+            # Add to vector store
+            add_documents_to_store(vector_store, all_splits)
+        else:
+            logger.warning("No documents loaded from uncached sources.")
+
     except Exception as e:
-        logger.error(f"Error processing document: {e}")
+        logger.error(f"Error processing documents: {e}")
         exit(1)
+else:
+    logger.info("All sources are already cached. Skipping loading, splitting, and embedding.\n")
 
 # Create RAG agent
 try:

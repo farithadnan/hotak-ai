@@ -53,6 +53,29 @@ def is_document_cached(vector_store: Chroma, source_url: str) -> bool:
         return False
 
 
+def filter_uncached_sources(vector_store: Chroma, sources: list) -> tuple[list, list]:
+    """
+    Split sources into cached and uncached lists.
+
+    Args:
+        vector_store: The vector store instance
+        sources: List of source URLs or file paths
+
+    Returns:
+        tuple: (cached_sources, uncached_sources)
+    """
+    cached_sources = []
+    uncached_sources = []
+
+    for source in sources:
+        if is_document_cached(vector_store, source):
+            cached_sources.append(source)
+        else:
+            uncached_sources.append(source)
+
+    return cached_sources, uncached_sources
+
+
 def add_documents_to_store(vector_store: Chroma, documents: list):
     """
     Add documents to the vector store.
