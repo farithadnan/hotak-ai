@@ -20,7 +20,7 @@ from utils.logger import setup_logger
 
 from models.llm import initialize_models
 from storage.vector_storage import initialize_vector_store, is_document_cached, add_documents_to_store
-from loaders.web_loader import load_web_document
+from loaders.document_loader import load_document
 from utils.text_splitter import split_documents
 from agents.rag_agent import create_rag_agent
 
@@ -39,8 +39,12 @@ llm, embeddings = initialize_models()
 # Initialize vector store
 vector_store = initialize_vector_store(embeddings)
 
-# Define source URL
-source_url = "https://lilianweng.github.io/posts/2023-06-23-agent/"
+# Define source - can be URL, PDF, or TXT file
+# Examples:
+# source_url = "https://lilianweng.github.io/posts/2023-06-23-agent/"  # Web URL
+# source_url = r"C:\Users\User\Desktop\Dev\hotak-ai\app\data\test\sample.pdf"  # PDF file (raw string)
+# source_url = "C:/Users/User/Desktop/Dev/hotak-ai/app/data/test/notes.txt"  # TXT file (forward slashes)
+source_url = r"C:\Users\User\Desktop\Dev\hotak-ai\app\data\test\test_document.txt"
 
 # CACHING LOGIC: Check if document already processed
 if is_document_cached(vector_store, source_url):
@@ -52,8 +56,8 @@ else:
     logger.info("Processing document...\n")
     
     try:
-        # Load document from web
-        docs = load_web_document(source_url)
+        # Load document (auto-detects type: web, PDF, or TXT)
+        docs = load_document(source_url)
         
         # Split into chunks
         all_splits = split_documents(docs)
@@ -74,10 +78,8 @@ except Exception as e:
 
 
 # Example query to test the agent
-query = (
-    "What is the standard method for Task Decomposition?\n\n"
-    "Once you get the answer, look up common extensions of that method."
-)
+# Use a direct question to trigger retrieval:
+query = "What is in the document? Show me the first few sentences."
 
 try:
     logger.info(f"Processing query: {query}")
