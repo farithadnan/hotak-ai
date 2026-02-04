@@ -44,7 +44,7 @@ vector_store = initialize_vector_store(embeddings)
 # source_url = "https://lilianweng.github.io/posts/2023-06-23-agent/"  # Web URL
 # source_url = r"C:\Users\User\Desktop\Dev\hotak-ai\app\data\test\sample.pdf"  # PDF file (raw string)
 # source_url = "C:/Users/User/Desktop/Dev/hotak-ai/app/data/test/notes.txt"  # TXT file (forward slashes)
-source_url = r"C:\Users\User\Desktop\Dev\hotak-ai\app\data\test\test_document.txt"
+source_url = r"C:\Users\User\Desktop\Dev\hotak-ai\app\data\test\sample.docx"
 
 # CACHING LOGIC: Check if document already processed
 if is_document_cached(vector_store, source_url):

@@ -11,6 +11,8 @@ from langchain_core.documents import Document
 from loaders.web_loader import load_web_document
 from loaders.pdf_loader import load_pdf_document
 from loaders.txt_loader import load_txt_document
+from loaders.docx_loader import load_docx_document
+
 from utils.logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -59,9 +61,13 @@ def load_document(source: str) -> List[Document]:
     elif extension == ".txt":
         logger.info("Detected: TXT file")
         return load_txt_document(source)
+
+    elif extension == ".docx":
+        logger.info("Detected: DOCX file")
+        return load_docx_document(source)
     
     else:
-        supported = [".pdf", ".txt", "http://", "https://"]
+        supported = [".pdf", ".txt", ".docx", "http://", "https://"]
         logger.error(f"Unsupported file type: {extension}")
         raise ValueError(
             f"Unsupported file type: {extension}. "
