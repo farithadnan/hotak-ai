@@ -1,4 +1,5 @@
 """Module for RAG agent implementation."""
+from pathlib import Path
 from langchain.tools import tool
 from langchain.agents import create_agent
 from langchain_chroma import Chroma
@@ -36,10 +37,25 @@ def create_retrieval_tool(vector_store: Chroma):
                 logger.warning("No documents retrieved from vector store.")
                 return "", []
 
-            serialized = "\n\n".join(
-                (f"Source: {doc.metadata}\nContent: {doc.page_content}")
-                for doc in retrieved_docs
-            )
+            def format_source_label(doc_metadata: dict, index: int) -> str:
+                source = doc_metadata.get("source", "unknown")
+                file_name = doc_metadata.get("file_name")
+                page = doc_metadata.get("page")
+                page_label = f", page {page}" if page is not None else ""
+                if file_name:
+                    return f"[{index}] {file_name}{page_label}"
+                if source.startswith("http"):
+                    return f"[{index}] {source}{page_label}"
+                return f"[{index}] {Path(source).name}{page_label}"
+
+            serialized_chunks = []
+            for i, doc in enumerate(retrieved_docs, start=1):
+                source_label = format_source_label(doc.metadata or {}, i)
+                serialized_chunks.append(
+                    f"{source_label}\nContent: {doc.page_content}"
+                )
+
+            serialized = "\n\n".join(serialized_chunks)
 
             if not serialized:
                 logger.warning("Serialized retrieved documents is empty.")

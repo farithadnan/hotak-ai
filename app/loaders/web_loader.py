@@ -42,6 +42,7 @@ def load_web_document(source_url: str) -> list:
         # It's used later to check if document is cached (via .get(where={"source": url}))
         for doc in docs:
             doc.metadata["source"] = source_url
+            doc.metadata["source_type"] = "web"
         
         logger.info(f"Loaded {len(docs)} document(s) from the web.")
         logger.info(f"Total characters: {len(docs[0].page_content)}")

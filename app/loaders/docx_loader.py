@@ -1,6 +1,7 @@
 """Module to load docx documents."""
 
 from typing import List
+from pathlib import Path
 from langchain_core.documents import Document
 from utils.logger import setup_logger
 
@@ -31,9 +32,14 @@ def load_docx_document(file_path: str) -> List[Document]:
         content = "\n\n".join(full_text)  # Double newline for better separation
         
         # Create a single Document
+        file_name = Path(file_path).name
         doc = Document(
             page_content=content,
-            metadata={"source": file_path}
+            metadata={
+                "source": file_path,
+                "file_name": file_name,
+                "source_type": "docx",
+            }
         )
         
         # Log success with stats

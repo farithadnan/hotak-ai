@@ -5,6 +5,7 @@ This module loads plain text files (.txt) and prepares them for the RAG system.
 """
 
 from typing import List
+from pathlib import Path
 from langchain_core.documents import Document
 from utils.logger import setup_logger
 
@@ -34,9 +35,14 @@ def load_txt_document(file_path: str) -> List[Document]:
             content = f.read()
         
         # Create a single Document
+        file_name = Path(file_path).name
         doc = Document(
             page_content=content,
-            metadata={"source": file_path}
+            metadata={
+                "source": file_path,
+                "file_name": file_name,
+                "source_type": "txt",
+            }
         )
         
         # Log success
