@@ -8,10 +8,10 @@ to the appropriate loader automatically.
 from typing import List
 from pathlib import Path
 from langchain_core.documents import Document
-from .web_loader import load_web_document
-from .pdf_loader import load_pdf_document
-from .txt_loader import load_txt_document
-from ..utils.logger import setup_logger
+from loaders.web_loader import load_web_document
+from loaders.pdf_loader import load_pdf_document
+from loaders.txt_loader import load_txt_document
+from utils.logger import setup_logger
 
 logger = setup_logger(__name__)
 

@@ -6,7 +6,7 @@ This module loads plain text files (.txt) and prepares them for the RAG system.
 
 from typing import List
 from langchain_core.documents import Document
-from ..utils.logger import setup_logger
+from utils.logger import setup_logger
 
 logger = setup_logger(__name__)
 
