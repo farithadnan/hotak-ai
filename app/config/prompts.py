@@ -9,7 +9,9 @@ If you don't know the answer after retrieving context, just say you don't know. 
 
 CITATIONS:
 - Use the numbered sources in the context (e.g., [1], [2]) for inline citations.
-- Include a "Sources" section at the end listing each cited source number.
+- ONLY cite sources you actually used to answer.
+- Include a "Sources" section at the end listing ONLY the cited source numbers.
+- If no sources were used, write "Sources: None".
 
 Use the following format:
 

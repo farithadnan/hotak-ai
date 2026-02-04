@@ -26,7 +26,7 @@ from storage.vector_storage import (
 )
 from loaders.document_loader import load_documents
 from utils.text_splitter import split_documents
-from agents.rag_agent import create_rag_agent
+from agents.rag_agent import create_rag_agent, validate_and_format_response
 
 # Set up logger
 logger = setup_logger()
@@ -93,14 +93,40 @@ query = "What is in the document? Show me the first few sentences."
 
 try:
     logger.info(f"Processing query: {query}")
+    
+    # Track retrieved docs for citation validation
+    retrieved_docs_holder = {"docs": []}
+    
+    # Capture agent response
+    full_response = ""
+    
     for event in agent.stream(
         {"messages": [{"role": "user", "content": query}]},
         stream_mode="values",
     ):
-        event["messages"][-1].pretty_print()
+        last_message = event["messages"][-1]
+        last_message.pretty_print()
+        
+        # Extract text content
+        if hasattr(last_message, 'content'):
+            content = last_message.content
+            if isinstance(content, str):
+                full_response += content
+    
+    # For now, we'll validate against top retrieved docs
+    # In a production system, you'd track which docs were actually used
+    top_docs = vector_store.similarity_search(query, k=5)
+    
+    if top_docs and full_response:
+        validated_response, citation_info = validate_and_format_response(
+            full_response, top_docs
+        )
+        logger.info(f"Citation check: {citation_info}")
+    
     logger.info("Query processed successfully.")
 except Exception as e:
     logger.error(f"Agent failed to process query: {e}")
+
 
 # Notes for future features:
 # - User can input custom queries via UI

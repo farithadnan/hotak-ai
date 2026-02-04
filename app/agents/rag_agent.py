@@ -6,6 +6,7 @@ from langchain_chroma import Chroma
 from config.settings import RETRIEVAL_K
 from config.prompts import SYSTEM_PROMPT
 from utils.logger import setup_logger
+from utils.citation_extractor import ensure_citations, validate_citations
 
 logger = setup_logger()
 
@@ -103,3 +104,36 @@ def create_rag_agent(llm, vector_store: Chroma):
     except Exception as e:
         logger.error(f"Failed to create agent: {e}")
         raise
+
+def validate_and_format_response(answer: str, retrieved_docs: list) -> tuple[str, dict]:
+    """
+    Validate citations in the agent's answer and ensure they're grounded in sources.
+    
+    Args:
+        answer: The agent's answer text
+        retrieved_docs: List of documents that were retrieved
+        
+    Returns:
+        Tuple of (validated_answer, citation_info)
+        - validated_answer: Answer with enforced citations
+        - citation_info: Dict with validation details
+    """
+    is_valid, cited_numbers, errors = validate_citations(answer, retrieved_docs)
+    
+    # Log validation results
+    if is_valid:
+        logger.info(f"Citation validation passed. Found {len(cited_numbers)} citation(s).")
+    else:
+        logger.warning(f"Citation validation failed: {errors}")
+    
+    # Ensure answer has citations (adds if missing)
+    validated_answer, has_valid_citations = ensure_citations(answer, retrieved_docs)
+    
+    citation_info = {
+        "is_valid": has_valid_citations,
+        "cited_sources": len(cited_numbers),
+        "total_sources": len(retrieved_docs),
+        "errors": errors,
+    }
+    
+    return validated_answer, citation_info
