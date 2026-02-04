@@ -3,15 +3,17 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - pypdf
-  - python=3.12
-  - fastapi
-  - uvicorn
+  - langchain-ollama
   - langchain
-  - python-dotenv
+  - fastapi
+  - langchain-chroma
+  - python=3.12
+  - uvicorn
+  - langchain-text-splitters
   - beautifulsoup4
   - langchain-community
-  - langchain-ollama
+  - python-dotenv
+  - pypdf
   - langchain-openai
-  - langchain-chroma
-  - langchain-text-splitters
+  - python-docx
+prefix: C:\Users\User\miniconda3\envs\hotak-ai-venv
