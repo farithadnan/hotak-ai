@@ -2,6 +2,7 @@
 
 from pydantic import BaseModel
 from .utils.logger import setup_logger
+from .models.template import TemplateCreate, TemplateUpdate, Template
 from .agents.rag_agent import validate_and_format_response
 from .storage.vector_storage import (
     filter_uncached_sources, 
@@ -38,7 +39,142 @@ async def health_check():
     return {"status": "healthy"}
 
 
-@app.on_event("startup")
+# ============================================================
+# Template Management Endpoints
+# ============================================================
+
+@app.post("/templates", status_code=201)
+async def create_template_endpoint(template_data: TemplateCreate):
+    """
+    Create a new knowledge template.
+    
+    A template is a reusable "brain" that contains:
+    - Documents/sources to search
+    - Custom settings (model, temperature, prompt, etc.)
+    """
+    try:
+        from .storage.template_storage import create_template
+        
+        logger.info(f"Creating template: {template_data.name}")
+        template = create_template(template_data)
+        logger.info(f"Template created successfully: {template.id}")
+        
+        return template
+        
+    except ValueError as e:
+        logger.error(f"Validation error creating template: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Failed to create template: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/templates")
+async def list_templates_endpoint():
+    """
+    Get all knowledge templates.
+    
+    Returns a list of all available templates.
+    """
+    try:
+        from .storage.template_storage import get_all_templates
+        
+        logger.info("Listing all templates")
+        templates = get_all_templates()
+        
+        return {
+            "templates": templates,
+            "count": len(templates)
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to list templates: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/templates/{template_id}")
+async def get_template_endpoint(template_id: str):
+    """
+    Get a specific template by ID.
+    
+    Returns template details including sources and settings.
+    """
+    try:
+        from .storage.template_storage import get_template
+        
+        logger.info(f"Getting template: {template_id}")
+        template = get_template(template_id)
+        
+        if not template:
+            raise HTTPException(status_code=404, detail=f"Template not found: {template_id}")
+        
+        return template
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get template: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.put("/templates/{template_id}")
+async def update_template_endpoint(template_id: str, update_data: TemplateUpdate):
+    """
+    Update an existing template.
+    
+    Only provided fields will be updated.
+    """
+    try:
+        from .storage.template_storage import update_template
+        
+        logger.info(f"Updating template: {template_id}")
+        template = update_template(template_id, update_data)
+        
+        if not template:
+            raise HTTPException(status_code=404, detail=f"Template not found: {template_id}")
+        
+        logger.info(f"Template updated successfully: {template_id}")
+        return template
+        
+    except ValueError as e:
+        logger.error(f"Validation error updating template: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to update template: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/templates/{template_id}")
+async def delete_template_endpoint(template_id: str):
+    """
+    Delete a template by ID.
+    
+    This is permanent and cannot be undone.
+    """
+    try:
+        from .storage.template_storage import delete_template
+        
+        logger.info(f"Deleting template: {template_id}")
+        deleted = delete_template(template_id)
+        
+        if not deleted:
+            raise HTTPException(status_code=404, detail=f"Template not found: {template_id}")
+        
+        logger.info(f"Template deleted successfully: {template_id}")
+        return {"message": "Template deleted successfully", "id": template_id}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to delete template: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================
+# Query Endpoints
+# ============================================================
 async def startup_event():
     """Actions to perform on server startup."""
     try:
