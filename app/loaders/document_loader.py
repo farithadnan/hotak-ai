@@ -12,6 +12,7 @@ from loaders.web_loader import load_web_document
 from loaders.pdf_loader import load_pdf_document
 from loaders.txt_loader import load_txt_document
 from loaders.docx_loader import load_docx_document
+from loaders.md_loader import load_md_document
 
 from utils.logger import setup_logger
 
@@ -27,6 +28,7 @@ def load_document(source: str) -> List[Document]:
     - .pdf files → PyPDFLoader  
     - .txt files → Text file reader
     - .docx files → DOCX file reader
+    - .md files → Markdown file reader
     
     Args:
         source: URL or file path to load
@@ -66,9 +68,12 @@ def load_document(source: str) -> List[Document]:
     elif extension == ".docx":
         logger.info("Detected: DOCX file")
         return load_docx_document(normalized_source)
+    if extension == ".md":
+        logger.info("Detected: Markdown file")
+        return load_md_document(normalized_source)
     
     else:
-        supported = [".pdf", ".txt", ".docx", "http://", "https://"]
+        supported = [".pdf", ".txt", ".docx", ".md", "http://", "https://"]
         logger.error(f"Unsupported file type: {extension}")
         raise ValueError(
             f"Unsupported file type: {extension}. "
