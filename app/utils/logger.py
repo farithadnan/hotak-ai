@@ -5,25 +5,34 @@ import logging
 from pathlib import Path
 from config.settings import (
     APP_NAME,
-    LOGS_DIRECTORY
+    LOGS_DIRECTORY,
+    LOG_LEVEL
 )
 
-def setup_logger(name: str = APP_NAME, log_file: str = None) -> logging.Logger:
-    """Set up a logger for the application."""
+def setup_logger(name: str = APP_NAME) -> logging.Logger:
+    """
+    Set up a logger for the application.
+    
+    Args:
+        name: Logger name (use __name__ for module-specific logs)
+        
+    Returns:
+        Configured logger instance
+    """
 
     # Create logger
     logger = logging.getLogger(name)
-    logger.setLevel(logging.INFO)
+    
+    # Convert string level to logging constant
+    level = getattr(logging, LOG_LEVEL.upper(), logging.INFO)
+    logger.setLevel(level)
 
     # Avoid duplicate handlers if called multiple times
     if logger.hasHandlers():
         return logger
 
     # Create logs directory if it doesn't exist
-    if log_file is None:
-        log_path = Path(LOGS_DIRECTORY) / "app.log"
-    else:
-        log_path = Path(log_file)
+    log_path = Path(LOGS_DIRECTORY) / "app.log"
     log_path.parent.mkdir(parents=True, exist_ok=True)
 
     # Format for log messages

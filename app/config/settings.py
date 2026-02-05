@@ -8,6 +8,7 @@ load_dotenv()
 
 APP_NAME = "Hotak AI"
 LOGS_DIRECTORY = "logs/"
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")  # DEBUG, INFO, WARNING, ERROR
 
 # ==========================================
 # SECRETS (from .env file)
