@@ -400,131 +400,152 @@ Current PDF loader (pypdf) only extracts text from text-based PDFs. For **scanne
 
 ---
 
-## Phase 6: Web UI with Template System
+## Phase 6: Web UI with Template System ⭐ IN PROGRESS
 
-### Goals
-- Template-based knowledge management ("Brains")
-- Chat sessions with/without templates
-- User-friendly interface
+### Overview
+Template-based knowledge management ("Brains") allowing users to create reusable knowledge templates that can be attached to chat sessions. Both ad-hoc chat (no template) and template-based chat (organized knowledge) are supported.
 
-### Architecture Overview
-
-**Knowledge Template (Brain):**
-- Name, description, custom prompt
-- Attached documents/URLs
-- Settings: model, temperature, chunk size, retrieval_k
-- Reusable across multiple chats
-- Always persistent
-
-**Chat Session:**
-- Optional template binding
-- Conversation history
-- If template → always use its docs/settings
-- If no template → ad-hoc mode
-
-**Ad-hoc Mode:**
-- Quick upload + ask
-- No template, no persistence
-- Session-only memory
+### Architecture
+- **Knowledge Template (Brain):** Name, description, attached documents/URLs, custom settings, system prompt
+- **Chat Session:** Can bind to a template or run ad-hoc (no template)
+- **Ad-hoc Mode:** Quick upload + ask without templates
 
 ---
 
-### Backend Tasks
+### Backend Status: ✅ COMPLETE (Feb 5, 2026)
 
-#### 1. Template Management API
-- [ ] Database schema for templates (SQLite or JSON files)
-- [ ] `POST /templates` - Create template
-- [ ] `GET /templates` - List all templates
-- [ ] `GET /templates/{id}` - Get template details
-- [ ] `PUT /templates/{id}` - Update template
-- [ ] `DELETE /templates/{id}` - Delete template
-- [ ] Template model: name, description, sources[], settings{}
+#### ✅ Template Data Models
+**File:** `app/models/template.py`
+- [x] TemplateSettings (model, temperature, chunk_size, chunk_overlap, retrieval_k, system_prompt)
+- [x] TemplateCreate (input validation)
+- [x] Template (full model with UUID, timestamps)
+- [x] TemplateUpdate (partial updates)
+- **Completed:** Feb 5, 2026
 
-**Priority:** HIGH  
-**Time estimate:** 2-3 days  
-**Dependencies:** Phase 5 complete
+#### ✅ Template Storage Layer
+**File:** `app/storage/template_storage.py`
+- [x] JSON file persistence at `app/data/templates/templates.json`
+- [x] CRUD functions: create_template, get_all_templates, get_template, update_template, delete_template
+- [x] Automatic directory creation
+- [x] UUID generation for IDs
+- [x] Timestamp tracking
+- **Completed:** Feb 5, 2026
 
-#### 2. Chat Session API
-- [ ] Database schema for chat sessions
-- [ ] `POST /chats` - Create new chat (with/without template_id)
-- [ ] `GET /chats` - List all chats
-- [ ] `GET /chats/{id}` - Get chat history
-- [ ] `POST /chats/{id}/message` - Send message to chat
-- [ ] `DELETE /chats/{id}` - Delete chat
-- [ ] Chat model: template_id (optional), messages[], created_at
+#### ✅ Template API Endpoints
+**File:** `app/server.py`
+- [x] POST /templates - Create new template
+- [x] GET /templates - List all templates
+- [x] GET /templates/{id} - Get single template
+- [x] PUT /templates/{id} - Update template
+- [x] DELETE /templates/{id} - Delete template
+- [x] Error handling with HTTPException
+- [x] Tested via curl successfully
+- **Completed:** Feb 5, 2026
 
-**Priority:** HIGH  
-**Time estimate:** 2-3 days  
-**Dependencies:** Template API complete
-
-#### 3. Context Management
-- [ ] Load template's documents on chat creation
-- [ ] Use template's settings (prompt, retrieval_k, etc.)
-- [ ] Maintain conversation history per chat
-- [ ] Support ad-hoc document upload in non-template chats
-- [ ] Clear template cache when template updated
-
-**Priority:** HIGH  
-**Time estimate:** 2 days
+#### ✅ Path Configuration Fixes
+- [x] Fixed `app/config/settings.py` to use Path objects
+- [x] Fixed `app/storage/template_storage.py` path calculation
+- [x] Verified files created in `app/data/templates/` not root directory
+- [x] Verified logs created in `app/logs/` not root directory
+- **Completed:** Feb 5, 2026
 
 ---
 
-### Frontend Tasks
+### Frontend Status: 🔄 IN PROGRESS
 
-#### 1. Template Builder UI
-- [ ] Template list page
-- [ ] Create/edit template form:
-  - Name, description
-  - Documents/URLs input (multi-line)
-  - System prompt editor (textarea)
-  - Settings panel (temperature, retrieval_k, chunk size)
-  - Save/cancel buttons
-- [ ] Template card component (shows name, doc count, settings)
-- [ ] Delete template confirmation
+#### ✅ TypeScript Models (Step 3)
+**File:** `frontend/src/types/models.ts`
+- [x] Template, TemplateCreate, TemplateUpdate, TemplateSettings interfaces
+- [x] Chat, Message, MessageCreate interfaces (for future use)
+- [x] Type guards (isTemplate, isTemplateSettings)
+- [x] Default constants (DEFAULT_TEMPLATE_SETTINGS, AVAILABLE_MODELS)
+- [x] Comprehensive inline documentation
+- **Completed:** Feb 5, 2026
+
+#### ✅ API Service Layer (Step 4)
+**File:** `frontend/src/services/api.ts`
+- [x] createTemplate(data) - POST /templates
+- [x] getTemplates() - GET /templates
+- [x] getTemplate(id) - GET /templates/{id}
+- [x] updateTemplate(id, data) - PUT /templates/{id}
+- [x] deleteTemplate(id) - DELETE /templates/{id}
+- [x] Error handling (getErrorMessage utility)
+- [x] Backward compatibility with legacy functions
+- [x] Comprehensive inline documentation with examples
+- **Completed:** Feb 5, 2026
+
+#### ⏭️ Template Builder Component (Step 5 - NEXT)
+**File:** `frontend/src/components/TemplateBuilder.tsx` (Not started)
+- [ ] Form with name, description, sources, settings inputs
+- [ ] Validation (required fields, value ranges)
+- [ ] API integration (call createTemplate/updateTemplate)
 - [ ] Loading/error states
+- [ ] Success notification
+- **Time Estimate:** 3-4 hours
+- **Status:** Ready to start - all dependencies complete
 
-**Priority:** HIGH  
-**Time estimate:** 2-3 days
+#### ⏭️ Template List Component (Step 6)
+**File:** `frontend/src/components/TemplateList.tsx` (Not started)
+- [ ] Display all templates from getTemplates()
+- [ ] Edit and delete operations
+- [ ] Create new template button
+- [ ] Loading/error states
+- **Time Estimate:** 2-3 hours
+- **Depends on:** Step 5 complete
 
-#### 2. Chat Interface UI
-- [ ] Chat list sidebar (show all chats)
-- [ ] Create new chat modal:
-  - Option 1: Select template
-  - Option 2: Start without template (ad-hoc)
-- [ ] Chat window:
-  - Message list
-  - Input box
-  - Send button
-  - Template badge (if using template)
-  - Document upload button (ad-hoc mode only)
-- [ ] Citation display with sources
-- [ ] Delete chat option
+#### ⏭️ Chat Components (Steps 7-8)
+**Files:** `ChatWindow.tsx`, `ChatSidebar.tsx` (Not started)
+- [ ] Chat window with message display
+- [ ] Chat list/sidebar with chat selector
+- [ ] Message input and sending
+- [ ] Citation display
+- **Time Estimate:** 6-8 hours total
+- **Depends on:** Backend chat endpoints (not yet implemented)
 
-**Priority:** HIGH  
-**Time estimate:** 3-4 days
-
-#### 3. Layout & Navigation
-- [ ] Three-panel layout:
-  - Left: Templates + Chats list
-  - Center: Active chat
-  - Right: Template/chat info (collapsible)
-- [ ] Responsive design
+#### ⏭️ App Layout (Step 9)
+**File:** `src/App.tsx` (Not started)
+- [ ] Organize all components into main layout
 - [ ] Navigation between templates and chats
-- [ ] Active state indicators
+- [ ] Responsive design
+- **Time Estimate:** 2-3 hours
 
-**Priority:** MEDIUM  
-**Time estimate:** 2 days
+#### ⏭️ Styling with Tailwind (Step 10)
+**File:** `src/index.css`, component styles (Not started)
+- [ ] Install and configure Tailwind CSS
+- [ ] Style all components
+- [ ] Consistent design system
+- [ ] Responsive layout
+- **Time Estimate:** 4-5 hours
 
-#### 4. Advanced UI Features
-- [ ] Template preview (show loaded docs)
-- [ ] Citation highlighting in answers
-- [ ] Export chat history
-- [ ] Search templates/chats
-- [ ] Dark mode
-- [ ] Keyboard shortcuts
+---
 
-**Priority:** LOW  
-**Time estimate:** 3-5 days
+### Notes for Next Session
+
+**✨ What's Ready to Build:**
+Everything you need to build Step 5 (Template Builder) is complete:
+1. Backend template API working ✅
+2. TypeScript models defined ✅
+3. API service functions written ✅
+4. Path fixes verified ✅
+
+**📋 Immediate Next Step:**
+Build `frontend/src/components/TemplateBuilder.tsx` - a form component that:
+1. Takes template data from user
+2. Validates inputs
+3. Calls createTemplate() from API service
+4. Shows success/error messages
+
+**🚀 Quick Start Tips:**
+- Use React hooks (useState, useEffect)
+- Import models and API functions
+- Build incrementally (start with simple form)
+- Test in browser before moving to next step
+
+**⏸️ When to Pause:**
+- After Step 5 works (can create templates via UI)
+- Before starting chat features (need backend endpoints first)
+
+---
 
 ---
 
@@ -584,18 +605,100 @@ Current PDF loader (pypdf) only extracts text from text-based PDFs. For **scanne
 - Phase 1, Task 3: Basic Text Splitting (RecursiveCharacterTextSplitter)
 - Phase 1, Task 4: Citation & References (Auto-validation, source attribution)
 - Phase 5: Web API (FastAPI) - Core endpoints, streaming, error handling
+- **Phase 6 Backend:** Template system complete (models, storage, API endpoints) ✨ NEW
+- **Phase 6 Frontend Foundation:** TypeScript models, API service layer ✨ NEW
 
-**🎯 Next Recommended:** Phase 6 - Build Template-Based Web UI
+**🎯 Current Focus (Next 3-4 Hours):**
+- Phase 6 Frontend Step 5: Build Template Builder component (React form)
 
-**Current Focus:**
-1. Backend: Template Management API (Phase 6, Backend Task 1)
-2. Frontend: Template Builder UI (Phase 6, Frontend Task 1)
-3. Then: Chat Session API + UI
+**📋 Ready Next:**
+- Template List component (displays all templates)
+- Chat components (require backend chat endpoints first)
 
 **Alternative Options (Lower Priority):**
 - Phase 1, Task 3: Semantic Chunking (Better text splitting)
 - Phase 2: Vector Store Management (Collection management, backup/restore)
 - Phase 3: LLM Model Management (Switch models at runtime)
+- Backend Chat API (required before chat UI works)
+
+---
+
+## Session Summary (February 5, 2026)
+
+### What Was Accomplished
+
+**Backend Foundation:**
+1. ✅ Fixed path configuration issues in `app/config/settings.py` and `app/storage/template_storage.py`
+2. ✅ Verified template API working correctly (tested with curl)
+3. ✅ Confirmed files created in correct directories (`app/data/templates/`, `app/logs/`)
+
+**Frontend Foundation:**
+1. ✅ Created `frontend/src/types/models.ts` - Complete TypeScript interfaces mirroring Python models
+   - Templates, Chats, Messages with full documentation
+   - Type guards for runtime checking
+   - Default constants for UI forms
+   - Detailed explanations of each concept
+
+2. ✅ Enhanced `frontend/src/services/api.ts` - API service layer with CRUD functions
+   - 5 new template functions (create, read, update, delete, list)
+   - Error handling with standardized messages
+   - Axios generics for type safety
+   - Comprehensive documentation with examples
+
+### Key Learnings Explained
+
+**TypeScript Concepts:**
+- Interfaces vs Types
+- Optional properties (`?`)
+- Union types (`|`)
+- Generic types (`<T>`)
+- Type guards for runtime safety
+- Default constants and exports
+
+**API Patterns:**
+- CRUD operations (Create, Read, Update, Delete)
+- Axios instance setup and configuration
+- Error handling pyramid (multiple error sources)
+- Promise chaining with async/await
+- Type-safe HTTP requests with generics
+
+**Project Architecture:**
+- Service layer abstraction
+- Separation of concerns (Models, Storage, API)
+- Type safety at multiple layers (TypeScript, Python, JSON)
+- Error handling consistency
+
+### Code Quality
+- ✅ Over 500 lines of detailed inline documentation
+- ✅ All concepts explained step-by-step
+- ✅ Real-world code examples provided
+- ✅ Learning-focused with "WHY" explanations
+
+### Handoff Notes for Next Session
+
+**What's Ready:**
+```typescript
+✅ Models defined (frontend/src/types/models.ts)
+✅ API functions written (frontend/src/services/api.ts)
+✅ Backend working (POST/GET/PUT/DELETE /templates)
+✅ Path issues fixed (files in right directories)
+```
+
+**What to Build Next:**
+```typescript
+⏭️ TemplateBuilder.tsx - Form component
+   Location: frontend/src/components/TemplateBuilder.tsx
+   Time: 3-4 hours
+   Difficulty: Medium
+   Uses: createTemplate(), updateTemplate() from api.ts
+```
+
+**Quick Reference:**
+- Frontend dev server: http://localhost:5173
+- Backend API: http://localhost:8000
+- API docs: http://localhost:8000/docs
+- Templates stored at: app/data/templates/templates.json
+- Logs at: app/logs/app.log
 
 ---
 
