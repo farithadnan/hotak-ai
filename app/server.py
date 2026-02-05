@@ -13,6 +13,7 @@ from utils.text_splitter import split_documents
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
+from fastapi.middleware.cors import CORSMiddleware
 
 logger = setup_logger(__name__)
 
@@ -20,6 +21,15 @@ app = FastAPI(
     title="Hotak AI Server",
     description="API server for Hotak AI application.",
     version="1.0.0"
+)
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],  # Vite dev server
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 @app.get("/health")
