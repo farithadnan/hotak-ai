@@ -1,15 +1,14 @@
-
 """Module for managing LLM and Embeddings models."""
 
 from langchain.chat_models import init_chat_model
 from langchain_openai import OpenAIEmbeddings
-from config.settings import (
+from ..config.settings import (
     LLM_MODEL, 
     LLM_TEMPERATURE, 
     LLM_MAX_TOKENS, 
     EMBEDDING_MODEL
 )
-from utils.logger import setup_logger
+from ..utils.logger import setup_logger
 
 logger = setup_logger(__name__)
 

@@ -3,7 +3,7 @@
 import sys
 import logging
 from pathlib import Path
-from config.settings import (
+from ..config.settings import (
     APP_NAME,
     LOGS_DIRECTORY,
     LOG_LEVEL

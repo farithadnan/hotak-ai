@@ -7,7 +7,7 @@ This module ensures all answers are grounded in retrieved sources.
 import re
 from typing import List, Tuple, Set
 from langchain_core.documents import Document
-from utils.logger import setup_logger
+from .logger import setup_logger
 
 logger = setup_logger(__name__)
 

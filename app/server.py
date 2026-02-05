@@ -1,15 +1,15 @@
 """Module to handle fastAPI server setup."""
 
 from pydantic import BaseModel
-from utils.logger import setup_logger
-from agents.rag_agent import validate_and_format_response
-from storage.vector_storage import (
+from .utils.logger import setup_logger
+from .agents.rag_agent import validate_and_format_response
+from .storage.vector_storage import (
     filter_uncached_sources, 
     add_documents_to_store,
     get_all_stored_sources
 )
-from loaders.document_loader import load_documents
-from utils.text_splitter import split_documents
+from .loaders.document_loader import load_documents
+from .utils.text_splitter import split_documents
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
@@ -48,7 +48,7 @@ async def startup_event():
         # Fix Windows console encoding for emojis
         sys.stdout.reconfigure(encoding='utf-8')
         
-        from config.settings import (
+        from .config.settings import (
             OPENAI_API_KEY,
             LANGSMITH_API_KEY, 
             LANGSMITH_TRACING,
@@ -73,11 +73,11 @@ async def startup_event():
         os.environ["LANGSMITH_PROJECT"] = LANGSMITH_PROJECT
 
         # Initialize models
-        from models.llm import initialize_models
+        from .models.llm import initialize_models
         llm, embeddings = initialize_models()
 
         # Initialize vector store
-        from storage.vector_storage import (
+        from .storage.vector_storage import (
             initialize_vector_store,
             filter_uncached_sources,
             add_documents_to_store,
@@ -85,7 +85,7 @@ async def startup_event():
         vector_store = initialize_vector_store(embeddings)
         
         # Initialize RAG agent
-        from agents.rag_agent import create_rag_agent
+        from .agents.rag_agent import create_rag_agent
         rag_agent = create_rag_agent(llm, vector_store)
         
         # Store in app.state
