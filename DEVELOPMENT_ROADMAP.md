@@ -177,14 +177,21 @@ Current PDF loader (pypdf) only extracts text from text-based PDFs. For **scanne
 - ✅ Supports: Web URLs, PDF, TXT, DOCX files
 
 #### 2. Document Management
-- [ ] Support multiple URLs/files in one run
+- [x] Support multiple URLs/files in one run
 - [ ] Preview documents before processing
-- [ ] Extract and store metadata (title, author, date, source)
+- [x] Extract and store metadata (source)
 - [ ] Add document deduplication
 - [ ] Implement document update/delete operations
 
 **Priority:** MEDIUM  
-**Time estimate:** 3 days
+**Time estimate:** 3 days  
+**Status:** 🔄 Partially Complete
+
+**Current Implementation:**
+- ✅ `load_documents()` supports batch loading from list of sources
+- ✅ `filter_uncached_sources()` separates cached vs new documents
+- ✅ Basic metadata tracking (source URL/path)
+- ⏭️ Need: Preview, deduplication, update/delete operations
 
 #### 3. Advanced Text Splitting
 - [ ] Sentence-based splitting
@@ -197,13 +204,22 @@ Current PDF loader (pypdf) only extracts text from text-based PDFs. For **scanne
 **Time estimate:** 2-3 days
 
 #### 4. Citation & References
-- [ ] Add source references to chunks
-- [ ] Include citations in agent responses
-- [ ] Link chunks to original documents
-- [ ] Implement "view source" functionality
+- [x] Add source references to chunks
+- [x] Include citations in agent responses
+- [x] Link chunks to original documents
+- [x] Implement "view source" functionality
 
 **Priority:** HIGH  
-**Time estimate:** 2 days
+**Time estimate:** 2 days  
+**Status:** ✅ Complete!
+
+**Current Implementation:**
+- ✅ `citation_extractor.py` module created
+- ✅ Auto-numbers sources as [1], [2], [3]
+- ✅ Validates citations exist in retrieved docs
+- ✅ Auto-adds citations if agent forgets
+- ✅ Appends "Sources:" section with cited documents
+- ✅ Shows filename and page numbers in sources
 
 ---
 
@@ -439,92 +455,15 @@ Before building the API, refactor error handling from Phase 0:
 
 ---
 
-## Recommended Starting Path
+## Current Progress Summary
 
-### Week 1-2: Foundation ✅ COMPLETED!
-1. ✅ Phase 0, Task 1: Refactor into modules
-2. ✅ Phase 0, Task 2: Configuration system
-3. ✅ Phase 0, Task 3: Error handling & logging (basic)
-4. ✅ Phase 0, Task 4: Document caching (basic)
+**✅ Completed:**
+- Phase 0: Foundation & Refactoring (Configuration, Logging, Error Handling, Caching)
+- Phase 1, Task 1: Multi-format Document Loading (Web, PDF, TXT, DOCX)
+- Phase 1, Task 2: Multiple Documents Support (Batch loading, caching)
+- Phase 1, Task 4: Citation & References (Auto-validation, source attribution)
 
-### Current Status:
-**✅ Phase 0 Complete (Core Tasks):**
-- ✅ Configuration extracted to settings.py and prompts.py
-- ✅ Logger utility with file and console output
-- ✅ Error handling for all critical operations
-- ✅ Document caching with source URL metadata
-- ✅ All modules refactored and working
-- ✅ main.py uses clean module imports
-- ✅ All Quick Wins 1-5 done
-
-**⏭️ Phase 0 Enhancements (Optional):**
-- ⏭️ Custom exception classes
-- ⏭️ Retry logic for API/network failures
-- ⏭️ Cache invalidation and versioning
-- ⏭️ Timestamp tracking for documents
-
-### Week 3-4: Core Features ✅ COMPLETED!
-4. ✅ Phase 1, Task 1: Multi-format loaders (PDF, DOCX, TXT)
-5. ⏭️ Phase 1, Task 4: Citations
-6. ⏭️ Phase 1, Task 2: Document Management
-
-### Current Status:
-**✅ Phase 1, Task 1 Complete!**
-- ✅ PDF, TXT, DOCX loaders created
-- ✅ Unified loader with auto file-type detection
-- ✅ Proper error handling and logging
-- ✅ Metadata tracking for all document types
-
-**⏭️ RECOMMENDED NEXT STEPS (Choose One Path):**
-
-**Option A: Continue Phase 1 - Document Features** (Easiest)
-- Task 4: Add citations to agent responses (2 days)
-- Task 2: Support multiple files at once (3 days)
-- Task 3: Better text splitting strategies (2-3 days)
-
-**Option B: Phase 5 - FastAPI (Most Impact)** (Recommended for UI)
-- Build REST API endpoints (3-4 days)
-- Enable document upload via API
-- Query endpoint with streaming
-- Sets foundation for web UI
-
-**Option C: Phase 2 - Vector Store Management** (Technical)
-- Add collection management (2 days)
-- Clear/export/import operations (2-3 days)
-- View statistics and document counts
-
-**Option D: Phase 4 - CLI Interface** (User-Friendly)
-- Create CLI commands (2-3 days)
-- Interactive query mode (2 days)
-- Better user experience for terminal use
-
-**💡 RECOMMENDATION:** If you want to build a UI eventually, go with **Option B (FastAPI)**. Otherwise, **Option A (Citations)** is quick and adds immediate value to responses.
-
-### Week 5-6: API Layer
-7. ✅ Phase 5, Task 1: Core API endpoints
-8. ✅ Phase 2, Task 1: Collection management
-
-### Week 7+: Choose Your Path
-- **Backend-focused:** Phase 2 & 3 (vector stores & models)
-- **User-focused:** Phase 4 & 6 (CLI & UI)
-- **Production-focused:** Phase 7 (testing & deployment)
-
----
-
-## Quick Wins (Do These First)
-
-1. ✅ **Extract config to settings.py** (1 hour) - DONE!
-2. ✅ **Replace hardcoded values in main.py with imports** (30 min) - DONE!
-3. ✅ **Add logging instead of print** (30 min) - DONE!
-4. ✅ **Add error handling for document loading** (1 hour) - DONE!
-5. ✅ **Check if docs exist before re-embedding** (2 hours) - DONE!
-6. ✅ **Refactor code into modules** (1 day) - DONE!
-7. ✅ **Add PDF support** (2-3 hours) - DONE!
-8. ✅ **Add TXT support** (1 hour) - DONE!
-9. ✅ **Add DOCX support** (2 hours) - DONE!
-10. ⏭️ **Add citations to responses** (2 hours) - NEXT RECOMMENDED
-11. ⏭️ **Support multiple documents at once** (3 hours) - RECOMMENDED
-12. ⏭️ **Add custom exception classes** (2 hours) - RECOMMENDED
+**🎯 Next Recommended:** Phase 5 - Build FastAPI server (3-4 days)
 
 ---
 
