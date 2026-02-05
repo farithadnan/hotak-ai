@@ -44,26 +44,28 @@ def load_document(source: str) -> List[Document]:
         logger.info("Detected: Web URL")
         return load_web_document(source)
     
-    # It's a file path - check if it exists
-    file_path = Path(source)
+    # It's a file path - normalize it first
+    file_path = Path(source).resolve()  # Normalize to absolute path
+    normalized_source = str(file_path)  # Convert back to string
+    
     if not file_path.exists():
-        logger.error(f"File not found: {source}")
-        raise FileNotFoundError(f"File does not exist: {source}")
+        logger.error(f"File not found: {normalized_source}")
+        raise FileNotFoundError(f"File does not exist: {normalized_source}")
     
     # Check file extension
     extension = file_path.suffix.lower()
     
     if extension == ".pdf":
         logger.info("Detected: PDF file")
-        return load_pdf_document(source)
+        return load_pdf_document(normalized_source)
     
     elif extension == ".txt":
         logger.info("Detected: TXT file")
-        return load_txt_document(source)
+        return load_txt_document(normalized_source)
 
     elif extension == ".docx":
         logger.info("Detected: DOCX file")
-        return load_docx_document(source)
+        return load_docx_document(normalized_source)
     
     else:
         supported = [".pdf", ".txt", ".docx", "http://", "https://"]
