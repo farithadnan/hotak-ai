@@ -7,7 +7,7 @@ from config.settings import (
     CHUNK_OVERLAP
 )
 
-logger = setup_logger()
+logger = setup_logger(__name__)
 
 def split_documents(documents: list) -> list:
     """

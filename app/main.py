@@ -30,7 +30,7 @@ from utils.text_splitter import split_documents
 from agents.rag_agent import create_rag_agent, validate_and_format_response
 
 # Set up logger
-logger = setup_logger()
+logger = setup_logger(__name__)
 
 # Set environment variables
 os.environ["LANGSMITH_TRACING"] = LANGSMITH_TRACING

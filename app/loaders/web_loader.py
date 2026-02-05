@@ -4,7 +4,7 @@ import bs4
 from langchain_community.document_loaders import WebBaseLoader
 from utils.logger import setup_logger
 
-logger = setup_logger()
+logger = setup_logger(__name__)
 
 def load_web_document(source_url: str) -> list:
     """

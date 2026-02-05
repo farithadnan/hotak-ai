@@ -8,7 +8,7 @@ from config.prompts import SYSTEM_PROMPT
 from utils.logger import setup_logger
 from utils.citation_extractor import ensure_citations, validate_citations
 
-logger = setup_logger()
+logger = setup_logger(__name__)
 
 def create_retrieval_tool(vector_store: Chroma):
     """

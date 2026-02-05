@@ -9,7 +9,7 @@ from config.settings import (
 )
 from langchain_community.document_loaders import WebBaseLoader 
 
-logger = setup_logger()
+logger = setup_logger(__name__)
 
 def initialize_vector_store(embeddings: OpenAIEmbeddings) -> Chroma:
     """

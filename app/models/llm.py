@@ -11,7 +11,7 @@ from config.settings import (
 )
 from utils.logger import setup_logger
 
-logger = setup_logger()
+logger = setup_logger(__name__)
 
 def initialize_models():
     """
