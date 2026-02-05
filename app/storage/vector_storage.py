@@ -108,3 +108,33 @@ def add_documents_to_store(vector_store: Chroma, documents: list):
     except Exception as e:
         logger.error(f"Error adding documents to vector store: {e}")
         raise
+
+
+def get_all_stored_sources(vector_store: Chroma) -> dict:
+    """
+    Retrieve all sources from the vector store with chunk counts.
+    
+    Args:
+        vector_store: The vector store instance
+    Returns:
+        dict: {source_url: chunk_count}
+    """
+    try:
+        logger.info("Retrieving all stored sources from vector store...")
+        
+        # Query vector store for all documents
+        results = vector_store.get()
+
+        # Count chunks per source
+        source_counts = {}
+        for metadata in results.get('metadatas', []):
+            if metadata and 'source' in metadata:
+                source = metadata['source']
+                source_counts[source] = source_counts.get(source, 0) + 1
+        
+        logger.info(f"Found {len(source_counts)} unique sources with {sum(source_counts.values())} total chunks.")
+        return source_counts
+
+    except Exception as e:
+        logger.error(f"Error retrieving stored sources: {e}")
+        return {}
