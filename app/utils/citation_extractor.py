@@ -36,26 +36,28 @@ def build_source_map(retrieved_docs: List[Document]) -> dict:
     
     Args:
         retrieved_docs: List of retrieved documents (in order)
-        
     Returns:
         Dictionary: {1: "source1", 2: "source2", ...}
     """
+    from pathlib import Path
+    
     source_map = {}
     for i, doc in enumerate(retrieved_docs, start=1):
         metadata = doc.metadata or {}
         source = metadata.get("source", "unknown")
-        file_name = metadata.get("file_name")
         page = metadata.get("page")
         
         # Build readable source label
-        if file_name:
-            label = file_name
-            if page is not None:
-                label += f" (page {page})"
-        elif source.startswith("http"):
+        if source.startswith("http"):
+            # It's a URL
             label = source
         else:
-            label = source
+            # It's a file path - extract just the filename
+            label = Path(source).name
+        
+        # Add page number if available (convert 0-indexed to 1-indexed)
+        if page is not None:
+            label += f" (page {page + 1})"
         
         source_map[i] = label
     
@@ -69,7 +71,6 @@ def validate_citations(answer: str, retrieved_docs: List[Document]) -> Tuple[boo
     Args:
         answer: The model's answer text
         retrieved_docs: List of documents that were retrieved
-        
     Returns:
         Tuple of (is_valid, cited_numbers, error_messages)
         - is_valid: True if all citations are valid or no citations needed

@@ -118,22 +118,23 @@ def validate_and_format_response(answer: str, retrieved_docs: list) -> tuple[str
         - validated_answer: Answer with enforced citations
         - citation_info: Dict with validation details
     """
-    is_valid, cited_numbers, errors = validate_citations(answer, retrieved_docs)
+    # ensure_citations() already validates internally, so just call it once
+    validated_answer, has_valid_citations = ensure_citations(answer, retrieved_docs)
     
-    # Log validation results
-    if is_valid:
+    # Extract citation numbers from the validated answer
+    from utils.citation_extractor import extract_citation_numbers
+    cited_numbers = extract_citation_numbers(validated_answer)
+    
+    # Log results
+    if has_valid_citations:
         logger.info(f"Citation validation passed. Found {len(cited_numbers)} citation(s).")
     else:
-        logger.warning(f"Citation validation failed: {errors}")
-    
-    # Ensure answer has citations (adds if missing)
-    validated_answer, has_valid_citations = ensure_citations(answer, retrieved_docs)
+        logger.warning(f"Citation validation failed. Citations were auto-added.")
     
     citation_info = {
         "is_valid": has_valid_citations,
         "cited_sources": len(cited_numbers),
         "total_sources": len(retrieved_docs),
-        "errors": errors,
     }
     
     return validated_answer, citation_info

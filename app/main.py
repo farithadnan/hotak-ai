@@ -1,4 +1,5 @@
-# Import configuration
+"""Main file for the RAG application."""
+
 import os
 from config.settings import (
     OPENAI_API_KEY,
@@ -51,12 +52,18 @@ vector_store = initialize_vector_store(embeddings)
 # r"C:\Users\User\Desktop\Dev\hotak-ai\app\data\test\sample.docx"  # DOCX file
 sources = [
     r"https://lilianweng.github.io/posts/2023-06-23-agent/",
+    r"C://Users//User//Desktop//Dev//hotak-ai//app//data//test//sample.docx",
+    r"C://Users//User//Desktop//Dev//hotak-ai//app//data//test//test_document.txt",
+    r"C://Users//User//Desktop//Dev//hotak-ai//app//data//test//sample.pdf",
 ]
 
 # CACHING LOGIC: Check which sources are already processed
 cached_sources, uncached_sources = filter_uncached_sources(vector_store, sources)
-for cached in cached_sources:
-    logger.info(f"[CACHED] Document from {cached} is already cached.")
+
+if cached_sources:
+    logger.info(f"[CACHED] {len(cached_sources)} source(s) already in vector store.")
+    for cached in cached_sources:
+        logger.info(f"  - {cached}")
 
 if uncached_sources:
     logger.info(f"Processing {len(uncached_sources)} new source(s)...\n")
@@ -94,11 +101,8 @@ query = "What is in the document? Show me the first few sentences."
 try:
     logger.info(f"Processing query: {query}")
     
-    # Track retrieved docs for citation validation
-    retrieved_docs_holder = {"docs": []}
-    
-    # Capture agent response
-    full_response = ""
+    # Stream and display agent's response
+    final_message = None
     
     for event in agent.stream(
         {"messages": [{"role": "user", "content": query}]},
@@ -106,15 +110,16 @@ try:
     ):
         last_message = event["messages"][-1]
         last_message.pretty_print()
-        
-        # Extract text content
-        if hasattr(last_message, 'content'):
-            content = last_message.content
-            if isinstance(content, str):
-                full_response += content
+        final_message = last_message  # Keep updating to get the final one
     
-    # For now, we'll validate against top retrieved docs
-    # In a production system, you'd track which docs were actually used
+    # Extract final response text for citation validation
+    full_response = ""
+    if final_message and hasattr(final_message, 'content'):
+        content = final_message.content
+        if isinstance(content, str):
+            full_response = content
+    
+    # Validate citations against top retrieved docs
     top_docs = vector_store.similarity_search(query, k=5)
     
     if top_docs and full_response:
