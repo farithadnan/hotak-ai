@@ -1,13 +1,18 @@
 """Application settings and constants."""
 
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
 
+# Base paths - all data stored in app/ directory
+APP_DIR = Path(__file__).parent.parent  # f:/dev/hotak-ai/app/
+LOGS_DIRECTORY = APP_DIR / "logs"
+DATA_DIRECTORY = APP_DIR / "data"
+
 APP_NAME = "Hotak AI"
-LOGS_DIRECTORY = "logs/"
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")  # DEBUG, INFO, WARNING, ERROR
 
 # ==========================================
@@ -34,7 +39,7 @@ EMBEDDING_MODEL = "text-embedding-3-small"
 # VECTOR STORE SETTINGS
 # ==========================================
 COLLECTION_NAME = "hotak_ai_collection"
-PERSIST_DIRECTORY = "data/chroma_db/"
+PERSIST_DIRECTORY = str(DATA_DIRECTORY / "chroma_db")  # Convert Path to string for ChromaDB
 
 # ==========================================
 # TEXT SPLITTING SETTINGS

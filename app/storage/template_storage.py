@@ -23,8 +23,8 @@ except ImportError:
 
 logger = setup_logger(__name__)
 
-# Storage file location
-STORAGE_DIR = Path(__file__).parent.parent.parent / "data" / "templates"
+# Storage file location - stores in app/data/templates/
+STORAGE_DIR = Path(__file__).parent.parent / "data" / "templates"
 TEMPLATES_FILE = STORAGE_DIR / "templates.json"
 
 
