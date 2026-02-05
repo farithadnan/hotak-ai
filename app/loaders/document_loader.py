@@ -26,13 +26,12 @@ def load_document(source: str) -> List[Document]:
     - URLs (http/https) → WebBaseLoader
     - .pdf files → PyPDFLoader  
     - .txt files → Text file reader
+    - .docx files → DOCX file reader
     
     Args:
         source: URL or file path to load
-        
     Returns:
         List of LangChain Documents with content and metadata
-        
     Raises:
         ValueError: If source type is unsupported
         FileNotFoundError: If file doesn't exist

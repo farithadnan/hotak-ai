@@ -18,10 +18,8 @@ def load_txt_document(file_path: str) -> List[Document]:
     
     Args:
         file_path: Path to the .txt file
-        
     Returns:
         List containing a single Document with the text content
-        
     Raises:
         FileNotFoundError: If the file doesn't exist
         PermissionError: If the file can't be read
