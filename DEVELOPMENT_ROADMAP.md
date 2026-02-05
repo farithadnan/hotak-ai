@@ -141,7 +141,7 @@ Current error handling uses `exit(1)` for critical failures (doc loading, splitt
 - [x] PDF loader (pypdf)
 - [x] DOCX loader (python-docx)
 - [x] TXT loader
-- [ ] Markdown loader (optional)
+- [x] Markdown loader
 - [x] Create unified loader interface
 - [x] Add file type detection
 - [x] Handle loading errors gracefully
@@ -171,10 +171,12 @@ Current PDF loader (pypdf) only extracts text from text-based PDFs. For **scanne
 - ✅ PDF loader created (`loaders/pdf_loader.py`)
 - ✅ TXT loader created (`loaders/txt_loader.py`)
 - ✅ DOCX loader created (`loaders/docx_loader.py`)
+- ✅ Markdown loader created (`loaders/md_loader.py`)
 - ✅ Unified loader with auto-detection (`loaders/document_loader.py`)
 - ✅ Source metadata added to all documents
 - ✅ Error handling with proper exceptions
-- ✅ Supports: Web URLs, PDF, TXT, DOCX files
+- ✅ Path normalization to prevent duplicates
+- ✅ Supports: Web URLs, PDF, TXT, DOCX, MD files
 
 #### 2. Document Management
 - [x] Support multiple URLs/files in one run
@@ -194,6 +196,7 @@ Current PDF loader (pypdf) only extracts text from text-based PDFs. For **scanne
 - ⏭️ Need: Preview, deduplication, update/delete operations
 
 #### 3. Advanced Text Splitting
+- [x] Character-based splitting (RecursiveCharacterTextSplitter)
 - [ ] Sentence-based splitting
 - [ ] Paragraph-based splitting
 - [ ] Semantic chunking
@@ -201,7 +204,15 @@ Current PDF loader (pypdf) only extracts text from text-based PDFs. For **scanne
 - [ ] Save/load custom splitting configs
 
 **Priority:** MEDIUM  
-**Time estimate:** 2-3 days
+**Time estimate:** 2-3 days  
+**Status:** 🔄 Partially Complete
+
+**Current Implementation:**
+- ✅ `text_splitter.py` module created
+- ✅ Uses RecursiveCharacterTextSplitter
+- ✅ Configurable chunk size and overlap
+- ✅ Input validation for chunk parameters
+- ⏭️ Need: Semantic chunking, sentence/paragraph-based splitting
 
 #### 4. Citation & References
 - [x] Add source references to chunks
@@ -337,36 +348,47 @@ Current PDF loader (pypdf) only extracts text from text-based PDFs. For **scanne
 - Async operations
 - API documentation
 
-**⚠️ CRITICAL REFACTORING NEEDED:**  
-Before building the API, refactor error handling from Phase 0:
-- **Current:** Script uses `exit(1)` for errors (doc loading, splitting, vector store, agent creation)
-- **Needed:** Move initialization to `@app.on_event("startup")` and replace `exit(1)` with HTTP exceptions
-- **Strategy:**
-  - Server startup: Load docs/create agent once. If fails, server won't start
-  - Query endpoint: Return `HTTPException(500)` on error, don't crash server
-  - Frontend can handle 500 errors and let user retry
+**Status:** ✅ Complete!
 
 ### Tasks
 
 #### 1. Core Endpoints
-- [ ] `POST /documents/load` - Load documents
-- [ ] `POST /query` - Ask questions
-- [ ] `GET /collections` - List collections
-- [ ] `GET /documents` - List documents
-- [ ] `DELETE /documents/{id}` - Delete document
+- [x] `POST /documents/load` - Load documents
+- [x] `POST /query` - Ask questions
+- [x] `GET /documents` - List documents
+- [x] `GET /health` - Health check
+- [ ] `GET /collections` - List collections (future - multi-collection support)
+- [ ] `DELETE /documents/{id}` - Delete document (future enhancement)
 
 **Priority:** HIGH (for UI)  
-**Time estimate:** 3-4 days
+**Time estimate:** 3-4 days  
+**Status:** ✅ Complete!
+
+**Completed Work:**
+- ✅ FastAPI server with proper startup/shutdown lifecycle
+- ✅ Error handling with HTTPException (replaced exit(1) pattern)
+- ✅ POST /query - Non-streaming queries with citation validation
+- ✅ POST /documents/load - Batch document loading with caching
+- ✅ GET /documents - List all cached sources with chunk counts
+- ✅ GET /health - Server health check
+- ✅ Startup initialization moved to @app.on_event("startup")
+- ✅ Path normalization to prevent duplicate sources
+- ✅ Auto-generated API docs at /docs (Swagger UI)
+- ✅ Logging configuration with uvicorn integration
 
 #### 2. Advanced Features
-- [ ] Streaming responses
+- [x] Streaming responses (POST /query/stream)
 - [ ] Background tasks for long operations
 - [ ] Rate limiting
 - [ ] Authentication (API keys)
 - [ ] CORS configuration
 
 **Priority:** MEDIUM  
-**Time estimate:** 3 days
+**Time estimate:** 3 days  
+**Status:** 🔄 Partially Complete (Streaming implemented)
+
+**Completed Work:**
+- ✅ POST /query/stream - Server-sent events for streaming responses
 
 #### 3. WebSocket Support
 - [ ] Real-time query streaming
@@ -459,11 +481,18 @@ Before building the API, refactor error handling from Phase 0:
 
 **✅ Completed:**
 - Phase 0: Foundation & Refactoring (Configuration, Logging, Error Handling, Caching)
-- Phase 1, Task 1: Multi-format Document Loading (Web, PDF, TXT, DOCX)
+- Phase 1, Task 1: Multi-format Document Loading (Web, PDF, TXT, DOCX, MD)
 - Phase 1, Task 2: Multiple Documents Support (Batch loading, caching)
+- Phase 1, Task 3: Basic Text Splitting (RecursiveCharacterTextSplitter)
 - Phase 1, Task 4: Citation & References (Auto-validation, source attribution)
+- Phase 5: Web API (FastAPI) - Core endpoints, streaming, error handling
 
-**🎯 Next Recommended:** Phase 5 - Build FastAPI server (3-4 days)
+**🎯 Next Recommended:** Phase 6 - Build a Web UI (Streamlit or React)
+
+**Alternative Options:**
+- Phase 1, Task 3: Semantic Chunking (Better text splitting - advanced techniques)
+- Phase 2: Vector Store Management (Collection management, backup/restore)
+- Phase 3: LLM Model Management (Switch models at runtime)
 
 ---
 
