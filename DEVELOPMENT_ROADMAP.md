@@ -400,30 +400,128 @@ Current PDF loader (pypdf) only extracts text from text-based PDFs. For **scanne
 
 ---
 
-## Phase 6: Web UI (Optional)
+## Phase 6: Web UI with Template System
 
 ### Goals
+- Template-based knowledge management ("Brains")
+- Chat sessions with/without templates
 - User-friendly interface
-- Visual document management
-- Interactive querying
 
-### Tasks
+### Architecture Overview
 
-#### 1. Basic UI (React/Vue/Streamlit)
-- [ ] Document upload interface
-- [ ] Query input and results display
-- [ ] Collection management
-- [ ] Settings panel
+**Knowledge Template (Brain):**
+- Name, description, custom prompt
+- Attached documents/URLs
+- Settings: model, temperature, chunk size, retrieval_k
+- Reusable across multiple chats
+- Always persistent
+
+**Chat Session:**
+- Optional template binding
+- Conversation history
+- If template → always use its docs/settings
+- If no template → ad-hoc mode
+
+**Ad-hoc Mode:**
+- Quick upload + ask
+- No template, no persistence
+- Session-only memory
+
+---
+
+### Backend Tasks
+
+#### 1. Template Management API
+- [ ] Database schema for templates (SQLite or JSON files)
+- [ ] `POST /templates` - Create template
+- [ ] `GET /templates` - List all templates
+- [ ] `GET /templates/{id}` - Get template details
+- [ ] `PUT /templates/{id}` - Update template
+- [ ] `DELETE /templates/{id}` - Delete template
+- [ ] Template model: name, description, sources[], settings{}
+
+**Priority:** HIGH  
+**Time estimate:** 2-3 days  
+**Dependencies:** Phase 5 complete
+
+#### 2. Chat Session API
+- [ ] Database schema for chat sessions
+- [ ] `POST /chats` - Create new chat (with/without template_id)
+- [ ] `GET /chats` - List all chats
+- [ ] `GET /chats/{id}` - Get chat history
+- [ ] `POST /chats/{id}/message` - Send message to chat
+- [ ] `DELETE /chats/{id}` - Delete chat
+- [ ] Chat model: template_id (optional), messages[], created_at
+
+**Priority:** HIGH  
+**Time estimate:** 2-3 days  
+**Dependencies:** Template API complete
+
+#### 3. Context Management
+- [ ] Load template's documents on chat creation
+- [ ] Use template's settings (prompt, retrieval_k, etc.)
+- [ ] Maintain conversation history per chat
+- [ ] Support ad-hoc document upload in non-template chats
+- [ ] Clear template cache when template updated
+
+**Priority:** HIGH  
+**Time estimate:** 2 days
+
+---
+
+### Frontend Tasks
+
+#### 1. Template Builder UI
+- [ ] Template list page
+- [ ] Create/edit template form:
+  - Name, description
+  - Documents/URLs input (multi-line)
+  - System prompt editor (textarea)
+  - Settings panel (temperature, retrieval_k, chunk size)
+  - Save/cancel buttons
+- [ ] Template card component (shows name, doc count, settings)
+- [ ] Delete template confirmation
+- [ ] Loading/error states
+
+**Priority:** HIGH  
+**Time estimate:** 2-3 days
+
+#### 2. Chat Interface UI
+- [ ] Chat list sidebar (show all chats)
+- [ ] Create new chat modal:
+  - Option 1: Select template
+  - Option 2: Start without template (ad-hoc)
+- [ ] Chat window:
+  - Message list
+  - Input box
+  - Send button
+  - Template badge (if using template)
+  - Document upload button (ad-hoc mode only)
+- [ ] Citation display with sources
+- [ ] Delete chat option
+
+**Priority:** HIGH  
+**Time estimate:** 3-4 days
+
+#### 3. Layout & Navigation
+- [ ] Three-panel layout:
+  - Left: Templates + Chats list
+  - Center: Active chat
+  - Right: Template/chat info (collapsible)
+- [ ] Responsive design
+- [ ] Navigation between templates and chats
+- [ ] Active state indicators
 
 **Priority:** MEDIUM  
-**Time estimate:** 5-7 days
+**Time estimate:** 2 days
 
-#### 2. Advanced UI Features
-- [ ] Document preview
-- [ ] Citation highlighting
-- [ ] Query history
-- [ ] Export conversations
+#### 4. Advanced UI Features
+- [ ] Template preview (show loaded docs)
+- [ ] Citation highlighting in answers
+- [ ] Export chat history
+- [ ] Search templates/chats
 - [ ] Dark mode
+- [ ] Keyboard shortcuts
 
 **Priority:** LOW  
 **Time estimate:** 3-5 days
@@ -487,10 +585,15 @@ Current PDF loader (pypdf) only extracts text from text-based PDFs. For **scanne
 - Phase 1, Task 4: Citation & References (Auto-validation, source attribution)
 - Phase 5: Web API (FastAPI) - Core endpoints, streaming, error handling
 
-**🎯 Next Recommended:** Phase 6 - Build a Web UI (Streamlit or React)
+**🎯 Next Recommended:** Phase 6 - Build Template-Based Web UI
 
-**Alternative Options:**
-- Phase 1, Task 3: Semantic Chunking (Better text splitting - advanced techniques)
+**Current Focus:**
+1. Backend: Template Management API (Phase 6, Backend Task 1)
+2. Frontend: Template Builder UI (Phase 6, Frontend Task 1)
+3. Then: Chat Session API + UI
+
+**Alternative Options (Lower Priority):**
+- Phase 1, Task 3: Semantic Chunking (Better text splitting)
 - Phase 2: Vector Store Management (Collection management, backup/restore)
 - Phase 3: LLM Model Management (Switch models at runtime)
 
