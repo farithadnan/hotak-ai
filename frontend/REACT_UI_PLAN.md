@@ -51,11 +51,11 @@ Building a professional React + TypeScript UI for Hotak AI with:
 
 You've completed the foundation! The models and API layer are ready. Now it's time to build the React components that use them.
 
-### Step 5: Template Builder Component (🎯 NEXT - Your Current Task)
+### Step 5: Template Builder Component ✅ COMPLETE (Feb 6, 2026)
 
 **Goal:** Create a form where users can create and edit templates
 
-**Create:** `src/components/TemplateBuilder.tsx`
+**Created:** `src/components/TemplateBuilder.tsx`
 
 **What it will do:**
 ```
@@ -150,10 +150,25 @@ You've completed the foundation! The models and API layer are ready. Now it's ti
 
 **Time estimate:** 3-4 hours  
 **Difficulty:** Medium (multiple form fields, validation, async)
+**Status:** ✅ Complete!
+
+**What was built:**
+- [x] Form with all fields (name, description, sources, settings)
+- [x] Model dropdown (gpt-4o-mini, gpt-4o, etc.)
+- [x] Temperature slider (0.0-1.0 with live display)
+- [x] Chunk settings (chunk_size, chunk_overlap, retrieval_k)
+- [x] System prompt textarea
+- [x] Form validation (name required, prevents empty submission)
+- [x] API integration with createTemplate()
+- [x] Loading state ("Creating..." button text, disabled inputs)
+- [x] Success message (green box with confirmation)
+- [x] Error handling (red box with error message)
+- [x] Form reset after successful creation
+- [x] Tested and working - templates saved to backend
 
 ---
 
-### Step 6: Template List Component
+### Step 6: Template List Component (🎯 NEXT)
 
 **Goal:** Display all templates, let users select/edit/delete them
 
@@ -287,17 +302,17 @@ frontend/
 
 ## 📋 Upcoming Tasks (Continue From Here)
 
-### ✨ NEXT IMMEDIATE TASK: Step 5 - Template Builder Component
+### ✨ NEXT IMMEDIATE TASK: Step 6 - Template List Component
 
-**Current Date:** February 5, 2026  
+**Current Date:** February 6, 2026  
 **Status:** Ready to start  
-**Time Estimate:** 3-4 hours  
+**Time Estimate:** 2-3 hours  
 **Difficulty:** Medium
 
-You have everything you need:
+**Prerequisites:** ✅ All complete!
 - ✅ TypeScript models defined (`src/types/models.ts`)
-- ✅ API functions ready (`src/services/api.ts` - `createTemplate`, `updateTemplate`, etc.)
-- ✅ Validation rules documented in Pydantic models
+- ✅ API functions ready (`src/services/api.ts` - `getTemplates()`, `deleteTemplate()`, etc.)
+- ✅ Template Builder working (can create templates)
 
 **What to build:**
 [See Step 5: Template Builder Component section above for full details]
@@ -479,7 +494,8 @@ Before you can fully test the UI, you need these backend features:
 | Foundation | Template API endpoints | ✅ Complete | Feb 5 |
 | Foundation | **TypeScript models** | ✅ Complete | Feb 5 |
 | Foundation | **API service layer** | ✅ Complete | Feb 5 |
-| UI - Step 5 | **Template Builder Component** | ⏭️ Next | — |
+| UI - Step 5 | **Template Builder Component** | ✅ Complete | Feb 6 |
+| UI - Step 6 | **Template List Component** | ⏭️ Next | — |
 | UI - Step 6 | Template List Component | Queued | — |
 | UI - Step 7 | Chat Window Component | Queued | — |
 | UI - Step 8 | Chat Sidebar | Queued | — |

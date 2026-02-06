@@ -474,24 +474,24 @@ Template-based knowledge management ("Brains") allowing users to create reusable
 - [x] Comprehensive inline documentation with examples
 - **Completed:** Feb 5, 2026
 
-#### ⏭️ Template Builder Component (Step 5 - NEXT)
-**File:** `frontend/src/components/TemplateBuilder.tsx` (Not started)
-- [ ] Form with name, description, sources, settings inputs
-- [ ] Validation (required fields, value ranges)
-- [ ] API integration (call createTemplate/updateTemplate)
-- [ ] Loading/error states
-- [ ] Success notification
-- **Time Estimate:** 3-4 hours
-- **Status:** Ready to start - all dependencies complete
+#### ✅ Template Builder Component (Step 5)
+**File:** `frontend/src/components/TemplateBuilder.tsx`
+- [x] Form with name, description, sources, settings inputs
+- [x] Validation (required fields, value ranges)
+- [x] API integration (call createTemplate/updateTemplate)
+- [x] Loading/error states
+- [x] Success notification
+- **Completed:** Feb 6, 2026
+- **Status:** ✅ Complete and tested
 
-#### ⏭️ Template List Component (Step 6)
+#### ⏭️ Template List Component (Step 6 - NEXT)
 **File:** `frontend/src/components/TemplateList.tsx` (Not started)
 - [ ] Display all templates from getTemplates()
 - [ ] Edit and delete operations
 - [ ] Create new template button
 - [ ] Loading/error states
 - **Time Estimate:** 2-3 hours
-- **Depends on:** Step 5 complete
+- **Status:** ✅ Ready to start - Template Builder complete
 
 #### ⏭️ Chat Components (Steps 7-8)
 **Files:** `ChatWindow.tsx`, `ChatSidebar.tsx` (Not started)
@@ -519,31 +519,53 @@ Template-based knowledge management ("Brains") allowing users to create reusable
 
 ---
 
-### Notes for Next Session
+### Notes for Next Session (Continue Here 👈)
 
-**✨ What's Ready to Build:**
-Everything you need to build Step 5 (Template Builder) is complete:
-1. Backend template API working ✅
-2. TypeScript models defined ✅
-3. API service functions written ✅
-4. Path fixes verified ✅
+**✅ What's Been Completed (Feb 6, 2026):**
+1. ✅ Fixed import issues (changed all relative → absolute imports in backend)
+2. ✅ Template Builder component fully working
+3. ✅ Can create templates via UI (tested successfully)
+4. ✅ Templates saved to `app/data/templates/templates.json`
+5. ✅ Form validation, error handling, success messages all working
 
-**📋 Immediate Next Step:**
-Build `frontend/src/components/TemplateBuilder.tsx` - a form component that:
-1. Takes template data from user
-2. Validates inputs
-3. Calls createTemplate() from API service
-4. Shows success/error messages
+**📋 Immediate Next Step: Template List Component**
 
-**🚀 Quick Start Tips:**
-- Use React hooks (useState, useEffect)
-- Import models and API functions
-- Build incrementally (start with simple form)
-- Test in browser before moving to next step
+Build `frontend/src/components/TemplateList.tsx` to:
+1. **Fetch templates:** Use `getTemplates()` from API service
+2. **Display as cards:** Show name, description, source count for each
+3. **Add Edit button:** Click → load template data into TemplateBuilder in edit mode
+4. **Add Delete button:** Click → confirm → call `deleteTemplate(id)`
+5. **Add "Create New" button:** Opens TemplateBuilder in create mode
+6. **Loading state:** Show "Loading..." while fetching
+7. **Empty state:** Show "No templates yet" if list is empty
+
+**🚀 Implementation Tips:**
+```typescript
+// 1. Fetch templates on component mount
+const [templates, setTemplates] = useState<Template[]>([]);
+const [isLoading, setIsLoading] = useState(true);
+
+useEffect(() => {
+  getTemplates()
+    .then(setTemplates)
+    .catch(err => setError(err.message))
+    .finally(() => setIsLoading(false));
+}, []);
+
+// 2. Map templates to list/grid
+{templates.map(template => (
+  <div key={template.id}>
+    <h3>{template.name}</h3>
+    <p>{template.description}</p>
+    <button onClick={() => handleEdit(template.id)}>Edit</button>
+    <button onClick={() => handleDelete(template.id)}>Delete</button>
+  </div>
+))}
+```
 
 **⏸️ When to Pause:**
-- After Step 5 works (can create templates via UI)
-- Before starting chat features (need backend endpoints first)
+- After Step 6 works (can list, edit, delete templates)
+- Before chat features (those need backend chat endpoints first)
 
 ---
 
@@ -605,11 +627,12 @@ Build `frontend/src/components/TemplateBuilder.tsx` - a form component that:
 - Phase 1, Task 3: Basic Text Splitting (RecursiveCharacterTextSplitter)
 - Phase 1, Task 4: Citation & References (Auto-validation, source attribution)
 - Phase 5: Web API (FastAPI) - Core endpoints, streaming, error handling
-- **Phase 6 Backend:** Template system complete (models, storage, API endpoints) ✨ NEW
-- **Phase 6 Frontend Foundation:** TypeScript models, API service layer ✨ NEW
+- **Phase 6 Backend:** Template system complete (models, storage, API endpoints)
+- **Phase 6 Frontend Foundation:** TypeScript models, API service layer
+- **Phase 6 Frontend Step 5:** Template Builder component ✅ (Feb 6, 2026)
 
-**🎯 Current Focus (Next 3-4 Hours):**
-- Phase 6 Frontend Step 5: Build Template Builder component (React form)
+**🎯 Next Session (2-3 Hours):**
+- Phase 6 Frontend Step 6: Template List Component (display/edit/delete templates)
 
 **📋 Ready Next:**
 - Template List component (displays all templates)
@@ -729,5 +752,133 @@ Build `frontend/src/components/TemplateBuilder.tsx` - a form component that:
 - **Document changes:** Keep this roadmap updated
 - **Get feedback:** Test with real use cases early
 - **Iterate:** Refine based on what you learn
+
+---
+
+## Session Summary (February 6, 2026)
+
+### Issues Resolved
+1. **Import Error Fixed:**
+   - Problem: Server crashed with "attempted relative import with no known parent package"
+   - Root cause: `server.py` as entry point can't use relative imports (`.utils.logger`)
+   - Solution: Changed ALL imports in `app/` from relative to absolute (removed leading dots)
+   - Changed files: `server.py`, all modules in `utils/`, `models/`, `storage/`, `loaders/`, `agents/`
+   - Result: Backend now starts successfully with `uvicorn server:app --reload`
+
+2. **Cross-Computer Import Consistency:**
+   - Explained why imports work differently on different computers (PYTHONPATH, run location)
+   - Standardized on absolute imports + always run from `app/` directory
+   - This is the correct, standard approach for uvicorn
+
+### Frontend Progress
+
+**Step 5 Complete: Template Builder Component ✅**
+
+Built `frontend/src/components/TemplateBuilder.tsx` with:
+
+**All Form Fields Implemented:**
+- ✅ Name input (required validation)
+- ✅ Description textarea (optional)
+- ✅ Sources textarea (one per line, converts to array)
+- ✅ Model dropdown (gpt-4o-mini, gpt-4o, etc.)
+- ✅ Temperature slider (0.0-1.0 with live value display)
+- ✅ Chunk size input (number validation)
+- ✅ Chunk overlap input (number validation)
+- ✅ Retrieval K input (number validation)
+- ✅ System prompt textarea (optional, large)
+
+**Form Features:**
+- ✅ Controlled inputs (React state management)
+- ✅ Form validation (name required, can't submit empty)
+- ✅ Submit handler with async API call
+- ✅ Loading state (button shows "Creating...", disabled during submission)
+- ✅ Error handling (red error box with message)
+- ✅ Success handling (green success box, form reset)
+- ✅ Proper TypeScript types throughout
+
+**Integration:**
+- ✅ Uses `createTemplate()` from API service
+- ✅ Uses `DEFAULT_TEMPLATE_SETTINGS` from models
+- ✅ Imported into `App.tsx` and rendered
+- ✅ Tested end-to-end: form → API → backend → templates.json
+
+**Testing Results:**
+- ✅ Created test template via UI
+- ✅ Verified saved to `app/data/templates/templates.json`
+- ✅ Backend logs show successful creation
+- ✅ Success message displayed in UI
+
+### Learning Points Covered
+
+**React Concepts:**
+- `useState` for form data, loading, error, success states
+- Event handlers (`onChange`, `onSubmit`)
+- Controlled inputs (value from state, update state on change)
+- Async/await with try/catch/finally pattern
+- Conditional rendering (`{error && <div>...</div>}`)
+- Disabled state based on conditions
+- Form prevention of default behavior
+
+**TypeScript:**
+- Interface usage (`TemplateCreate`, `Template`)
+- Type annotations (`React.FormEvent`, `e: React.ChangeEvent<HTMLInputElement>`)
+- Optional chaining and null coalescing (`formData.description || ''`)
+- Type imports (`import type { ... }`)
+
+**Data Flow:**
+- User input → React state → API service → Backend → Database
+- Nested object updates (settings within formData)
+- Array handling (sources split/join operations)
+- Number parsing (`parseInt`, `parseFloat`, `.toFixed()`)
+
+**Why Bottom-Up Approach:**
+- Validate core functionality early (form → API → backend)
+- See immediate results (templates created)
+- Fail fast (catch API issues before building fancy layout)
+- Learning focused (understand data flow first)
+- Backend was ready (template API complete)
+
+### File Structure Now
+
+```
+frontend/src/
+├── components/
+│   └── TemplateBuilder.tsx  ← NEW (Step 5 ✅)
+├── types/
+│   └── models.ts            ← Complete (Step 3 ✅)
+├── services/
+│   └── api.ts               ← Complete (Step 4 ✅)
+├── App.tsx                  ← Updated (imports TemplateBuilder)
+└── ...
+```
+
+### What's Next (Step 6)
+
+**Template List Component** (`frontend/src/components/TemplateList.tsx`)
+- Fetch all templates using `getTemplates()`
+- Display as cards/list with name, description, source count
+- Edit button → populate TemplateBuilder with existing data
+- Delete button → confirm → call `deleteTemplate(id)`
+- "Create New" button
+- Loading/empty/error states
+
+**Time estimate:** 2-3 hours  
+**Status:** Ready to start (all dependencies met)
+
+### Commands Updated
+
+Added to `README.md`:
+```bash
+# Backend (FastAPI)
+cd app
+conda activate hotak-ai-venv
+uvicorn server:app --reload
+
+# Frontend (React)
+cd frontend
+npm run dev
+```
+
+---
 
 Good luck! 🚀
