@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { healthCheck } from './services/api'
+import TemplateBuilder from './components/TemplateBuilder'
 import './App.css'
 
 function App() {
@@ -15,6 +16,10 @@ function App() {
     <div>
       <h1>Hotak AI</h1>
       <p>API Health: {health ? JSON.stringify(health) : 'Loading...'}</p>
+      
+      <hr />
+      
+      <TemplateBuilder />
     </div>
   )
 }
