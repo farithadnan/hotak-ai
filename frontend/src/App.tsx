@@ -4,7 +4,7 @@ import TemplateBuilder from './components/TemplateBuilder'
 import './App.css'
 
 function App() {
-  const [health, setHealth] = useState<any>(null)
+  const [health, setHealth] = useState<object | null>(null)
 
   useEffect(() => {
     healthCheck()
