@@ -3,10 +3,10 @@ from pathlib import Path
 from langchain.tools import tool
 from langchain.agents import create_agent
 from langchain_chroma import Chroma
-from ..config.settings import RETRIEVAL_K
-from ..config.prompts import SYSTEM_PROMPT
-from ..utils.logger import setup_logger
-from ..utils.citation_extractor import ensure_citations, validate_citations
+from config.settings import RETRIEVAL_K
+from config.prompts import SYSTEM_PROMPT
+from utils.logger import setup_logger
+from utils.citation_extractor import ensure_citations, validate_citations
 
 logger = setup_logger(__name__)
 

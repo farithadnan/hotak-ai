@@ -2,7 +2,7 @@
 
 from pathlib import Path
 from langchain_community.document_loaders import PyPDFLoader
-from ..utils.logger import setup_logger
+from utils.logger import setup_logger
 
 logger = setup_logger(__name__)
 

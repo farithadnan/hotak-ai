@@ -13,7 +13,7 @@ from datetime import datetime
 
 try:
     from ..models.template import Template, TemplateCreate, TemplateUpdate
-    from ..utils.logger import setup_logger
+    from utils.logger import setup_logger
 except ImportError:
     # Fallback for direct execution
     import sys
