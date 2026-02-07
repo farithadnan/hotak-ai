@@ -198,17 +198,18 @@ export const createTemplate = async (data: TemplateCreate): Promise<Template> =>
  * Display list of all templates in the UI dropdown/table
  * This is the "list" operation in CRUD
  * 
- * RETURN TYPE: Promise<Template[]>
- * - Template[] = array of templates
+ * RETURN TYPE: Promise<{ templates: Template[]; count: number }>
+ * - The backend returns BOTH the array AND the total count
+ * - This lets us show "Showing 5 of 10 templates" in the UI
  * 
  * WHEN TO CALL:
  * - On app startup (load available templates)
  * - After creating/deleting template (refresh list)
  * - When user navigates to templates page
  */
-export const getTemplates = async (): Promise<Template[]> => {
+export const getTemplates = async (): Promise<{ templates: Template[]; count: number }> => {
   try {
-    const response = await api.get<Template[]>('/templates');
+    const response = await api.get<{ templates: Template[]; count: number }>('/templates');
     return response.data;
   } catch (error) {
     throw new Error(`Failed to fetch templates: ${getErrorMessage(error)}`);

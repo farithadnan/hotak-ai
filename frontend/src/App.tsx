@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { healthCheck } from './services/api'
 import TemplateBuilder from './components/TemplateBuilder'
+import TemplateList from './components/TemplateList'
 import './App.css'
 
 function App() {
@@ -20,6 +21,7 @@ function App() {
       <hr />
       
       <TemplateBuilder />
+      <TemplateList />
     </div>
   )
 }
