@@ -495,7 +495,7 @@ Before you can fully test the UI, you need these backend features:
 | Foundation | **TypeScript models** | ✅ Complete | Feb 5 |
 | Foundation | **API service layer** | ✅ Complete | Feb 5 |
 | UI - Step 5 | **Template Builder Component** | ✅ Complete | Feb 6 |
-| UI - Step 6 | **Template List Component** | ⏭️ Next | — |
+| UI - Step 6 | **Template List Component** | ⏭️ Current | Feb 7 |
 | UI - Step 6 | Template List Component | Queued | — |
 | UI - Step 7 | Chat Window Component | Queued | — |
 | UI - Step 8 | Chat Sidebar | Queued | — |

@@ -485,13 +485,13 @@ Template-based knowledge management ("Brains") allowing users to create reusable
 - **Status:** ✅ Complete and tested
 
 #### ⏭️ Template List Component (Step 6 - NEXT)
-**File:** `frontend/src/components/TemplateList.tsx` (Not started)
-- [ ] Display all templates from getTemplates()
+**File:** `frontend/src/components/TemplateList.tsx` (Currently working)
+- [x] Display all templates from getTemplates() - need to convert to table?
 - [ ] Edit and delete operations
 - [ ] Create new template button
 - [ ] Loading/error states
 - **Time Estimate:** 2-3 hours
-- **Status:** ✅ Ready to start - Template Builder complete
+- **Status:** Currently working
 
 #### ⏭️ Chat Components (Steps 7-8)
 **Files:** `ChatWindow.tsx`, `ChatSidebar.tsx` (Not started)
