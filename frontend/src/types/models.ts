@@ -82,6 +82,7 @@ export interface Template {
   settings: TemplateSettings;          // Nested object
   created_at: string;                  // ISO timestamp: "2026-02-05T10:30:00"
   updated_at: string | null;           // null if never updated
+  source_count?: number;               // Optional: number of sources
 }
 
 /**

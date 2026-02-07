@@ -17,17 +17,9 @@ function TemplateList() {
     try {
       setIsLoading(true);
       setError(null);
-      
-      console.log('Fetching templates...');
       const data = await getTemplates();
-      console.log('Received data:', data);
-      console.log('Data type:', typeof data);
-      console.log('Is array?', Array.isArray(data));
-      
       setTemplates(data.templates);
-      
     } catch (err: any) {
-      console.error('Error loading templates:', err);
       setError(err.message || 'Failed to load templates');
     } finally {
       setIsLoading(false);
@@ -35,13 +27,39 @@ function TemplateList() {
   };
 
   return (
-    <div>
+    <div style={{ padding: '20px' }}>
       <h2>My Templates</h2>
       
       {isLoading && <p>Loading templates...</p>}
       {error && <p style={{ color: 'red' }}>Error: {error}</p>}
       
-      <p>Templates loaded: {templates.length}</p>
+      {!isLoading && !error && templates.length === 0 && (
+        <p>No templates yet. Create your first template above!</p>
+      )}
+      
+      {!isLoading && !error && templates.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+          {templates.map((template) => (
+            <div 
+              key={template.id} 
+              style={{ 
+                border: '1px solid #ddd', 
+                borderRadius: '8px', 
+                padding: '15px',
+                backgroundColor: '#f9f9f9'
+              }}
+            >
+              <h3 style={{ margin: '0 0 10px 0' }}>{template.name}</h3>
+              <p style={{ margin: '0 0 10px 0', color: '#666' }}>
+                {template.description || 'No description'}
+              </p>
+              <p style={{ margin: '0', fontSize: '14px', color: '#888' }}>
+                Sources: {template.source_count || 0}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
