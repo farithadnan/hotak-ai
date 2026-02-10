@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getTemplates } from '../services/api';
+import { getTemplates } from '../services';
 import type { Template } from '../types/models';
 
 function TemplateList() {
