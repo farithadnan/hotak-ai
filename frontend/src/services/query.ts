@@ -1,4 +1,7 @@
-import api from './api';
+import api, { getErrorMessage } from './api';
+
+// Contract: /query -> { answer, citation_info }
+// Contract: /query/stream -> text/plain stream
 
 /**
  * Legacy types for existing RAG query functionality
@@ -11,7 +14,7 @@ export interface QueryRequest {
 
 export interface QueryResponse {
   answer: string;
-  sources: string[];
+  citation_info: string;
 }
 
 
@@ -19,6 +22,10 @@ export interface QueryResponse {
  * Query the RAG system (existing functionality)
  */
 export const queryAgent = async (request: QueryRequest): Promise<QueryResponse> => {
-  const response = await api.post('/query', request);
-  return response.data;
+  try {
+    const response = await api.post('/query', request);
+    return response.data;
+  } catch (error) {
+    throw new Error(`Failed to run query: ${getErrorMessage(error as any)}`);
+  }
 };
