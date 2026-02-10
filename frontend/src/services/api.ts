@@ -100,6 +100,8 @@ export const getErrorMessage = (error: any): string => {
 /**
  * Health check - verify backend is running
  * 
+ * Contract: /health -> { status: "healthy" }
+ * 
  * USAGE:
  * if (await healthCheck()) {
  *   console.log("Backend is up!")
