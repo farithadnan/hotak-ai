@@ -1,1 +1,7 @@
-"""API routes and endpoints module."""
+"""API package exports."""
+
+from .routes import router
+
+__all__ = [
+	"router"
+]
