@@ -13,7 +13,7 @@ router = APIRouter()
 async def create_template_endpoint(template_data: TemplateCreate):
     """Create a new knowledge template."""
     try:
-        from storage.template_storage import create_template
+        from ..storage.template_storage import create_template
 
         logger.info(f"Creating template: {template_data.name}")
         template = create_template(template_data)
@@ -33,7 +33,7 @@ async def create_template_endpoint(template_data: TemplateCreate):
 async def list_templates_endpoint():
     """Get all knowledge templates."""
     try:
-        from storage.template_storage import get_all_templates
+        from ..storage.template_storage import get_all_templates
 
         logger.info("Listing all templates")
         templates = get_all_templates()
@@ -49,7 +49,7 @@ async def list_templates_endpoint():
 async def get_template_endpoint(template_id: str):
     """Get a specific template by ID."""
     try:
-        from storage.template_storage import get_template
+        from ..storage.template_storage import get_template
 
         logger.info(f"Getting template: {template_id}")
         template = get_template(template_id)
@@ -70,7 +70,7 @@ async def get_template_endpoint(template_id: str):
 async def update_template_endpoint(template_id: str, update_data: TemplateUpdate):
     """Update an existing template. Only provided fields are updated."""
     try:
-        from storage.template_storage import update_template
+        from ..storage.template_storage import update_template
 
         logger.info(f"Updating template: {template_id}")
         template = update_template(template_id, update_data)
@@ -95,7 +95,7 @@ async def update_template_endpoint(template_id: str, update_data: TemplateUpdate
 async def delete_template_endpoint(template_id: str):
     """Delete a template by ID. This is permanent."""
     try:
-        from storage.template_storage import delete_template
+        from ..storage.template_storage import delete_template
 
         logger.info(f"Deleting template: {template_id}")
         deleted = delete_template(template_id)
