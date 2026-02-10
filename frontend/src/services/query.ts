@@ -1,4 +1,4 @@
-import api, { getErrorMessage } from './api';
+import api, { API_BASE_URL, getErrorMessage } from './api';
 
 // Contract: /query -> { answer, citation_info }
 // Contract: /query/stream -> text/plain stream (chunked)
@@ -43,7 +43,7 @@ export const streamQuery = async function* (
   request: QueryRequest
 ): AsyncGenerator<QueryStreamChunk> {
   try {
-    const response = await fetch('http://localhost:8000/query/stream', {
+    const response = await fetch(`${API_BASE_URL}/query/stream`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
