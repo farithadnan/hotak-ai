@@ -5,6 +5,9 @@ import type {
   TemplateUpdate,
 } from '../types/models';
 
+// Contract: /templates -> Template[]
+// Contract: /templates/{id} -> Template
+
 /**
  * Create a new template
  * 
