@@ -6,7 +6,7 @@
 # Backend (FastAPI)
 cd app
 conda activate hotak-ai-venv
-uvicorn server:app --reload
+uvicorn app.server:app --reload
 
 # Frontend (React)
 cd frontend
