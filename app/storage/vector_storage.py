@@ -1,5 +1,4 @@
 """Module for managing vector storage."""
-import bs4
 from utils.logger import setup_logger
 from langchain_chroma import Chroma
 from langchain_openai import OpenAIEmbeddings
@@ -7,7 +6,6 @@ from config.settings import (
     COLLECTION_NAME, 
     PERSIST_DIRECTORY
 )
-from langchain_community.document_loaders import WebBaseLoader 
 
 logger = setup_logger(__name__)
 
