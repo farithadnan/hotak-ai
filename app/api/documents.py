@@ -47,7 +47,11 @@ async def load_documents_endpoint(request: DocumentLoadRequest, http_request: Re
             }
 
         logger.info(f"Processing {len(uncached_sources)} new source(s)...")
-        docs = load_documents(uncached_sources)
+        docs, failed_sources = load_documents(uncached_sources)
+        loaded_sources = [
+            source for source in uncached_sources
+            if source not in failed_sources
+        ]
 
         if not docs:
             logger.warning("No documents loaded from uncached sources.")
@@ -55,7 +59,8 @@ async def load_documents_endpoint(request: DocumentLoadRequest, http_request: Re
                 "loaded": 0,
                 "skipped": len(cached_sources),
                 "cached_sources": cached_sources,
-                "loaded_sources": []
+                "loaded_sources": [],
+                "failed_sources": failed_sources
             }
 
         all_splits = split_documents(docs)
@@ -64,10 +69,11 @@ async def load_documents_endpoint(request: DocumentLoadRequest, http_request: Re
         logger.info("Documents loaded and embedded successfully.")
 
         return {
-            "loaded": len(uncached_sources),
+            "loaded": len(loaded_sources),
             "skipped": len(cached_sources),
             "cached_sources": cached_sources,
-            "loaded_sources": uncached_sources
+            "loaded_sources": loaded_sources,
+            "failed_sources": failed_sources
         }
 
     except Exception as e:

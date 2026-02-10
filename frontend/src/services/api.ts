@@ -122,11 +122,13 @@ export interface DocumentLoadRequest {
   chunk_overlap?: number;
 }
 
+// Backend shape for /documents/load
 export interface DocumentLoadResponse {
   loaded: number;
   skipped: number;
   cached_sources: string[];
   loaded_sources: string[];
+  failed_sources: string[];
 }
 
 export interface DocumentSource {

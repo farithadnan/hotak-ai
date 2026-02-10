@@ -5,7 +5,7 @@ This module detects the document type (web URL, PDF, TXT, etc.) and routes
 to the appropriate loader automatically.
 """
 
-from typing import List
+from typing import List, Tuple
 from pathlib import Path
 from langchain_core.documents import Document
 from .web_loader import load_web_document
@@ -81,7 +81,7 @@ def load_document(source: str) -> List[Document]:
         )
 
 
-def load_documents(sources: List[str]) -> List[Document]:
+def load_documents(sources: List[str]) -> Tuple[List[Document], List[str]]:
     """
     Load documents from multiple sources (URLs or file paths).
 
@@ -89,17 +89,23 @@ def load_documents(sources: List[str]) -> List[Document]:
         sources: List of URLs or file paths to load
 
     Returns:
-        Combined list of LangChain Documents
+        Tuple of (documents, failed_sources)
     """
     all_docs: List[Document] = []
+    failed_sources: List[str] = []
 
     for source in sources:
         try:
             docs = load_document(source)
             all_docs.extend(docs)
         except Exception as e:
+            failed_sources.append(source)
             logger.error(f"Skipping source due to error: {source}. Error: {e}")
             continue
 
-    logger.info(f"Loaded total documents from batch: {len(all_docs)}")
-    return all_docs
+    logger.info(
+        "Loaded total documents from batch: %s (failed: %s)",
+        len(all_docs),
+        len(failed_sources)
+    )
+    return all_docs, failed_sources
