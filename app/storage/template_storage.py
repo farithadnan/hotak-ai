@@ -11,15 +11,8 @@ from pathlib import Path
 from typing import List, Optional
 from datetime import datetime
 
-try:
-    from ..models.template import Template, TemplateCreate, TemplateUpdate
-    from utils.logger import setup_logger
-except ImportError:
-    # Fallback for direct execution
-    import sys
-    sys.path.insert(0, str(Path(__file__).parent.parent))
-    from models.template import Template, TemplateCreate, TemplateUpdate
-    from utils.logger import setup_logger
+from ..models.template import Template, TemplateCreate, TemplateUpdate
+from ..utils.logger import setup_logger
 
 logger = setup_logger(__name__)
 

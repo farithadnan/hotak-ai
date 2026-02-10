@@ -14,7 +14,7 @@ from .txt_loader import load_txt_document
 from .docx_loader import load_docx_document
 from .md_loader import load_md_document
 
-from utils.logger import setup_logger
+from ..utils.logger import setup_logger
 
 logger = setup_logger(__name__)
 

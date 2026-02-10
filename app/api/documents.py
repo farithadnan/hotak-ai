@@ -3,14 +3,14 @@
 from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException, Request
 
-from storage.vector_storage import (
+from ..storage.vector_storage import (
     filter_uncached_sources,
     add_documents_to_store,
     get_all_stored_sources
 )
-from loaders.document_loader import load_documents
-from utils.text_splitter import split_documents
-from utils.logger import setup_logger
+from ..loaders.document_loader import load_documents
+from ..utils.text_splitter import split_documents
+from ..utils.logger import setup_logger
 
 logger = setup_logger(__name__)
 router = APIRouter()

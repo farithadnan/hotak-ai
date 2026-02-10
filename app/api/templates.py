@@ -2,8 +2,8 @@
 
 from fastapi import APIRouter, HTTPException
 
-from models.template import TemplateCreate, TemplateUpdate, Template
-from utils.logger import setup_logger
+from ..models.template import TemplateCreate, TemplateUpdate, Template
+from ..utils.logger import setup_logger
 
 logger = setup_logger(__name__)
 router = APIRouter()

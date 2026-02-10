@@ -3,8 +3,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from api import router
-from utils.logger import setup_logger
+from .api import router
+from .utils.logger import setup_logger
 
 logger = setup_logger(__name__)
 
@@ -32,7 +32,7 @@ async def startup_event():
         # Fix Windows console encoding for emojis
         sys.stdout.reconfigure(encoding='utf-8')
         
-        from config.settings import (
+        from .config.settings import (
             OPENAI_API_KEY,
             LANGSMITH_API_KEY, 
             LANGSMITH_TRACING,
@@ -57,15 +57,15 @@ async def startup_event():
         os.environ["LANGSMITH_PROJECT"] = LANGSMITH_PROJECT
 
         # Initialize models
-        from services.llm import initialize_models
+        from .services.llm import initialize_models
         llm, embeddings = initialize_models()
 
         # Initialize vector store
-        from storage.vector_storage import initialize_vector_store
+        from .storage.vector_storage import initialize_vector_store
         vector_store = initialize_vector_store(embeddings)
         
         # Initialize RAG agent
-        from agents.rag_agent import create_rag_agent
+        from .agents.rag_agent import create_rag_agent
         rag_agent = create_rag_agent(llm, vector_store)
         
         # Store in app.state

@@ -4,8 +4,8 @@ from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
 
-from agents.rag_agent import validate_and_format_response
-from utils.logger import setup_logger
+from ..agents.rag_agent import validate_and_format_response
+from ..utils.logger import setup_logger
 
 logger = setup_logger(__name__)
 router = APIRouter()

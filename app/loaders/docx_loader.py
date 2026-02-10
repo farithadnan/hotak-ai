@@ -3,7 +3,7 @@
 from typing import List
 from pathlib import Path
 from langchain_core.documents import Document
-from utils.logger import setup_logger
+from ..utils.logger import setup_logger
 
 from docx import Document as DocxDocument
 

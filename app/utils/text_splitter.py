@@ -2,7 +2,7 @@
 
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from .logger import setup_logger
-from config.settings import (
+from ..config.settings import (
     CHUNK_SIZE,
     CHUNK_OVERLAP
 )

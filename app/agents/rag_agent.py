@@ -3,10 +3,10 @@ from pathlib import Path
 from langchain.tools import tool
 from langchain.agents import create_agent
 from langchain_chroma import Chroma
-from config.settings import RETRIEVAL_K
-from config.prompts import SYSTEM_PROMPT
-from utils.logger import setup_logger
-from utils.citation_extractor import ensure_citations, validate_citations
+from ..config.settings import RETRIEVAL_K
+from ..config.prompts import SYSTEM_PROMPT
+from ..utils.logger import setup_logger
+from ..utils.citation_extractor import ensure_citations, validate_citations
 
 logger = setup_logger(__name__)
 
@@ -122,7 +122,7 @@ def validate_and_format_response(answer: str, retrieved_docs: list) -> tuple[str
     validated_answer, has_valid_citations = ensure_citations(answer, retrieved_docs)
     
     # Extract citation numbers from the validated answer
-    from utils.citation_extractor import extract_citation_numbers
+    from ..utils.citation_extractor import extract_citation_numbers
     cited_numbers = extract_citation_numbers(validated_answer)
     
     # Log results
