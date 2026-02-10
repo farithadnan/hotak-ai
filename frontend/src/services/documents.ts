@@ -1,4 +1,7 @@
-import api from './api';
+import api, { getErrorMessage } from './api';
+
+// Contract: /documents/load -> { loaded, skipped, cached_sources, loaded_sources, failed_sources }
+// Contract: /documents -> { total_sources, sources: [{ source, chunks }] }
 
 
 export interface DocumentLoadRequest {
@@ -30,14 +33,22 @@ export interface DocumentListResponse {
  * Load documents into vector store (existing functionality)
  */
 export const loadDocuments = async (request: DocumentLoadRequest): Promise<DocumentLoadResponse> => {
-  const response = await api.post('/documents/load', request);
-  return response.data;
+  try {
+    const response = await api.post('/documents/load', request);
+    return response.data;
+  } catch (error) {
+    throw new Error(`Failed to load documents: ${getErrorMessage(error as any)}`);
+  }
 };
 
 /**
  * List loaded documents (existing functionality)
  */
 export const listDocuments = async (): Promise<DocumentListResponse> => {
-  const response = await api.get('/documents');
-  return response.data;
+  try {
+    const response = await api.get('/documents');
+    return response.data;
+  } catch (error) {
+    throw new Error(`Failed to list documents: ${getErrorMessage(error as any)}`);
+  }
 };
