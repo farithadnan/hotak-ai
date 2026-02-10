@@ -209,7 +209,7 @@ async def startup_event():
         os.environ["LANGSMITH_PROJECT"] = LANGSMITH_PROJECT
 
         # Initialize models
-        from models.llm import initialize_models
+        from services.llm import initialize_models
         llm, embeddings = initialize_models()
 
         # Initialize vector store

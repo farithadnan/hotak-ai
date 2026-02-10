@@ -1,4 +1,4 @@
-"""LLM and embedding models module."""
+"""Data models for the application."""
 
 # Export template models for easier imports
 from .template import (
