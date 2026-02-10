@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getTemplates, deleteTemplate } from '../services/api';
+import { getTemplates } from '../services/api';
 import type { Template } from '../types/models';
 
 function TemplateList() {
@@ -18,7 +18,7 @@ function TemplateList() {
       setIsLoading(true);
       setError(null);
       const data = await getTemplates();
-      setTemplates(data.templates);
+      setTemplates(data);
     } catch (err: any) {
       setError(err.message || 'Failed to load templates');
     } finally {
@@ -54,7 +54,7 @@ function TemplateList() {
                 {template.description || 'No description'}
               </p>
               <p style={{ margin: '0', fontSize: '14px', color: '#888' }}>
-                Sources: {template.source_count || 0}
+                Sources: {template.sources?.length ?? 0}
               </p>
             </div>
           ))}
