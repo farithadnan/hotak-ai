@@ -1,5 +1,5 @@
 import { useMemo, useState, useRef, useEffect } from 'react'
-import { SquarePen, PanelRightClose, PanelRightOpen, Copy, Volume2, ThumbsUp, ThumbsDown, RefreshCw, Plus, Briefcase, Mic, ChevronDown, Search, SendHorizontal, Settings, Archive, LogOut } from 'lucide-react'
+import { SquarePen, PanelRightClose, PanelRightOpen, Copy, Volume2, ThumbsUp, ThumbsDown, RefreshCw, Briefcase, Mic, ChevronDown, Search, SendHorizontal, Settings, Archive, LogOut, MoreHorizontal, Upload, Link, FileText } from 'lucide-react'
 import './App.css'
 
 type ChatMessage = {
@@ -29,10 +29,12 @@ function App() {
   const [modelSearch, setModelSearch] = useState('')
   const [isProfilePopoverOpen, setIsProfilePopoverOpen] = useState(false)
   const [profilePopoverPosition, setProfilePopoverPosition] = useState({ top: 0, left: 0 })
+  const [isAttachPopoverOpen, setIsAttachPopoverOpen] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const modelPopoverRef = useRef<HTMLDivElement>(null)
   const profilePopoverRef = useRef<HTMLDivElement>(null)
   const profileButtonRef = useRef<HTMLButtonElement>(null)
+  const attachPopoverRef = useRef<HTMLDivElement>(null)
 
   const availableModels = useMemo<Model[]>(
     () => [
@@ -133,6 +135,23 @@ function App() {
       document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [isProfilePopoverOpen])
+
+  // Close attach popover on click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (attachPopoverRef.current && !attachPopoverRef.current.contains(event.target as Node)) {
+        setIsAttachPopoverOpen(false)
+      }
+    }
+
+    if (isAttachPopoverOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isAttachPopoverOpen])
 
   // Calculate profile popover position
   useEffect(() => {
@@ -407,9 +426,32 @@ function App() {
                     />
                     <div className="composer-actions">
                       <div className="composer-actions-left">
-                        <button className="composer-action-button" type="button" title="Add Files">
-                          <Plus size={20} />
-                        </button>
+                        <div className="attach-wrapper" ref={attachPopoverRef}>
+                          <button 
+                            className="composer-action-button" 
+                            type="button" 
+                            title="More"
+                            onClick={() => setIsAttachPopoverOpen(!isAttachPopoverOpen)}
+                          >
+                            <MoreHorizontal size={20} />
+                          </button>
+                          {isAttachPopoverOpen && (
+                            <div className="attach-popover">
+                              <button className="attach-menu-item" type="button">
+                                <Upload size={18} />
+                                <span>Upload Files</span>
+                              </button>
+                              <button className="attach-menu-item" type="button">
+                                <Link size={18} />
+                                <span>Attach URL</span>
+                              </button>
+                              <button className="attach-menu-item" type="button">
+                                <FileText size={18} />
+                                <span>Attach Templates</span>
+                              </button>
+                            </div>
+                          )}
+                        </div>
                         <button className="composer-action-button" type="button" title="Tools">
                           <Briefcase size={20} />
                         </button>
@@ -505,9 +547,32 @@ function App() {
                 />
                 <div className="composer-actions">
                   <div className="composer-actions-left">
-                    <button className="composer-action-button" type="button" title="Add Files">
-                      <Plus size={20} />
-                    </button>
+                    <div className="attach-wrapper" ref={attachPopoverRef}>
+                      <button 
+                        className="composer-action-button" 
+                        type="button" 
+                        title="More"
+                        onClick={() => setIsAttachPopoverOpen(!isAttachPopoverOpen)}
+                      >
+                        <MoreHorizontal size={20} />
+                      </button>
+                      {isAttachPopoverOpen && (
+                        <div className="attach-popover">
+                          <button className="attach-menu-item" type="button">
+                            <Upload size={18} />
+                            <span>Upload Files</span>
+                          </button>
+                          <button className="attach-menu-item" type="button">
+                            <Link size={18} />
+                            <span>Attach URL</span>
+                          </button>
+                          <button className="attach-menu-item" type="button">
+                            <FileText size={18} />
+                            <span>Attach Templates</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
                     <button className="composer-action-button" type="button" title="Tools">
                       <Briefcase size={20} />
                     </button>
