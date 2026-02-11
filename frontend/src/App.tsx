@@ -1,5 +1,5 @@
 import { useMemo, useState, useRef, useEffect } from 'react'
-import { SquarePen, PanelRightClose, PanelRightOpen, Copy, Volume2, ThumbsUp, ThumbsDown, RefreshCw, ChevronDown, Search, Settings, Archive, LogOut } from 'lucide-react'
+import { SquarePen, PanelRightClose, PanelRightOpen, Copy, Volume2, ThumbsUp, ThumbsDown, RefreshCw, ChevronDown, Search, Settings, Archive, LogOut, BookType } from 'lucide-react'
 import { useClickOutside } from './hooks/useClickOutside'
 import { Composer } from './components/Composer'
 import TemplateList from './components/TemplateList'
@@ -260,12 +260,9 @@ function App() {
         </div>
 
         <div className="sidebar-section">
-          <div className="section-title">Templates</div>
-          <button className="sidebar-item" type="button" onClick={handleOpenTemplates}>
-            All Templates
-          </button>
-          <button className="sidebar-item" type="button" onClick={handleCreateTemplate}>
-            New Template
+          <button className="primary-button" type="button" title="Templates" onClick={handleOpenTemplates}>
+            <span className="new-chat-icon"><BookType size={18} /></span>
+            <span className="new-chat-text">Templates</span>
           </button>
         </div>
 
