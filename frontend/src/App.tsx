@@ -52,15 +52,27 @@ function App() {
         <div className="sidebar-header">
           <div className="logo-wrap">
             <div className="logo-mark">HA</div>
+            {!isSidebarCollapsed && (
+              <button
+                className="icon-button sidebar-toggle is-overlay"
+                type="button"
+                onClick={() => setIsSidebarCollapsed((prev) => !prev)}
+                aria-label="Collapse sidebar"
+              >
+                &lt;&lt;
+              </button>
+            )}
+          </div>
+          {isSidebarCollapsed && (
             <button
               className="icon-button sidebar-toggle"
               type="button"
               onClick={() => setIsSidebarCollapsed((prev) => !prev)}
-              aria-label="Toggle sidebar"
+              aria-label="Expand sidebar"
             >
-              {isSidebarCollapsed ? '>>' : '<<'}
+              &gt;&gt;
             </button>
-          </div>
+          )}
         </div>
 
         <div className="sidebar-section">
@@ -189,6 +201,7 @@ function App() {
 
                   {message.role === 'assistant' && (
                     <div className="assistant-block">
+                      <div className="message-timestamp">11/02/2026 at 10:41 AM</div>
                       <div className="assistant-text">{message.content}</div>
                       <div className="assistant-actions">
                         <button className="ghost-button" type="button">
