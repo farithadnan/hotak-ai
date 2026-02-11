@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { Pencil, Search, Trash2, Plus } from 'lucide-react'
 import { deleteTemplate, getTemplates } from '../services'
 import { ConfirmDialog } from './ConfirmDialog'
+import { Toastr } from './Toastr'
+import type { ToastrType } from './Toastr'
 import type { Template } from '../types/models'
 
 type TemplateListProps = {
@@ -61,6 +63,15 @@ function TemplateList({ onCreate, onEdit }: TemplateListProps) {
   const [searchValue, setSearchValue] = useState('')
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [pendingDelete, setPendingDelete] = useState<Template | null>(null)
+  const [toastrOpen, setToastrOpen] = useState(false)
+  const [toastrMsg, setToastrMsg] = useState('')
+  const [toastrType, setToastrType] = useState<ToastrType>('info')
+
+  const showToastr = (msg: string, type: ToastrType = 'info') => {
+    setToastrMsg(msg)
+    setToastrType(type)
+    setToastrOpen(true)
+  }
 
   useEffect(() => {
     void loadTemplates()
@@ -103,8 +114,10 @@ function TemplateList({ onCreate, onEdit }: TemplateListProps) {
       await deleteTemplate(pendingDelete.id)
       await loadTemplates()
       setPendingDelete(null)
+      showToastr('Template deleted', 'success')
     } catch (err: any) {
       setError(err.message || 'Failed to delete template')
+      showToastr(err.message || 'Failed to delete template', 'error')
     }
   }
 
@@ -213,6 +226,7 @@ function TemplateList({ onCreate, onEdit }: TemplateListProps) {
         onConfirm={handleConfirmDelete}
         onCancel={handleCancelDelete}
       />
+      <Toastr open={toastrOpen} message={toastrMsg} type={toastrType} onClose={() => setToastrOpen(false)} />
     </div>
   )
 }
