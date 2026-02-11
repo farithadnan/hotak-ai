@@ -2,12 +2,15 @@ import { useMemo, useState, useRef, useEffect } from 'react'
 import { SquarePen, PanelRightClose, PanelRightOpen, Copy, Volume2, ThumbsUp, ThumbsDown, RefreshCw, ChevronDown, Search, Settings, Archive, LogOut } from 'lucide-react'
 import { useClickOutside } from './hooks/useClickOutside'
 import { Composer } from './components/Composer'
+import TemplateList from './components/TemplateList'
+import TemplateBuilder from './components/TemplateBuilder'
 import type { ChatThread, Model } from './types'
 import './App.css'
 
 function App() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [activeChatId, setActiveChatId] = useState<string | null>(null)
+  const [activeView, setActiveView] = useState<'chat' | 'templates' | 'template-create'>('chat')
   const [model, setModel] = useState('gpt-4o-mini')
   const [inputValue, setInputValue] = useState('')
   const [hasStartedChat, setHasStartedChat] = useState(false)
@@ -180,6 +183,33 @@ function App() {
     // TODO: Handle message send
   }
 
+  const handleOpenTemplates = () => {
+    setActiveView('templates')
+  }
+
+  const handleOpenChat = (chatId?: string) => {
+    setActiveView('chat')
+    if (chatId === undefined) {
+      return
+    }
+    setActiveChatId(chatId)
+  }
+
+  const handleNewChat = () => {
+    setActiveView('chat')
+    setActiveChatId(null)
+    setHasStartedChat(false)
+    setInputValue('')
+  }
+
+  const handleCreateTemplate = () => {
+    setActiveView('template-create')
+  }
+
+  const handleBackToTemplates = () => {
+    setActiveView('templates')
+  }
+
   const handleModelSelect = (modelId: string) => {
     setModel(modelId)
     setIsModelPopoverOpen(false)
@@ -223,7 +253,7 @@ function App() {
         </div>
 
         <div className="sidebar-section">
-          <button className="primary-button" type="button" title="New Chat">
+          <button className="primary-button" type="button" title="New Chat" onClick={handleNewChat}>
             <span className="new-chat-icon"><SquarePen size={16} /></span>
             <span className="new-chat-text">New Chat</span>
           </button>
@@ -231,11 +261,11 @@ function App() {
 
         <div className="sidebar-section">
           <div className="section-title">Templates</div>
-          <button className="sidebar-item" type="button">
-            Research Workspace
+          <button className="sidebar-item" type="button" onClick={handleOpenTemplates}>
+            All Templates
           </button>
-          <button className="sidebar-item" type="button">
-            Product Docs
+          <button className="sidebar-item" type="button" onClick={handleCreateTemplate}>
+            New Template
           </button>
         </div>
 
@@ -246,7 +276,7 @@ function App() {
               key={chat.id}
               className={chat.id === activeChatId ? 'sidebar-item is-active' : 'sidebar-item'}
               type="button"
-              onClick={() => setActiveChatId(chat.id)}
+              onClick={() => handleOpenChat(chat.id)}
             >
               {chat.title}
             </button>
@@ -299,7 +329,7 @@ function App() {
         </div>
       </aside>
 
-      <main className={hasChatSession ? 'main-panel' : 'main-panel is-empty'}>
+      <main className={activeView === 'chat' && !hasChatSession ? 'main-panel is-empty' : 'main-panel'}>
         <header className="main-header">
           <div className="header-left">
             <button
@@ -313,132 +343,158 @@ function App() {
             </button>
           </div>
           <div className="header-center">
-            <div className="model-selector" ref={modelPopoverRef}>
-              <button
-                className="model-selector-button"
-                type="button"
-                onClick={() => {
-                  setIsModelPopoverOpen(!isModelPopoverOpen)
-                  setIsSidebarCollapsed(true)
-                }}
-                title={selectedModel?.name || 'Select Model'}
-              >
-                <span className="model-selector-text">{selectedModel?.name || 'Select Model'}</span>
-                <ChevronDown size={16} className="model-selector-icon" />
-              </button>
-              {isModelPopoverOpen && (
-                <div className="model-popover">
-                  <div className="model-search">
-                    <Search size={16} className="search-icon" />
-                    <input
-                      type="text"
-                      placeholder="Search models..."
-                      value={modelSearch}
-                      onChange={(e) => setModelSearch(e.target.value)}
-                      autoFocus
-                    />
+            {activeView === 'chat' ? (
+              <div className="model-selector" ref={modelPopoverRef}>
+                <button
+                  className="model-selector-button"
+                  type="button"
+                  onClick={() => {
+                    setIsModelPopoverOpen(!isModelPopoverOpen)
+                    setIsSidebarCollapsed(true)
+                  }}
+                  title={selectedModel?.name || 'Select Model'}
+                >
+                  <span className="model-selector-text">{selectedModel?.name || 'Select Model'}</span>
+                  <ChevronDown size={16} className="model-selector-icon" />
+                </button>
+                {isModelPopoverOpen && (
+                  <div className="model-popover">
+                    <div className="model-search">
+                      <Search size={16} className="search-icon" />
+                      <input
+                        type="text"
+                        placeholder="Search models..."
+                        value={modelSearch}
+                        onChange={(e) => setModelSearch(e.target.value)}
+                        autoFocus
+                      />
+                    </div>
+                    <div className="model-list">
+                      {filteredModels.length === 0 ? (
+                        <div className="model-empty">No models found</div>
+                      ) : (
+                        filteredModels.map((m) => (
+                          <button
+                            key={m.id}
+                            type="button"
+                            className={m.id === model ? 'model-item is-selected' : 'model-item'}
+                            onClick={() => handleModelSelect(m.id)}
+                          >
+                            <div className="model-name">{m.name}</div>
+                            <div className="model-category">{m.category}</div>
+                          </button>
+                        ))
+                      )}
+                    </div>
                   </div>
-                  <div className="model-list">
-                    {filteredModels.length === 0 ? (
-                      <div className="model-empty">No models found</div>
-                    ) : (
-                      filteredModels.map((m) => (
-                        <button
-                          key={m.id}
-                          type="button"
-                          className={m.id === model ? 'model-item is-selected' : 'model-item'}
-                          onClick={() => handleModelSelect(m.id)}
-                        >
-                          <div className="model-name">{m.name}</div>
-                          <div className="model-category">{m.category}</div>
-                        </button>
-                      ))
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            ) : (
+              <div className="header-title">
+                {activeView === 'templates' ? 'Templates' : 'New Template'}
+              </div>
+            )}
           </div>
           <div className="header-right"></div>
         </header>
 
-        <section className="chat-area">
-          {!hasChatSession && (
-            <div className="empty-state">
-              <div className="empty-greeting">
-                <h2 className="greeting-kicker">Nice to meet you, {username}</h2>
+        {activeView === 'chat' && (
+          <section className="chat-area">
+            {!hasChatSession && (
+              <div className="empty-state">
+                <div className="empty-greeting">
+                  <h2 className="greeting-kicker">Nice to meet you, {username}</h2>
+                </div>
+                <Composer
+                  inputValue={inputValue}
+                  onInputChange={handleInputChange}
+                  onKeyDown={handleKeyDown}
+                  onSend={handleSend}
+                  textareaRef={textareaRef}
+                  className="empty-composer"
+                />
               </div>
-              <Composer
-                inputValue={inputValue}
-                onInputChange={handleInputChange}
-                onKeyDown={handleKeyDown}
-                onSend={handleSend}
-                textareaRef={textareaRef}
-                className="empty-composer"
-              />
-            </div>
-          )}
+            )}
 
-          {activeChat && (
-            <div className="chat-scroll">
-              {activeChat.messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={
-                    message.role === 'user'
-                      ? message.id === lastUserMessageId
-                        ? 'message-row user is-last'
-                        : 'message-row user'
-                      : 'message-row assistant'
-                  }
-                >
-                  {message.role === 'user' && (
-                    <div className="message-block">
-                      <div className="message-timestamp">11/02/2026 at 10:41 AM</div>
-                      <div className="bubble">{message.content}</div>
-                      {message.id === lastUserMessageId && (
-                        <div className="message-actions">
+            {activeChat && (
+              <div className="chat-scroll">
+                {activeChat.messages.map((message) => (
+                  <div
+                    key={message.id}
+                    className={
+                      message.role === 'user'
+                        ? message.id === lastUserMessageId
+                          ? 'message-row user is-last'
+                          : 'message-row user'
+                        : 'message-row assistant'
+                    }
+                  >
+                    {message.role === 'user' && (
+                      <div className="message-block">
+                        <div className="message-timestamp">11/02/2026 at 10:41 AM</div>
+                        <div className="bubble">{message.content}</div>
+                        {message.id === lastUserMessageId && (
+                          <div className="message-actions">
+                            <button className="ghost-button" type="button" title="Copy">
+                              <Copy size={14} />
+                            </button>
+                            <button className="ghost-button" type="button" title="Edit">
+                              <SquarePen size={14} />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {message.role === 'assistant' && (
+                      <div className="assistant-block">
+                        <div className="message-timestamp">11/02/2026 at 10:41 AM</div>
+                        <div className="assistant-text">{message.content}</div>
+                        <div className="assistant-actions">
                           <button className="ghost-button" type="button" title="Copy">
                             <Copy size={14} />
                           </button>
-                          <button className="ghost-button" type="button" title="Edit">
-                            <SquarePen size={14} />
+                          <button className="ghost-button" type="button" title="Read aloud">
+                            <Volume2 size={14} />
+                          </button>
+                          <button className="ghost-button" type="button" title="Good response">
+                            <ThumbsUp size={14} />
+                          </button>
+                          <button className="ghost-button" type="button" title="Bad response">
+                            <ThumbsDown size={14} />
+                          </button>
+                          <button className="ghost-button" type="button" title="Regenerate">
+                            <RefreshCw size={14} />
                           </button>
                         </div>
-                      )}
-                    </div>
-                  )}
-
-                  {message.role === 'assistant' && (
-                    <div className="assistant-block">
-                      <div className="message-timestamp">11/02/2026 at 10:41 AM</div>
-                      <div className="assistant-text">{message.content}</div>
-                      <div className="assistant-actions">
-                        <button className="ghost-button" type="button" title="Copy">
-                          <Copy size={14} />
-                        </button>
-                        <button className="ghost-button" type="button" title="Read aloud">
-                          <Volume2 size={14} />
-                        </button>
-                        <button className="ghost-button" type="button" title="Good response">
-                          <ThumbsUp size={14} />
-                        </button>
-                        <button className="ghost-button" type="button" title="Bad response">
-                          <ThumbsDown size={14} />
-                        </button>
-                        <button className="ghost-button" type="button" title="Regenerate">
-                          <RefreshCw size={14} />
-                        </button>
                       </div>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
 
-        {hasChatSession && (
+        {activeView === 'templates' && (
+          <TemplateList
+            onCreate={handleCreateTemplate}
+            onEdit={() => setActiveView('template-create')}
+          />
+        )}
+
+        {activeView === 'template-create' && (
+          <div className="template-builder-view">
+            <div className="template-builder-header">
+              <button className="ghost-button" type="button" onClick={handleBackToTemplates}>
+                Back to Templates
+              </button>
+            </div>
+            <TemplateBuilder />
+          </div>
+        )}
+
+        {activeView === 'chat' && hasChatSession && (
           <Composer
             inputValue={inputValue}
             onInputChange={handleInputChange}
