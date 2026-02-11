@@ -503,11 +503,13 @@ Template-based knowledge management ("Brains") allowing users to create reusable
 - **Depends on:** Backend chat endpoints (not yet implemented)
 
 #### ⏭️ App Layout (Step 9)
-**File:** `src/App.tsx` (Not started)
-- [ ] Organize all components into main layout
+**File:** `src/App.tsx` (In progress)
+- [x] Initial layout shell (sidebar, header, chat area)
+- [x] Empty-state composer centered with greeting
+- [x] Input moves to bottom only after send
 - [ ] Navigation between templates and chats
-- [ ] Responsive design
-- **Time Estimate:** 2-3 hours
+- [ ] Responsive design polish
+**Time Estimate:** 1-2 hours remaining
 
 #### ⏭️ Styling with Tailwind (Step 10)
 **File:** `src/index.css`, component styles (Not started)
@@ -539,6 +541,8 @@ Template-based knowledge management ("Brains") allowing users to create reusable
 2. ✅ Sidebar always collapsible; model selector in top-right header
 3. ✅ Input bar uses rounded style with + menu (anchored dropdown) and tools icon
 4. ✅ Hover actions on last user message (copy/edit inline)
+5. ✅ Empty state: greeting + centered composer; session starts only on send
+6. ✅ Removed composer top divider; + icon used for the attach menu
 
 **📋 Immediate Next Step: Template List Component**
 
@@ -550,6 +554,10 @@ Build `frontend/src/components/TemplateList.tsx` to:
 5. **Add "Create New" button:** Opens TemplateBuilder in create mode
 6. **Loading state:** Show "Loading..." while fetching
 7. **Empty state:** Show "No templates yet" if list is empty
+
+**Then:**
+8. Wire mock "new chat" creation on send (optional, UI-only)
+9. Finish App layout navigation between Templates and Chat views
 
 **🚀 Implementation Tips:**
 ```typescript

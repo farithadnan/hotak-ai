@@ -230,6 +230,9 @@ You've completed the foundation! The models and API layer are ready. Now it's ti
 - Input bar uses rounded corners with left-side + menu and tools icon
 - + menu is an anchored dropdown panel (template/file/url actions)
 - Model selector lives in top-right header
+- Empty state shows greeting and centered composer
+- Input bar moves to bottom only after send
+- Composer divider removed for cleaner surface
 
 **Time estimate:** 2-3 hours  
 **Difficulty:** Medium
@@ -327,7 +330,7 @@ frontend/
 
 ### ✨ NEXT IMMEDIATE TASK: Step 6 - Template List Component
 
-**Current Date:** February 6, 2026  
+**Current Date:** February 11, 2026  
 **Status:** Ready to start  
 **Time Estimate:** 2-3 hours  
 **Difficulty:** Medium
@@ -381,6 +384,11 @@ frontend/
 
 **File:** `frontend/src/components/TemplateBuilder.tsx`
 
+**After Step 6:**
+1. Optional: add mock "new chat" creation on send
+2. Finish App layout navigation between Templates and Chat views
+3. Start backend chat endpoints when ready for real chat history
+
 ---
 
 ### Step 6 - Template List Component
@@ -425,11 +433,11 @@ This requires conversation history, streaming responses, and citation formatting
 
 ### Step 9 - Main App Layout
 
-**Status:** Queued (after Steps 5-8)  
-**Time Estimate:** 2-3 hours  
+**Status:** 🔄 In progress  
+**Time Estimate:** 1-2 hours remaining  
 **Difficulty:** Medium
 
-Organize all components into a cohesive layout with navigation.
+Initial shell is in place (sidebar/header/chat area) with empty-state greeting and send-triggered session. Remaining work is navigation between Templates and Chats, plus responsive polish.
 
 **File:** Update `src/App.tsx`
 
@@ -529,7 +537,7 @@ Before you can fully test the UI, you need these backend features:
 | UI - Step 6 | Template List Component | Queued | — |
 | UI - Step 7 | Chat Window Component | Queued | — |
 | UI - Step 8 | Chat Sidebar | Queued | — |
-| UI - Step 9 | App Layout | Queued | — |
+| UI - Step 9 | App Layout | 🔄 In progress | Feb 11 |
 | UI - Step 10 | Tailwind Styling | Queued | — |
 | Backend | Chat endpoints | Queued | — |
 | Backend | Chat models | Queued | — |
