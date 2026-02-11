@@ -1,4 +1,5 @@
 .app-shell {
+  /* Two-column shell: sidebar + main content */
   display: grid;
   grid-template-columns: auto 1fr;
   height: 100vh;
@@ -7,6 +8,7 @@
 }
 
 .sidebar {
+  /* Sidebar navigation column */
   width: 240px;
   border-right: 1px solid var(--color-border);
   display: flex;
@@ -350,6 +352,7 @@
 }
 
 .main-panel {
+  /* Main content column with header + body */
   display: flex;
   flex-direction: column;
   height: 100vh;
@@ -488,6 +491,7 @@
 }
 
 .template-grid {
+  /* Responsive card grid for templates */
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 16px;
@@ -746,6 +750,7 @@
 }
 
 .chat-area {
+  /* Scrollable chat body area */
   flex: 1;
   display: flex;
   padding: 22px;
@@ -900,6 +905,7 @@
 }
 
 .composer-input-wrapper {
+  /* Input container with focus styling and actions slot */
   position: relative;
   background: var(--color-surface);
   border: 1px solid var(--color-border);

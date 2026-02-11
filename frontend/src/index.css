@@ -1,4 +1,5 @@
 :root {
+  /* Design tokens: global theme colors and typography */
   font-family: 'Inter', 'Geist', 'Segoe UI', ui-sans-serif, system-ui, sans-serif;
   line-height: 1.5;
   font-weight: 400;
@@ -24,6 +25,7 @@
 }
 
 body {
+  /* Page baseline for full-height app shell */
   margin: 0;
   background: var(--color-bg);
   color: var(--color-text);
