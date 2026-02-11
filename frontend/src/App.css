@@ -625,7 +625,7 @@
 
 .composer-input textarea {
   resize: none;
-  overflow-y: auto;
+  overflow-y: hidden;
   max-height: 200px;
   min-height: 44px;
 }

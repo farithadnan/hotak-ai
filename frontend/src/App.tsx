@@ -90,6 +90,8 @@ function App() {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto'
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`
+      // Only show scrollbar when content exceeds max-height
+      textareaRef.current.style.overflowY = textareaRef.current.scrollHeight > 200 ? 'auto' : 'hidden'
     }
   }, [inputValue])
 
