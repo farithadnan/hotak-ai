@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Pencil, Search, Trash2, Plus } from 'lucide-react'
 import { deleteTemplate, getTemplates } from '../services'
+import { ConfirmDialog } from './ConfirmDialog'
 import type { Template } from '../types/models'
 
 type TemplateListProps = {
@@ -58,6 +59,8 @@ function TemplateList({ onCreate, onEdit }: TemplateListProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchValue, setSearchValue] = useState('')
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [pendingDelete, setPendingDelete] = useState<Template | null>(null)
 
   useEffect(() => {
     void loadTemplates()
@@ -88,18 +91,26 @@ function TemplateList({ onCreate, onEdit }: TemplateListProps) {
     })
   }, [searchValue, templates])
 
-  const handleDelete = async (template: Template) => {
-    const shouldDelete = window.confirm(`Delete "${template.name}"? This cannot be undone.`)
-    if (!shouldDelete) {
-      return
-    }
+  const handleDeleteClick = (template: Template) => {
+    setPendingDelete(template)
+    setConfirmOpen(true)
+  }
 
+  const handleConfirmDelete = async () => {
+    if (!pendingDelete) return
+    setConfirmOpen(false)
     try {
-      await deleteTemplate(template.id)
+      await deleteTemplate(pendingDelete.id)
       await loadTemplates()
+      setPendingDelete(null)
     } catch (err: any) {
       setError(err.message || 'Failed to delete template')
     }
+  }
+
+  const handleCancelDelete = () => {
+    setConfirmOpen(false)
+    setPendingDelete(null)
   }
 
   return (
@@ -174,7 +185,7 @@ function TemplateList({ onCreate, onEdit }: TemplateListProps) {
                       className="template-action is-danger"
                       type="button"
                       title="Delete template"
-                      onClick={() => void handleDelete(template)}
+                      onClick={() => handleDeleteClick(template)}
                     >
                       <Trash2 size={16} />
                     </button>
@@ -193,6 +204,15 @@ function TemplateList({ onCreate, onEdit }: TemplateListProps) {
           })}
         </div>
       )}
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Delete Template"
+        message={pendingDelete ? `Delete "${pendingDelete.name}"? This cannot be undone.` : ''}
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+      />
     </div>
   )
 }
