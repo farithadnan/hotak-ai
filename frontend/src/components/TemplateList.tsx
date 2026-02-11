@@ -5,6 +5,7 @@ import { ConfirmDialog } from './ConfirmDialog'
 import { Toastr } from './Toastr'
 import type { ToastrType } from './Toastr'
 import type { Template } from '../types/models'
+import { TemplateSkeleton } from './skeletons/TemplateSkeleton'
 
 type TemplateListProps = {
   onCreate?: () => void
@@ -150,7 +151,13 @@ function TemplateList({ onCreate, onEdit }: TemplateListProps) {
         </div>
       </div>
 
-      {isLoading && <div className="template-state">Loading templates...</div>}
+      {isLoading && (
+        <div className="template-grid">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <TemplateSkeleton key={i} />
+          ))}
+        </div>
+      )}
       {error && <div className="template-state is-error">{error}</div>}
 
       {!isLoading && !error && filteredTemplates.length === 0 && (
