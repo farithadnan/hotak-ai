@@ -555,11 +555,9 @@
 }
 
 .composer-inner {
-  display: flex;
-  align-items: flex-end;
-  gap: 12px;
-  width: min(900px, 100%);
+  max-width: 760px;
   margin: 0 auto;
+  width: 100%;
 }
 
 .main-panel.is-empty .composer {
@@ -578,61 +576,80 @@
   width: 100%;
 }
 
-.composer-left,
-.composer-right {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.composer-left .icon-button,
-.composer-right .icon-button {
-  background: transparent;
-  border: none;
-  color: var(--color-text);
-  padding: 6px;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.composer-left .icon-button:hover,
-.composer-right .icon-button:hover {
-  color: #ffffff;
-  background: var(--color-surface);
-}
-
-.composer-input {
-  flex: 1;
-}
-
-.composer-input input,
-.composer-input textarea {
-  width: 100%;
+.composer-input-wrapper {
+  position: relative;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 14px;
-  padding: 12px 14px;
+  padding: 12px 14px 48px 14px;
+  transition: all 0.2s ease;
+}
+
+.composer-input-wrapper:focus-within {
+  border-color: var(--color-accent);
+}
+
+.composer-input-wrapper textarea {
+  width: 100%;
+  background: transparent;
+  border: none;
   color: var(--color-text);
   font-family: inherit;
   font-size: inherit;
   line-height: 1.5;
-}
-
-.composer-input input {
-  height: 44px;
-}
-
-.composer-input textarea {
   resize: none;
   overflow-y: hidden;
   max-height: 200px;
-  min-height: 44px;
+  min-height: 20px;
+  outline: none;
 }
 
-.composer-input input::placeholder,
-.composer-input textarea::placeholder {
+.composer-input-wrapper textarea::placeholder {
   color: var(--color-muted);
+}
+
+.composer-actions {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.composer-actions-left,
+.composer-actions-right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.composer-action-button {
+  background: transparent;
+  border: none;
+  color: var(--color-text);
+  padding: 6px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.composer-action-button:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.composer-action-button.send-button {
+  color: var(--color-accent);
+}
+
+.composer-action-button.send-button:hover {
+  color: #ffffff;
+  background: var(--color-accent);
 }
 
 .sidebar.is-collapsed .logo-text,

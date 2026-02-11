@@ -1,5 +1,5 @@
 import { useMemo, useState, useRef, useEffect } from 'react'
-import { SquarePen, PanelRightClose, PanelRightOpen, Copy, Volume2, ThumbsUp, ThumbsDown, RefreshCw, Plus, Briefcase, Mic, ChevronDown, Search } from 'lucide-react'
+import { SquarePen, PanelRightClose, PanelRightOpen, Copy, Volume2, ThumbsUp, ThumbsDown, RefreshCw, Plus, Briefcase, Mic, ChevronDown, Search, SendHorizontal } from 'lucide-react'
 import './App.css'
 
 type ChatMessage = {
@@ -275,15 +275,7 @@ function App() {
               <p>Choose a template or drop in a document to get started.</p>
               <div className="composer empty-composer">
                 <div className="composer-inner">
-                  <div className="composer-left">
-                    <button className="icon-button" type="button" title="Add Files">
-                      <Plus size={20} />
-                    </button>
-                    <button className="icon-button" type="button" title="Tools">
-                      <Briefcase size={20} />
-                    </button>
-                  </div>
-                  <div className="composer-input">
+                  <div className="composer-input-wrapper">
                     <textarea
                       ref={textareaRef}
                       value={inputValue}
@@ -293,11 +285,26 @@ function App() {
                       aria-label="Chat input"
                       rows={1}
                     />
-                  </div>
-                  <div className="composer-right">
-                    <button className="icon-button" type="button" title="Use Microphone">
-                      <Mic size={20} />
-                    </button>
+                    <div className="composer-actions">
+                      <div className="composer-actions-left">
+                        <button className="composer-action-button" type="button" title="Add Files">
+                          <Plus size={20} />
+                        </button>
+                        <button className="composer-action-button" type="button" title="Tools">
+                          <Briefcase size={20} />
+                        </button>
+                      </div>
+                      <div className="composer-actions-right">
+                        <button className="composer-action-button" type="button" title="Use Microphone">
+                          <Mic size={20} />
+                        </button>
+                        {inputValue.trim().length > 0 && (
+                          <button className="composer-action-button send-button" type="button" title="Send Message">
+                            <SendHorizontal size={20} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -366,15 +373,7 @@ function App() {
         {activeChat && (
           <footer className="composer">
             <div className="composer-inner">
-              <div className="composer-left">
-                <button className="icon-button" type="button" title="Add Files">
-                  <Plus size={20} />
-                </button>
-                <button className="icon-button" type="button" title="Tools">
-                  <Briefcase size={20} />
-                </button>
-              </div>
-              <div className="composer-input">
+              <div className="composer-input-wrapper">
                 <textarea
                   ref={textareaRef}
                   value={inputValue}
@@ -384,11 +383,26 @@ function App() {
                   aria-label="Chat input"
                   rows={1}
                 />
-              </div>
-              <div className="composer-right">
-                <button className="icon-button" type="button" title="Use Microphone">
-                  <Mic size={20} />
-                </button>
+                <div className="composer-actions">
+                  <div className="composer-actions-left">
+                    <button className="composer-action-button" type="button" title="Add Files">
+                      <Plus size={20} />
+                    </button>
+                    <button className="composer-action-button" type="button" title="Tools">
+                      <Briefcase size={20} />
+                    </button>
+                  </div>
+                  <div className="composer-actions-right">
+                    <button className="composer-action-button" type="button" title="Use Microphone">
+                      <Mic size={20} />
+                    </button>
+                    {inputValue.trim().length > 0 && (
+                      <button className="composer-action-button send-button" type="button" title="Send Message">
+                        <SendHorizontal size={20} />
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </footer>
