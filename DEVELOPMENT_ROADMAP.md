@@ -517,6 +517,12 @@ Template-based knowledge management ("Brains") allowing users to create reusable
 - [ ] Responsive layout
 - **Time Estimate:** 4-5 hours
 
+**Style Direction (Open WebUI inspired):**
+- Dark mode first; deep gray/near-black backgrounds (e.g., #1a1a1a)
+- Subtle borders over heavy shadows
+- Accent color: soft off-white or muted electric blue/purple
+- Clean sans-serif stack (Inter, Geist, or system default)
+
 ---
 
 ### Notes for Next Session (Continue Here 👈)
@@ -527,6 +533,12 @@ Template-based knowledge management ("Brains") allowing users to create reusable
 3. ✅ Can create templates via UI (tested successfully)
 4. ✅ Templates saved to `app/data/templates/templates.json`
 5. ✅ Form validation, error handling, success messages all working
+
+**✅ Update (Feb 11, 2026):**
+1. ✅ Chose Open WebUI-inspired UI direction (dark, minimal, utility-first)
+2. ✅ Sidebar always collapsible; model selector in top-right header
+3. ✅ Input bar uses rounded style with + menu (anchored dropdown) and tools icon
+4. ✅ Hover actions on last user message (copy/edit inline)
 
 **📋 Immediate Next Step: Template List Component**
 

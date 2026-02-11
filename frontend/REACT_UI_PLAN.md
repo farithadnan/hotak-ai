@@ -8,6 +8,22 @@ Building a professional React + TypeScript UI for Hotak AI with:
 
 ---
 
+## Visual Style Direction (Feb 11, 2026)
+
+**Goal:** Minimal, clean, utility-first UI inspired by Open WebUI.
+
+**Theme:** Dark mode first
+- Background: near-black / deep gray (e.g., #1a1a1a)
+- Surfaces: slightly lighter gray for panels/cards
+- Borders: subtle strokes (avoid heavy shadows)
+- Accent: soft off-white and a muted electric blue/purple for primary actions
+
+**Typography:** Clean sans-serif stack (Inter, Geist, or system default)
+
+**Logo Vibe:** Abstract geometric icon / monogram that reads well at small sizes
+
+---
+
 ## ✅ Completed Steps
 
 ### Step 1: Project Setup
@@ -207,6 +223,13 @@ You've completed the foundation! The models and API layer are ready. Now it's ti
 - Empty state message if no templates exist
 - Loading state while fetching templates
 - Error message if fetch fails
+
+**UI Direction Updates (Feb 11, 2026):**
+- Sidebar always collapsible (Open WebUI style)
+- Chat actions appear on hover (copy/edit for last user message)
+- Input bar uses rounded corners with left-side + menu and tools icon
+- + menu is an anchored dropdown panel (template/file/url actions)
+- Model selector lives in top-right header
 
 **Time estimate:** 2-3 hours  
 **Difficulty:** Medium
@@ -424,6 +447,13 @@ npm install -D tailwindcss postcss autoprefixer
 npx tailwindcss init -p
 # Then add Tailwind directives to index.css and use classes in components
 ```
+
+**Style Checklist (Open WebUI inspired):**
+- Dark mode tokens (background, surface, border, text, accent)
+- Subtle borders instead of heavy shadows
+- Rounded input bar with left action cluster (+, tools) and right mic
+- Collapsible sidebar with logo, template/chat sections, profile menu
+- Top-right model selector in header
 
 ---
 
