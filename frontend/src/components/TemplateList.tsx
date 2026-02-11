@@ -135,10 +135,6 @@ function TemplateList({ onCreate, onEdit }: TemplateListProps) {
             <h3>No templates yet</h3>
             <p>Create your first knowledge template to reuse across chats.</p>
           </div>
-          <button className="primary-button template-empty-button" type="button" onClick={onCreate}>
-            <Plus size={16} />
-            <span>Create Template</span>
-          </button>
         </div>
       )}
 
