@@ -276,8 +276,20 @@
   justify-content: flex-end;
 }
 
-.bubble {
+.message-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
   max-width: 68%;
+}
+
+.message-timestamp {
+  font-size: 0.75rem;
+  color: var(--color-muted);
+}
+
+.bubble {
   padding: 12px 14px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -293,7 +305,7 @@
 .message-actions {
   display: flex;
   gap: 6px;
-  margin-top: 10px;
+  justify-content: flex-end;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.2s ease;
@@ -302,6 +314,23 @@
 .message-row.user.is-last:hover .message-actions {
   opacity: 1;
   pointer-events: auto;
+}
+
+.assistant-block {
+  max-width: 72%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.assistant-text {
+  line-height: 1.6;
+}
+
+.assistant-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .composer {

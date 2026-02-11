@@ -170,19 +170,45 @@ function App() {
                       : 'message-row assistant'
                   }
                 >
-                  <div className="bubble">
-                    {message.content}
-                    {message.role === 'user' && message.id === lastUserMessageId && (
-                      <div className="message-actions">
+                  {message.role === 'user' && (
+                    <div className="message-block">
+                      <div className="message-timestamp">11/02/2026 at 10:41 AM</div>
+                      <div className="bubble">{message.content}</div>
+                      {message.id === lastUserMessageId && (
+                        <div className="message-actions">
+                          <button className="ghost-button" type="button">
+                            Copy
+                          </button>
+                          <button className="ghost-button" type="button">
+                            Edit
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {message.role === 'assistant' && (
+                    <div className="assistant-block">
+                      <div className="assistant-text">{message.content}</div>
+                      <div className="assistant-actions">
                         <button className="ghost-button" type="button">
                           Copy
                         </button>
                         <button className="ghost-button" type="button">
-                          Edit
+                          Read aloud
+                        </button>
+                        <button className="ghost-button" type="button">
+                          Good
+                        </button>
+                        <button className="ghost-button" type="button">
+                          Bad
+                        </button>
+                        <button className="ghost-button" type="button">
+                          Regenerate
                         </button>
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
