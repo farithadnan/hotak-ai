@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useRef, useEffect } from 'react'
+import { SquarePen, PanelRightClose, PanelRightOpen, Copy, Volume2, ThumbsUp, ThumbsDown, RefreshCw, Plus, Briefcase, Mic } from 'lucide-react'
 import './App.css'
 
 type ChatMessage = {
@@ -17,6 +18,9 @@ function App() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [activeChatId, setActiveChatId] = useState<string | null>(null)
   const [model, setModel] = useState('gpt-4o-mini')
+  const [inputValue, setInputValue] = useState('')
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const isMultiline = inputValue.length > 80 || inputValue.includes('\n')
 
   const chats = useMemo<ChatThread[]>(
     () => [
@@ -46,38 +50,52 @@ function App() {
     ? [...activeChat.messages].reverse().find((message) => message.role === 'user')?.id || null
     : null
 
+  // Auto-resize textarea
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto'
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`
+    }
+  }, [inputValue])
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInputValue(e.target.value)
+  }
+
   return (
     <div className="app-shell">
       <aside className={isSidebarCollapsed ? 'sidebar is-collapsed' : 'sidebar'}>
         <div className="sidebar-header">
           <div className="logo-wrap">
             <div className="logo-mark">HA</div>
-            {!isSidebarCollapsed && (
+            {isSidebarCollapsed && (
               <button
                 className="icon-button sidebar-toggle is-overlay"
                 type="button"
                 onClick={() => setIsSidebarCollapsed((prev) => !prev)}
-                aria-label="Collapse sidebar"
+                aria-label="Open sidebar"
+                title="Open sidebar"
               >
-                &lt;&lt;
+                <PanelRightClose size={16} />
               </button>
             )}
           </div>
-          {isSidebarCollapsed && (
+          {!isSidebarCollapsed && (
             <button
               className="icon-button sidebar-toggle"
               type="button"
               onClick={() => setIsSidebarCollapsed((prev) => !prev)}
-              aria-label="Expand sidebar"
+              aria-label="Close sidebar"
+              title="Close sidebar"
             >
-              &gt;&gt;
+              <PanelRightOpen size={16} />
             </button>
           )}
         </div>
 
         <div className="sidebar-section">
-          <button className="primary-button" type="button">
-            <span className="new-chat-icon">edit</span>
+          <button className="primary-button" type="button" title="New Chat">
+            <span className="new-chat-icon"><SquarePen size={16} /></span>
             <span className="new-chat-text">New Chat</span>
           </button>
         </div>
@@ -120,6 +138,15 @@ function App() {
             {activeChat ? activeChat.title : 'Welcome'}
           </div>
           <div className="header-actions">
+            <button
+              className="icon-button mobile-toggle"
+              type="button"
+              onClick={() => setIsSidebarCollapsed((prev) => !prev)}
+              aria-label="Toggle sidebar"
+              title="Toggle sidebar"
+            >
+              <PanelRightClose size={20} />
+            </button>
             <label className="model-label" htmlFor="model-select">
               Model
             </label>
@@ -145,23 +172,36 @@ function App() {
               <div className="composer empty-composer">
                 <div className="composer-inner">
                   <div className="composer-left">
-                    <button className="icon-button" type="button">
-                      +
+                    <button className="icon-button" type="button" title="Add Files">
+                      <Plus size={20} />
                     </button>
-                    <button className="icon-button" type="button">
-                      Tools
+                    <button className="icon-button" type="button" title="Tools">
+                      <Briefcase size={20} />
                     </button>
                   </div>
                   <div className="composer-input">
-                    <input
-                      type="text"
-                      placeholder="Ask anything..."
-                      aria-label="Chat input"
-                    />
+                    {isMultiline ? (
+                      <textarea
+                        ref={textareaRef}
+                        value={inputValue}
+                        onChange={handleInputChange}
+                        placeholder="Ask anything..."
+                        aria-label="Chat input"
+                        rows={1}
+                      />
+                    ) : (
+                      <input
+                        type="text"
+                        value={inputValue}
+                        onChange={(e) => setInputValue(e.target.value)}
+                        placeholder="Ask anything..."
+                        aria-label="Chat input"
+                      />
+                    )}
                   </div>
                   <div className="composer-right">
-                    <button className="icon-button" type="button">
-                      Mic
+                    <button className="icon-button" type="button" title="Use Microphone">
+                      <Mic size={20} />
                     </button>
                   </div>
                 </div>
@@ -188,11 +228,11 @@ function App() {
                       <div className="bubble">{message.content}</div>
                       {message.id === lastUserMessageId && (
                         <div className="message-actions">
-                          <button className="ghost-button" type="button">
-                            Copy
+                          <button className="ghost-button" type="button" title="Copy">
+                            <Copy size={14} />
                           </button>
-                          <button className="ghost-button" type="button">
-                            Edit
+                          <button className="ghost-button" type="button" title="Edit">
+                            <SquarePen size={14} />
                           </button>
                         </div>
                       )}
@@ -204,20 +244,20 @@ function App() {
                       <div className="message-timestamp">11/02/2026 at 10:41 AM</div>
                       <div className="assistant-text">{message.content}</div>
                       <div className="assistant-actions">
-                        <button className="ghost-button" type="button">
-                          Copy
+                        <button className="ghost-button" type="button" title="Copy">
+                          <Copy size={14} />
                         </button>
-                        <button className="ghost-button" type="button">
-                          Read aloud
+                        <button className="ghost-button" type="button" title="Read aloud">
+                          <Volume2 size={14} />
                         </button>
-                        <button className="ghost-button" type="button">
-                          Good
+                        <button className="ghost-button" type="button" title="Good response">
+                          <ThumbsUp size={14} />
                         </button>
-                        <button className="ghost-button" type="button">
-                          Bad
+                        <button className="ghost-button" type="button" title="Bad response">
+                          <ThumbsDown size={14} />
                         </button>
-                        <button className="ghost-button" type="button">
-                          Regenerate
+                        <button className="ghost-button" type="button" title="Regenerate">
+                          <RefreshCw size={14} />
                         </button>
                       </div>
                     </div>
@@ -232,23 +272,36 @@ function App() {
           <footer className="composer">
             <div className="composer-inner">
               <div className="composer-left">
-                <button className="icon-button" type="button">
-                  +
+                <button className="icon-button" type="button" title="Add Files">
+                  <Plus size={20} />
                 </button>
-                <button className="icon-button" type="button">
-                  Tools
+                <button className="icon-button" type="button" title="Tools">
+                  <Briefcase size={20} />
                 </button>
               </div>
               <div className="composer-input">
-                <input
-                  type="text"
-                  placeholder="Ask anything..."
-                  aria-label="Chat input"
-                />
+                {isMultiline ? (
+                  <textarea
+                    ref={textareaRef}
+                    value={inputValue}
+                    onChange={handleInputChange}
+                    placeholder="Ask anything..."
+                    aria-label="Chat input"
+                    rows={1}
+                  />
+                ) : (
+                  <input
+                    type="text"
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    placeholder="Ask anything..."
+                    aria-label="Chat input"
+                  />
+                )}
               </div>
               <div className="composer-right">
-                <button className="icon-button" type="button">
-                  Mic
+                <button className="icon-button" type="button" title="Use Microphone">
+                  <Mic size={20} />
                 </button>
               </div>
             </div>
