@@ -1,5 +1,5 @@
 import { useMemo, useState, useRef, useEffect } from 'react'
-import { SquarePen, PanelRightClose, PanelRightOpen, Copy, Volume2, ThumbsUp, ThumbsDown, RefreshCw, Plus, Briefcase, Mic } from 'lucide-react'
+import { SquarePen, PanelRightClose, PanelRightOpen, Copy, Volume2, ThumbsUp, ThumbsDown, RefreshCw, Plus, Briefcase, Mic, ChevronDown, Search } from 'lucide-react'
 import './App.css'
 
 type ChatMessage = {
@@ -14,13 +14,49 @@ type ChatThread = {
   messages: ChatMessage[]
 }
 
+type Model = {
+  id: string
+  name: string
+  category: string
+}
+
 function App() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [activeChatId, setActiveChatId] = useState<string | null>(null)
   const [model, setModel] = useState('gpt-4o-mini')
   const [inputValue, setInputValue] = useState('')
+  const [isModelPopoverOpen, setIsModelPopoverOpen] = useState(false)
+  const [modelSearch, setModelSearch] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const modelPopoverRef = useRef<HTMLDivElement>(null)
   const isMultiline = inputValue.length > 80 || inputValue.includes('\n')
+
+  const availableModels = useMemo<Model[]>(
+    () => [
+      { id: 'gpt-4o', name: 'GPT-4o', category: 'OpenAI' },
+      { id: 'gpt-4o-mini', name: 'GPT-4o Mini', category: 'OpenAI' },
+      { id: 'gpt-4-turbo', name: 'GPT-4 Turbo', category: 'OpenAI' },
+      { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', category: 'OpenAI' },
+      { id: 'claude-3-opus', name: 'Claude 3 Opus', category: 'Anthropic' },
+      { id: 'claude-3-sonnet', name: 'Claude 3 Sonnet', category: 'Anthropic' },
+      { id: 'claude-3-haiku', name: 'Claude 3 Haiku', category: 'Anthropic' },
+      { id: 'gemini-pro', name: 'Gemini Pro', category: 'Google' },
+      { id: 'gemini-pro-vision', name: 'Gemini Pro Vision', category: 'Google' },
+    ],
+    []
+  )
+
+  const filteredModels = useMemo(
+    () =>
+      availableModels.filter(
+        (m) =>
+          m.name.toLowerCase().includes(modelSearch.toLowerCase()) ||
+          m.category.toLowerCase().includes(modelSearch.toLowerCase())
+      ),
+    [availableModels, modelSearch]
+  )
+
+  const selectedModel = availableModels.find((m) => m.id === model)
 
   const chats = useMemo<ChatThread[]>(
     () => [
@@ -58,8 +94,32 @@ function App() {
     }
   }, [inputValue])
 
+  // Close model popover on click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (modelPopoverRef.current && !modelPopoverRef.current.contains(event.target as Node)) {
+        setIsModelPopoverOpen(false)
+        setModelSearch('')
+      }
+    }
+
+    if (isModelPopoverOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isModelPopoverOpen])
+
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInputValue(e.target.value)
+  }
+
+  const handleModelSelect = (modelId: string) => {
+    setModel(modelId)
+    setIsModelPopoverOpen(false)
+    setModelSearch('')
   }
 
   return (
@@ -146,17 +206,48 @@ function App() {
             </button>
           </div>
           <div className="header-center">
-            <select
-              id="model-select"
-              className="model-select"
-              value={model}
-              onChange={(event) => setModel(event.target.value)}
-            >
-              <option value="gpt-4o-mini">GPT-4o Mini</option>
-              <option value="gpt-4o">GPT-4o</option>
-              <option value="gpt-4-turbo">GPT-4 Turbo</option>
-              <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
-            </select>
+            <div className="model-selector" ref={modelPopoverRef}>
+              <button
+                className="model-selector-button"
+                type="button"
+                onClick={() => setIsModelPopoverOpen(!isModelPopoverOpen)}
+                title={selectedModel?.name || 'Select Model'}
+              >
+                <span className="model-selector-text">{selectedModel?.name || 'Select Model'}</span>
+                <ChevronDown size={16} className="model-selector-icon" />
+              </button>
+              {isModelPopoverOpen && (
+                <div className="model-popover">
+                  <div className="model-search">
+                    <Search size={16} className="search-icon" />
+                    <input
+                      type="text"
+                      placeholder="Search models..."
+                      value={modelSearch}
+                      onChange={(e) => setModelSearch(e.target.value)}
+                      autoFocus
+                    />
+                  </div>
+                  <div className="model-list">
+                    {filteredModels.length === 0 ? (
+                      <div className="model-empty">No models found</div>
+                    ) : (
+                      filteredModels.map((m) => (
+                        <button
+                          key={m.id}
+                          type="button"
+                          className={m.id === model ? 'model-item is-selected' : 'model-item'}
+                          onClick={() => handleModelSelect(m.id)}
+                        >
+                          <div className="model-name">{m.name}</div>
+                          <div className="model-category">{m.category}</div>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
           <div className="header-right"></div>
         </header>
