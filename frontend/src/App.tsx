@@ -70,7 +70,7 @@ function App() {
             <div className="logo-mark">HA</div>
             {isSidebarCollapsed && (
               <button
-                className="icon-button sidebar-toggle is-overlay"
+                className="icon-button sidebar-toggle is-replace"
                 type="button"
                 onClick={() => setIsSidebarCollapsed((prev) => !prev)}
                 aria-label="Open sidebar"
@@ -134,10 +134,7 @@ function App() {
 
       <main className={activeChat ? 'main-panel' : 'main-panel is-empty'}>
         <header className="main-header">
-          <div className="header-title">
-            {activeChat ? activeChat.title : 'Welcome'}
-          </div>
-          <div className="header-actions">
+          <div className="header-left">
             <button
               className="icon-button mobile-toggle"
               type="button"
@@ -147,9 +144,8 @@ function App() {
             >
               <PanelRightClose size={20} />
             </button>
-            <label className="model-label" htmlFor="model-select">
-              Model
-            </label>
+          </div>
+          <div className="header-center">
             <select
               id="model-select"
               className="model-select"
@@ -162,6 +158,7 @@ function App() {
               <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
             </select>
           </div>
+          <div className="header-right"></div>
         </header>
 
         <section className="chat-area">

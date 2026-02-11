@@ -15,6 +15,7 @@
   gap: 14px;
   background: var(--color-panel);
   transition: width 0.2s ease, padding 0.2s ease;
+  overflow: hidden;
 }
 
 .sidebar.is-collapsed {
@@ -47,6 +48,7 @@
   border: 1px solid var(--color-border);
   font-weight: 600;
   letter-spacing: 0.04em;
+  transition: opacity 0.2s ease;
 }
 
 .logo-text {
@@ -61,30 +63,52 @@
   padding: 6px 10px;
   border-radius: 10px;
   font-size: 0.8rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.icon-button:hover {
+  color: #ffffff;
+  border-color: #ffffff;
 }
 
 .sidebar-toggle {
   margin-left: auto;
-  transition: opacity 0.2s ease;
+  transition: all 0.2s ease;
 }
 
-.sidebar-toggle.is-overlay {
+.sidebar-toggle:hover {
+  color: #ffffff;
+  border-color: #ffffff;
+}
+
+.sidebar-toggle.is-replace {
   position: absolute;
   inset: 0;
   opacity: 0;
   pointer-events: none;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  padding: 0;
 }
 
-.sidebar.is-collapsed .logo-wrap:hover .sidebar-toggle.is-overlay {
+.sidebar.is-collapsed .logo-wrap:hover .logo-mark {
+  opacity: 0;
+}
+
+.sidebar.is-collapsed .logo-wrap:hover .sidebar-toggle.is-replace {
   opacity: 1;
   pointer-events: auto;
 }
 
 .primary-button {
   width: 100%;
-  background: var(--color-accent);
-  border: 1px solid var(--color-accent);
-  color: var(--color-bg);
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--color-text);
   padding: 8px 10px;
   border-radius: 12px;
   font-weight: 600;
@@ -92,6 +116,19 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  overflow: hidden;
+}
+
+.primary-button:hover {
+  border-color: var(--color-border);
+  background: var(--color-surface);
+}
+
+.new-chat-text {
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .new-chat-icon {
@@ -101,8 +138,6 @@
   width: 20px;
   height: 20px;
   border-radius: 6px;
-  background: rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(0, 0, 0, 0.2);
 }
 
 .sidebar.is-collapsed .primary-button {
@@ -124,6 +159,12 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ghost-button:hover {
+  color: #ffffff;
+  border-color: #ffffff;
 }
 
 .sidebar-section {
@@ -156,6 +197,8 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .sidebar-item:hover,
@@ -176,8 +219,21 @@
   background: transparent;
   border: 1px solid transparent;
   color: var(--color-text);
-  padding: 8px 10px;
+  padding: 6px 10px;
   border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  overflow: hidden;
+}
+
+.profile-button:hover {
+  border-color: var(--color-border);
+  background: var(--color-surface);
+}
+
+.profile-name {
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .sidebar.is-collapsed .profile-button {
@@ -205,12 +261,31 @@
 }
 
 .main-header {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
   padding: 8px 16px;
   border-bottom: 1px solid var(--color-border);
   background: var(--color-panel);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.header-right {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
 }
 
 .header-title {
@@ -239,6 +314,8 @@
   border: 1px solid var(--color-border);
   border-radius: 10px;
   padding: 6px 10px;
+  font-weight: 600;
+  cursor: pointer;
 }
 
 .chat-area {
@@ -400,10 +477,12 @@
   padding: 6px;
   border-radius: 10px;
   cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .composer-left .icon-button:hover,
 .composer-right .icon-button:hover {
+  color: #ffffff;
   background: var(--color-surface);
 }
 
@@ -443,7 +522,6 @@
 .sidebar.is-collapsed .logo-text,
 .sidebar.is-collapsed .section-title,
 .sidebar.is-collapsed .sidebar-item,
-.sidebar.is-collapsed .primary-button,
 .sidebar.is-collapsed .profile-name {
   display: none;
 }
@@ -475,14 +553,6 @@
 
   .mobile-toggle {
     display: inline-flex;
-  }
-
-  .header-title {
-    display: none;
-  }
-
-  .model-label {
-    display: none;
   }
 
   .model-select {
