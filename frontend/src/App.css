@@ -1,3 +1,18 @@
+/* Skeleton loader styles */
+.skeleton {
+  opacity: 0.7;
+  pointer-events: none;
+}
+.skeleton-box {
+  background: linear-gradient(90deg, #232232 25%, #292940 50%, #232232 75%);
+  border-radius: 6px;
+  animation: skeleton-shimmer 1.2s infinite linear;
+  background-size: 400px 100%;
+}
+@keyframes skeleton-shimmer {
+  0% { background-position: -200px 0; }
+  100% { background-position: 200px 0; }
+}
 /* Toastr notification styles */
 .toastr {
   position: fixed;
