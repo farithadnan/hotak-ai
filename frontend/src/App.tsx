@@ -130,6 +130,11 @@ function App() {
 
   return (
     <div className="app-shell">
+      {/* Mobile backdrop */}
+      {!isSidebarCollapsed && (
+        <div className="sidebar-backdrop" onClick={() => setIsSidebarCollapsed(true)} />
+      )}
+
       <aside className={isSidebarCollapsed ? 'sidebar is-collapsed' : 'sidebar'}>
         <div className="sidebar-header">
           <div className="logo-wrap">
@@ -216,7 +221,10 @@ function App() {
               <button
                 className="model-selector-button"
                 type="button"
-                onClick={() => setIsModelPopoverOpen(!isModelPopoverOpen)}
+                onClick={() => {
+                  setIsModelPopoverOpen(!isModelPopoverOpen)
+                  setIsSidebarCollapsed(true)
+                }}
                 title={selectedModel?.name || 'Select Model'}
               >
                 <span className="model-selector-text">{selectedModel?.name || 'Select Model'}</span>
