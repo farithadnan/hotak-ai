@@ -1,3 +1,6 @@
+// TemplateSkeleton: Skeleton loader for template cards in the TemplateList view.
+// Usage: <TemplateSkeleton />
+// Styling: See App.css for .skeleton and .skeleton-box classes.
 export function TemplateSkeleton() {
   return (
     <div className="template-card skeleton">
