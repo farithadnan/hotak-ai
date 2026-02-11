@@ -1,5 +1,5 @@
 import { useMemo, useState, useRef, useEffect } from 'react'
-import { SquarePen, PanelRightClose, PanelRightOpen, Copy, Volume2, ThumbsUp, ThumbsDown, RefreshCw, Plus, Briefcase, Mic, ChevronDown, Search, SendHorizontal } from 'lucide-react'
+import { SquarePen, PanelRightClose, PanelRightOpen, Copy, Volume2, ThumbsUp, ThumbsDown, RefreshCw, Plus, Briefcase, Mic, ChevronDown, Search, SendHorizontal, Settings, Archive, LogOut } from 'lucide-react'
 import './App.css'
 
 type ChatMessage = {
@@ -27,8 +27,12 @@ function App() {
   const [inputValue, setInputValue] = useState('')
   const [isModelPopoverOpen, setIsModelPopoverOpen] = useState(false)
   const [modelSearch, setModelSearch] = useState('')
+  const [isProfilePopoverOpen, setIsProfilePopoverOpen] = useState(false)
+  const [profilePopoverPosition, setProfilePopoverPosition] = useState({ top: 0, left: 0 })
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const modelPopoverRef = useRef<HTMLDivElement>(null)
+  const profilePopoverRef = useRef<HTMLDivElement>(null)
+  const profileButtonRef = useRef<HTMLButtonElement>(null)
 
   const availableModels = useMemo<Model[]>(
     () => [
@@ -112,6 +116,84 @@ function App() {
       document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [isModelPopoverOpen])
+
+  // Close profile popover on click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (profilePopoverRef.current && !profilePopoverRef.current.contains(event.target as Node)) {
+        setIsProfilePopoverOpen(false)
+      }
+    }
+
+    if (isProfilePopoverOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isProfilePopoverOpen])
+
+  // Calculate profile popover position
+  useEffect(() => {
+    if (isProfilePopoverOpen && profileButtonRef.current) {
+      const buttonRect = profileButtonRef.current.getBoundingClientRect()
+      const viewportWidth = window.innerWidth
+      const viewportHeight = window.innerHeight
+      const gap = 8
+      
+      // Responsive popover width
+      const isMobile = viewportWidth <= 900
+      const maxPopoverWidth = isMobile ? Math.min(220, viewportWidth - 32) : 240
+      const popoverHeight = 200
+
+      let top = 0
+      let left = 0
+
+      if (isSidebarCollapsed) {
+        // Position to the right when collapsed
+        left = buttonRect.right + gap
+        top = buttonRect.top
+
+        // Check if popover goes off the right edge
+        if (left + maxPopoverWidth > viewportWidth - gap) {
+          left = buttonRect.left - maxPopoverWidth - gap
+        }
+
+        // Check if popover goes off the bottom edge
+        if (top + popoverHeight > viewportHeight) {
+          top = viewportHeight - popoverHeight - gap
+        }
+
+        // Check if popover goes off the top edge
+        if (top < gap) {
+          top = gap
+        }
+      } else {
+        // Position above when expanded
+        left = buttonRect.left
+        top = buttonRect.top - popoverHeight - gap
+
+        // Check if popover goes off the top edge
+        if (top < gap) {
+          // Position below instead
+          top = buttonRect.bottom + gap
+        }
+
+        // Check if popover goes off the right edge
+        if (left + maxPopoverWidth > viewportWidth - gap) {
+          left = viewportWidth - maxPopoverWidth - gap
+        }
+
+        // Check if popover goes off the left edge
+        if (left < gap) {
+          left = gap
+        }
+      }
+
+      setProfilePopoverPosition({ top, left })
+    }
+  }, [isProfilePopoverOpen, isSidebarCollapsed])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInputValue(e.target.value)
@@ -198,10 +280,48 @@ function App() {
         </div>
 
         <div className="sidebar-footer">
-          <button className="profile-button" type="button">
-            <span className="profile-avatar">U</span>
-            {!isSidebarCollapsed && <span className="profile-name">User Profile</span>}
-          </button>
+          <div className="profile-wrapper" ref={profilePopoverRef}>
+            <button
+              ref={profileButtonRef}
+              className="profile-button" 
+              type="button"
+              onClick={() => setIsProfilePopoverOpen(!isProfilePopoverOpen)}
+            >
+              <span className="profile-avatar">U</span>
+              {!isSidebarCollapsed && <span className="profile-name">User Profile</span>}
+            </button>
+            {isProfilePopoverOpen && (
+              <div 
+                className="profile-popover" 
+                style={{
+                  position: 'fixed',
+                  top: `${profilePopoverPosition.top}px`,
+                  left: `${profilePopoverPosition.left}px`
+                }}
+              >
+                <div className="profile-menu-header">
+                  <span className="profile-menu-avatar">U</span>
+                  <div className="profile-menu-info">
+                    <div className="profile-menu-name">User Profile</div>
+                    <div className="profile-menu-email">user@example.com</div>
+                  </div>
+                </div>
+                <hr className="profile-menu-divider" />
+                <button className="profile-menu-item" type="button">
+                  <Settings size={18} />
+                  <span>Settings</span>
+                </button>
+                <button className="profile-menu-item" type="button">
+                  <Archive size={18} />
+                  <span>Archived Chats</span>
+                </button>
+                <button className="profile-menu-item" type="button">
+                  <LogOut size={18} />
+                  <span>Sign Out</span>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </aside>
 
