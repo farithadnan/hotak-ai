@@ -1,24 +1,9 @@
 import { useMemo, useState, useRef, useEffect } from 'react'
-import { SquarePen, PanelRightClose, PanelRightOpen, Copy, Volume2, ThumbsUp, ThumbsDown, RefreshCw, Briefcase, Mic, ChevronDown, Search, SendHorizontal, Settings, Archive, LogOut, MoreHorizontal, Upload, Link, FileText } from 'lucide-react'
+import { SquarePen, PanelRightClose, PanelRightOpen, Copy, Volume2, ThumbsUp, ThumbsDown, RefreshCw, ChevronDown, Search, Settings, Archive, LogOut } from 'lucide-react'
+import { useClickOutside } from './hooks/useClickOutside'
+import { Composer } from './components/Composer'
+import type { ChatThread, Model } from './types'
 import './App.css'
-
-type ChatMessage = {
-  id: string
-  role: 'user' | 'assistant'
-  content: string
-}
-
-type ChatThread = {
-  id: string
-  title: string
-  messages: ChatMessage[]
-}
-
-type Model = {
-  id: string
-  name: string
-  category: string
-}
 
 function App() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
@@ -29,12 +14,10 @@ function App() {
   const [modelSearch, setModelSearch] = useState('')
   const [isProfilePopoverOpen, setIsProfilePopoverOpen] = useState(false)
   const [profilePopoverPosition, setProfilePopoverPosition] = useState({ top: 0, left: 0 })
-  const [isAttachPopoverOpen, setIsAttachPopoverOpen] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const modelPopoverRef = useRef<HTMLDivElement>(null)
   const profilePopoverRef = useRef<HTMLDivElement>(null)
   const profileButtonRef = useRef<HTMLButtonElement>(null)
-  const attachPopoverRef = useRef<HTMLDivElement>(null)
 
   const availableModels = useMemo<Model[]>(
     () => [
@@ -101,57 +84,17 @@ function App() {
     }
   }, [inputValue])
 
-  // Close model popover on click outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (modelPopoverRef.current && !modelPopoverRef.current.contains(event.target as Node)) {
-        setIsModelPopoverOpen(false)
-        setModelSearch('')
-      }
-    }
+  // Close popovers on click outside
+  useClickOutside(
+    modelPopoverRef,
+    () => {
+      setIsModelPopoverOpen(false)
+      setModelSearch('')
+    },
+    isModelPopoverOpen
+  )
 
-    if (isModelPopoverOpen) {
-      document.addEventListener('mousedown', handleClickOutside)
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [isModelPopoverOpen])
-
-  // Close profile popover on click outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (profilePopoverRef.current && !profilePopoverRef.current.contains(event.target as Node)) {
-        setIsProfilePopoverOpen(false)
-      }
-    }
-
-    if (isProfilePopoverOpen) {
-      document.addEventListener('mousedown', handleClickOutside)
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [isProfilePopoverOpen])
-
-  // Close attach popover on click outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (attachPopoverRef.current && !attachPopoverRef.current.contains(event.target as Node)) {
-        setIsAttachPopoverOpen(false)
-      }
-    }
-
-    if (isAttachPopoverOpen) {
-      document.addEventListener('mousedown', handleClickOutside)
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [isAttachPopoverOpen])
+  useClickOutside(profilePopoverRef, () => setIsProfilePopoverOpen(false), isProfilePopoverOpen)
 
   // Calculate profile popover position
   useEffect(() => {
@@ -412,64 +355,13 @@ function App() {
             <div className="empty-state">
               <h2>Start a new conversation</h2>
               <p>Choose a template or drop in a document to get started.</p>
-              <div className="composer empty-composer">
-                <div className="composer-inner">
-                  <div className="composer-input-wrapper">
-                    <textarea
-                      ref={textareaRef}
-                      value={inputValue}
-                      onChange={handleInputChange}
-                      onKeyDown={handleKeyDown}
-                      placeholder="Ask anything..."
-                      aria-label="Chat input"
-                      rows={1}
-                    />
-                    <div className="composer-actions">
-                      <div className="composer-actions-left">
-                        <div className="attach-wrapper" ref={attachPopoverRef}>
-                          <button 
-                            className="composer-action-button" 
-                            type="button" 
-                            title="More"
-                            onClick={() => setIsAttachPopoverOpen(!isAttachPopoverOpen)}
-                          >
-                            <MoreHorizontal size={20} />
-                          </button>
-                          {isAttachPopoverOpen && (
-                            <div className="attach-popover">
-                              <button className="attach-menu-item" type="button">
-                                <Upload size={18} />
-                                <span>Upload Files</span>
-                              </button>
-                              <button className="attach-menu-item" type="button">
-                                <Link size={18} />
-                                <span>Attach URL</span>
-                              </button>
-                              <button className="attach-menu-item" type="button">
-                                <FileText size={18} />
-                                <span>Attach Templates</span>
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                        <button className="composer-action-button" type="button" title="Tools">
-                          <Briefcase size={20} />
-                        </button>
-                      </div>
-                      <div className="composer-actions-right">
-                        <button className="composer-action-button" type="button" title="Use Microphone">
-                          <Mic size={20} />
-                        </button>
-                        {inputValue.trim().length > 0 && (
-                          <button className="composer-action-button send-button" type="button" title="Send Message">
-                            <SendHorizontal size={20} />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <Composer
+                inputValue={inputValue}
+                onInputChange={handleInputChange}
+                onKeyDown={handleKeyDown}
+                textareaRef={textareaRef}
+                className="empty-composer"
+              />
             </div>
           )}
 
@@ -533,64 +425,12 @@ function App() {
         </section>
 
         {activeChat && (
-          <footer className="composer">
-            <div className="composer-inner">
-              <div className="composer-input-wrapper">
-                <textarea
-                  ref={textareaRef}
-                  value={inputValue}
-                  onChange={handleInputChange}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Ask anything..."
-                  aria-label="Chat input"
-                  rows={1}
-                />
-                <div className="composer-actions">
-                  <div className="composer-actions-left">
-                    <div className="attach-wrapper" ref={attachPopoverRef}>
-                      <button 
-                        className="composer-action-button" 
-                        type="button" 
-                        title="More"
-                        onClick={() => setIsAttachPopoverOpen(!isAttachPopoverOpen)}
-                      >
-                        <MoreHorizontal size={20} />
-                      </button>
-                      {isAttachPopoverOpen && (
-                        <div className="attach-popover">
-                          <button className="attach-menu-item" type="button">
-                            <Upload size={18} />
-                            <span>Upload Files</span>
-                          </button>
-                          <button className="attach-menu-item" type="button">
-                            <Link size={18} />
-                            <span>Attach URL</span>
-                          </button>
-                          <button className="attach-menu-item" type="button">
-                            <FileText size={18} />
-                            <span>Attach Templates</span>
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                    <button className="composer-action-button" type="button" title="Tools">
-                      <Briefcase size={20} />
-                    </button>
-                  </div>
-                  <div className="composer-actions-right">
-                    <button className="composer-action-button" type="button" title="Use Microphone">
-                      <Mic size={20} />
-                    </button>
-                    {inputValue.trim().length > 0 && (
-                      <button className="composer-action-button send-button" type="button" title="Send Message">
-                        <SendHorizontal size={20} />
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </footer>
+          <Composer
+            inputValue={inputValue}
+            onInputChange={handleInputChange}
+            onKeyDown={handleKeyDown}
+            textareaRef={textareaRef}
+          />
         )}
       </main>
     </div>
