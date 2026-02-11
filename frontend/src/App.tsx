@@ -29,7 +29,6 @@ function App() {
   const [modelSearch, setModelSearch] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const modelPopoverRef = useRef<HTMLDivElement>(null)
-  const isMultiline = inputValue.length > 80 || inputValue.includes('\n')
 
   const availableModels = useMemo<Model[]>(
     () => [
@@ -114,6 +113,13 @@ function App() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInputValue(e.target.value)
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      // TODO: Handle message send
+    }
   }
 
   const handleModelSelect = (modelId: string) => {
@@ -268,24 +274,15 @@ function App() {
                     </button>
                   </div>
                   <div className="composer-input">
-                    {isMultiline ? (
-                      <textarea
-                        ref={textareaRef}
-                        value={inputValue}
-                        onChange={handleInputChange}
-                        placeholder="Ask anything..."
-                        aria-label="Chat input"
-                        rows={1}
-                      />
-                    ) : (
-                      <input
-                        type="text"
-                        value={inputValue}
-                        onChange={(e) => setInputValue(e.target.value)}
-                        placeholder="Ask anything..."
-                        aria-label="Chat input"
-                      />
-                    )}
+                    <textarea
+                      ref={textareaRef}
+                      value={inputValue}
+                      onChange={handleInputChange}
+                      onKeyDown={handleKeyDown}
+                      placeholder="Ask anything..."
+                      aria-label="Chat input"
+                      rows={1}
+                    />
                   </div>
                   <div className="composer-right">
                     <button className="icon-button" type="button" title="Use Microphone">
@@ -368,24 +365,15 @@ function App() {
                 </button>
               </div>
               <div className="composer-input">
-                {isMultiline ? (
-                  <textarea
-                    ref={textareaRef}
-                    value={inputValue}
-                    onChange={handleInputChange}
-                    placeholder="Ask anything..."
-                    aria-label="Chat input"
-                    rows={1}
-                  />
-                ) : (
-                  <input
-                    type="text"
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    placeholder="Ask anything..."
-                    aria-label="Chat input"
-                  />
-                )}
+                <textarea
+                  ref={textareaRef}
+                  value={inputValue}
+                  onChange={handleInputChange}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Ask anything..."
+                  aria-label="Chat input"
+                  rows={1}
+                />
               </div>
               <div className="composer-right">
                 <button className="icon-button" type="button" title="Use Microphone">
