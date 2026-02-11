@@ -6,11 +6,12 @@ type ComposerProps = {
   inputValue: string
   onInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void
   onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void
+  onSend: () => void
   textareaRef: React.RefObject<HTMLTextAreaElement | null>
   className?: string
 }
 
-export function Composer({ inputValue, onInputChange, onKeyDown, textareaRef, className = '' }: ComposerProps) {
+export function Composer({ inputValue, onInputChange, onKeyDown, onSend, textareaRef, className = '' }: ComposerProps) {
   const [isAttachPopoverOpen, setIsAttachPopoverOpen] = useState(false)
   const attachPopoverRef = useRef<HTMLDivElement>(null)
 
@@ -66,7 +67,12 @@ export function Composer({ inputValue, onInputChange, onKeyDown, textareaRef, cl
                 <Mic size={20} />
               </button>
               {inputValue.trim().length > 0 && (
-                <button className="composer-action-button send-button" type="button" title="Send Message">
+                <button
+                  className="composer-action-button send-button"
+                  type="button"
+                  title="Send Message"
+                  onClick={onSend}
+                >
                   <SendHorizontal size={20} />
                 </button>
               )}

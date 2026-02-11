@@ -10,6 +10,7 @@ function App() {
   const [activeChatId, setActiveChatId] = useState<string | null>(null)
   const [model, setModel] = useState('gpt-4o-mini')
   const [inputValue, setInputValue] = useState('')
+  const [hasStartedChat, setHasStartedChat] = useState(false)
   const [isModelPopoverOpen, setIsModelPopoverOpen] = useState(false)
   const [modelSearch, setModelSearch] = useState('')
   const [isProfilePopoverOpen, setIsProfilePopoverOpen] = useState(false)
@@ -18,6 +19,7 @@ function App() {
   const modelPopoverRef = useRef<HTMLDivElement>(null)
   const profilePopoverRef = useRef<HTMLDivElement>(null)
   const profileButtonRef = useRef<HTMLButtonElement>(null)
+  const username = 'Avery'
 
   const availableModels = useMemo<Model[]>(
     () => [
@@ -73,6 +75,7 @@ function App() {
   const lastUserMessageId = activeChat
     ? [...activeChat.messages].reverse().find((message) => message.role === 'user')?.id || null
     : null
+  const hasChatSession = Boolean(activeChat) || hasStartedChat
 
   // Auto-resize textarea
   useEffect(() => {
@@ -164,8 +167,17 @@ function App() {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
-      // TODO: Handle message send
+      handleSend()
     }
+  }
+
+  const handleSend = () => {
+    if (!inputValue.trim()) {
+      return
+    }
+
+    setHasStartedChat(true)
+    // TODO: Handle message send
   }
 
   const handleModelSelect = (modelId: string) => {
@@ -287,7 +299,7 @@ function App() {
         </div>
       </aside>
 
-      <main className={activeChat ? 'main-panel' : 'main-panel is-empty'}>
+      <main className={hasChatSession ? 'main-panel' : 'main-panel is-empty'}>
         <header className="main-header">
           <div className="header-left">
             <button
@@ -351,14 +363,16 @@ function App() {
         </header>
 
         <section className="chat-area">
-          {!activeChat && (
+          {!hasChatSession && (
             <div className="empty-state">
-              <h2>Start a new conversation</h2>
-              <p>Choose a template or drop in a document to get started.</p>
+              <div className="empty-greeting">
+                <h2 className="greeting-kicker">Nice to meet you, {username}</h2>
+              </div>
               <Composer
                 inputValue={inputValue}
                 onInputChange={handleInputChange}
                 onKeyDown={handleKeyDown}
+                onSend={handleSend}
                 textareaRef={textareaRef}
                 className="empty-composer"
               />
@@ -424,11 +438,12 @@ function App() {
           )}
         </section>
 
-        {activeChat && (
+        {hasChatSession && (
           <Composer
             inputValue={inputValue}
             onInputChange={handleInputChange}
             onKeyDown={handleKeyDown}
+            onSend={handleSend}
             textareaRef={textareaRef}
           />
         )}

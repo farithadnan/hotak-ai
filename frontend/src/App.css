@@ -555,6 +555,19 @@
   gap: 18px;
 }
 
+.empty-greeting {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.greeting-kicker {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--color-muted);
+}
+
 .empty-state h2 {
   margin: 0;
   font-size: 1.4rem;
@@ -656,7 +669,7 @@
   width: 100%;
 }
 
-.main-panel.is-empty .composer {
+.main-panel.is-empty > .composer {
   display: none;
 }
 
