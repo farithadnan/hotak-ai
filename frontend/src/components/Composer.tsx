@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { Briefcase, Mic, SendHorizontal, MoreHorizontal, Upload, Link, FileText } from 'lucide-react'
+import { Briefcase, Mic, SendHorizontal, Plus, Upload, Link, FileText } from 'lucide-react'
 import { useClickOutside } from '../hooks/useClickOutside'
 
 type ComposerProps = {
@@ -39,7 +39,7 @@ export function Composer({ inputValue, onInputChange, onKeyDown, onSend, textare
                   title="More"
                   onClick={() => setIsAttachPopoverOpen(!isAttachPopoverOpen)}
                 >
-                  <MoreHorizontal size={20} />
+                  <Plus size={20} />
                 </button>
                 {isAttachPopoverOpen && (
                   <div className="attach-popover">
