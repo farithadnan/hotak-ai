@@ -4,7 +4,6 @@
 
 ```bash
 # Backend (FastAPI)
-cd app
 conda activate hotak-ai-venv
 uvicorn app.server:app --reload
 
