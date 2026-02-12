@@ -45,7 +45,7 @@ function TemplateBuilder() {
     };
 
     return (
-        <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
+        <div className="template-builder-root">
             <h2 className="form-title">Create New Template</h2>
             <div className="form-tabs">
                 <button
@@ -63,7 +63,7 @@ function TemplateBuilder() {
                     Settings
                 </button>
             </div>
-            <form className="form" onSubmit={handleSubmit} autoComplete="off" style={{ flex: 1, minHeight: 0 }}>
+            <form className="form template-builder-form" onSubmit={handleSubmit} autoComplete="off">
                 <div className="form-tab-panel">
                     {activeTab === 'basic' && (
                         <>
@@ -148,7 +148,7 @@ function TemplateBuilder() {
                                             <ul className="sources-url-list">
                                                 {(formData.sources ?? []).filter(src => src.startsWith('http')).map(url => (
                                                     <li className="sources-url-item" key={url}>
-                                                        <span style={{overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1}}>{url}</span>
+                                                        <span className="sources-list-ellipsis">{url}</span>
                                                         <button type="button" className="sources-url-remove" onClick={() => setFormData(prev => ({ ...prev, sources: (prev.sources ?? []).filter(s => s !== url) }))} title="Remove URL">
                                                             <Trash2 size={16} />
                                                         </button>
@@ -160,12 +160,12 @@ function TemplateBuilder() {
                                 </div>
                                 {/* Show uploaded files */}
                                 {(formData.sources ?? []).filter(src => !src.startsWith('http')).length > 0 && (
-                                    <div style={{ marginTop: '0.5rem' }}>
-                                        <div style={{ fontSize: '0.95rem', color: 'var(--color-muted)', marginBottom: '0.2rem' }}>Files:</div>
+                                    <div className="sources-files-list-wrap">
+                                        <div className="sources-files-label">Files:</div>
                                         <ul className="sources-url-list">
                                             {(formData.sources ?? []).filter(src => !src.startsWith('http')).map(file => (
                                                 <li className="sources-url-item" key={file}>
-                                                        <span style={{overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1}}>{file}</span>
+                                                        <span className="sources-list-ellipsis">{file}</span>
                                                     <button type="button" className="sources-url-remove" onClick={() => setFormData(prev => ({ ...prev, sources: (prev.sources ?? []).filter(s => s !== file) }))} title="Remove file">
                                                         <Trash2 size={16} />
                                                     </button>
