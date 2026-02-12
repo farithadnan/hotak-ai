@@ -34,7 +34,7 @@
 }
 /* --- Form Styles --- */
 .sources-urls {
-  margin-top: 0.0rem;
+  margin-top: 0.4rem;
 }
 .sources-upload {
   display: flex;
@@ -101,6 +101,28 @@
   min-width: 38px;
   padding: 0;
 }
+.sources-url-remove {
+  background: #e74c3c;
+  border: 1px solid #e74c3c;
+  color: #fff;
+  border-radius: 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s, border 0.18s;
+  height: 28px;
+  min-width: 28px;
+  padding: 0;
+  flex-shrink: 0;
+  margin-left: 0.5rem;
+}
+.sources-url-remove:hover {
+  background: #c0392b;
+  border-color: #c0392b;
+  color: #fff;
+}
 .sources-url-add-btn:hover,
 .sources-url-remove:hover {
   background: var(--color-accent);
@@ -111,13 +133,48 @@
   margin: 0.4rem 0 0 0;
   padding: 0;
   list-style: none;
+  max-height: 180px;
+  overflow-y: auto;
+  border: 1px solid var(--color-border);
+  border-radius: 7px;
+  background: var(--color-surface);
+}
+.sources-url-list::-webkit-scrollbar {
+  width: 7px;
+  background: var(--color-surface);
+}
+.sources-url-list::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 7px;
 }
 .sources-url-item {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  justify-content: flex-start;
   margin-bottom: 0.2rem;
   font-size: 0.97rem;
+  padding: 0 0.5rem 0 0.5rem;
+  min-height: 38px;
+}
+.sources-url-item span {
+  flex: 1 1 0;
+  min-width: 0;
+  width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
+}
+.sources-url-remove {
+  flex-shrink: 0;
+  margin-left: 0.5rem;
+}
+.sources-url-item span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1 1 0%;
+  min-width: 0;
 }
 .form {
   display: flex;

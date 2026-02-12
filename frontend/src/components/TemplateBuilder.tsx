@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { createTemplate } from '../services';
 import type { TemplateCreate } from '../types/models';
 import { DEFAULT_TEMPLATE_SETTINGS } from '../types/models';
-import { Plus, X } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 
 function TemplateBuilder() {
     // State for form data
@@ -148,9 +148,9 @@ function TemplateBuilder() {
                                             <ul className="sources-url-list">
                                                 {(formData.sources ?? []).filter(src => src.startsWith('http')).map(url => (
                                                     <li className="sources-url-item" key={url}>
-                                                        {url}
+                                                        <span style={{overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1}}>{url}</span>
                                                         <button type="button" className="sources-url-remove" onClick={() => setFormData(prev => ({ ...prev, sources: (prev.sources ?? []).filter(s => s !== url) }))} title="Remove URL">
-                                                            <X size={16} />
+                                                            <Trash2 size={16} />
                                                         </button>
                                                     </li>
                                                 ))}
@@ -165,9 +165,9 @@ function TemplateBuilder() {
                                         <ul className="sources-url-list">
                                             {(formData.sources ?? []).filter(src => !src.startsWith('http')).map(file => (
                                                 <li className="sources-url-item" key={file}>
-                                                    {file}
+                                                        <span style={{overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1}}>{file}</span>
                                                     <button type="button" className="sources-url-remove" onClick={() => setFormData(prev => ({ ...prev, sources: (prev.sources ?? []).filter(s => s !== file) }))} title="Remove file">
-                                                        <X size={16} />
+                                                        <Trash2 size={16} />
                                                     </button>
                                                 </li>
                                             ))}
