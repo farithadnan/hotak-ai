@@ -1,0 +1,41 @@
+/* Utility class for margin top */
+.mt-1 {
+  margin-top: 1rem;
+}
+.template-builder-root {
+  width: 100%;
+  display: block;
+  padding: 24px;
+  box-sizing: border-box;
+  height: auto;
+}
+
+.template-builder-form {
+  display: block;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  margin-top: 10px;
+  height: auto;
+}
+
+.back-to-template-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--color-text);
+  padding: 8px 10px;
+  border-radius: 12px;
+  font-weight: 600;
+  text-align: left;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  overflow: hidden;
+}
+
+.back-to-template-btn:hover {
+  background: var(--color-surface);
+  border-color: var(--color-border);
+}

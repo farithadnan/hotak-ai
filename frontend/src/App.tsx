@@ -2,8 +2,8 @@ import { useMemo, useState, useRef, useEffect } from 'react'
 import { SquarePen, PanelRightClose, PanelRightOpen, Copy, Volume2, ThumbsUp, ThumbsDown, RefreshCw, ChevronDown, Search, Settings, Archive, LogOut, BookType } from 'lucide-react'
 import { useClickOutside } from './hooks/useClickOutside'
 import { Composer } from './components/common/Composer/Composer'
-import TemplateList from './components/TemplateList'
-import TemplateBuilder from './components/TemplateBuilder'
+import TemplateList from './components/page/TemplateList/TemplateList'
+import TemplateBuilder from './components/page/TemplateBuilder/TemplateBuilder'
 import type { ChatThread, Model } from './types'
 import './App.css'
 
@@ -481,14 +481,7 @@ function App() {
         )}
 
         {activeView === 'template-create' && (
-          <div className="template-builder-view">
-            <div className="template-builder-header">
-              <button className="ghost-button" type="button" onClick={handleBackToTemplates}>
-                Back to Templates
-              </button>
-            </div>
-            <TemplateBuilder />
-          </div>
+          <TemplateBuilder onBack={handleBackToTemplates} />
         )}
 
         {activeView === 'chat' && hasChatSession && (
