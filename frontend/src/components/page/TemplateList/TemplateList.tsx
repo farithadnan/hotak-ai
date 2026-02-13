@@ -5,7 +5,7 @@ import { ConfirmDialog } from '../../common/ConfirmDialog/ConfirmDialog'
 import { Toastr } from '../../common/Toastr/Toastr'
 import type { ToastrType } from '../../common/Toastr/Toastr'
 import type { Template } from '../../../types/models'
-import { TemplateSkeleton } from '../../skeletons/TemplateSkeleton'
+import { TemplateSkeleton } from './TemplateSkeleton'
 
 import style from './TemplateList.module.css'
 

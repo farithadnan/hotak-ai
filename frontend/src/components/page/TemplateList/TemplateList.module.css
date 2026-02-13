@@ -1,3 +1,24 @@
+/* Skeleton loader styles for template cards */
+.skeleton {
+  background: var(--color-panel);
+  border: none !important;
+  box-shadow: none !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton-box {
+  background: linear-gradient(90deg, #232232 25%, #292940 50%, #232232 75%);
+  border-radius: 6px;
+  animation: skeleton-shimmer 1.2s infinite linear;
+  background-size: 400px 100%;
+  border: none !important;
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: -200px 0; }
+  100% { background-position: 200px 0; }
+}
 
 .template-view {
   padding: 24px;
