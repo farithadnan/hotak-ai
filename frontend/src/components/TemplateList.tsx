@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Pencil, Search, Trash2, Plus } from 'lucide-react'
 import { deleteTemplate, getTemplates } from '../services'
-import { ConfirmDialog } from './ConfirmDialog'
+import { ConfirmDialog } from './common/ConfirmDialog/ConfirmDialog'
 import { Toastr } from './common/Toastr/Toastr'
 import type { ToastrType } from './common/Toastr/Toastr'
 import type { Template } from '../types/models'
