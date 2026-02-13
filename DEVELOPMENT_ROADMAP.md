@@ -20,28 +20,18 @@ This roadmap transforms the current prototype into a production-ready RAG applic
 app/
 ├── config/
 │   ├── __init__.py
-│   ├── settings.py          # All constants and defaults
-│   └── prompts.py            # System prompts
-├── models/
-│   ├── __init__.py
-│   └── llm.py                # LLM & embeddings initialization
-├── storage/
 │   ├── __init__.py
 │   └── vector_store.py       # Vector store operations
 ├── loaders/
 │   ├── __init__.py
 │   ├── base.py               # Base loader interface
 │   └── web_loader.py         # HTML/web loading
-├── utils/
-│   ├── __init__.py
-│   └── text_splitter.py      # Text chunking utilities
-├── agents/
-│   ├── __init__.py
-│   └── rag_agent.py          # Agent setup
-├── api/
-│   ├── __init__.py
-│   └── routes.py             # FastAPI endpoints (future)
-├── main.py                   # CLI entry point
+**Backend Startup:**
+To launch the FastAPI server, run:
+```
+uvicorn app.server:app --reload
+```
+This starts the backend API at http://localhost:8000 and auto-generates docs at /docs.
 └── server.py                 # API server (future)
 ```
 

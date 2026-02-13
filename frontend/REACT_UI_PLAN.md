@@ -184,6 +184,35 @@ You've completed the foundation! The models and API layer are ready. Now it's ti
 
 ---
 
+### Step 5.5: Migrate to Generic Modal, Form, and Input Components
+
+**Goal:** Refactor all form-based UI (e.g., TemplateBuilder, TemplateList actions) to use reusable modal, form, and input components for consistency and maintainability.
+
+**Migration Steps:**
+1. Create a generic Modal component (e.g., Modal.tsx or ConfirmDialog.tsx)
+   - Handles open/close, title, content, and actions
+   - Used for create/edit dialogs and confirmations
+2. Build generic Form and Input components
+   - Abstract input types: TextInput, TextArea, Select, Slider, etc.
+   - Centralize validation logic and error display
+   - Example: src/components/common/Input.tsx, src/components/common/Form.tsx
+3. Refactor TemplateBuilder and other forms
+   - Replace inline markup with generic Form and Input components
+   - Use Modal for create/edit dialogs
+   - Move validation to shared utilities
+   - Ensure consistent error handling and loading states
+4. Update documentation and roadmap
+   - Document new architecture
+   - Remove legacy form code after migration
+
+**Benefits:**
+- Consistent UI/UX across dialogs and forms
+- Easier maintenance and extension
+- Centralized validation and error handling
+- Faster development for new features
+
+---
+
 ### Step 6: Template List Component (🎯 NEXT)
 
 **Goal:** Display all templates, let users select/edit/delete them
@@ -446,7 +475,7 @@ Initial shell is in place (sidebar/header/chat area) with empty-state greeting a
 ### Step 10 - Tailwind CSS Styling
 
 **Status:** Queued (can be done anytime, or progressively with each component)  
-**Time Estimate:** 4-5 hours  
+**Time estimate:** 4-5 hours  
 **Difficulty:** Low-Medium
 
 **Steps:**
@@ -468,7 +497,7 @@ npx tailwindcss init -p
 ### Step 11 - State Management (Optional)
 
 **Status:** Queued (Optional, nice-to-have for complex state)  
-**Time Estimate:** 2-3 hours  
+**Time estimate:** 2-3 hours  
 **Difficulty:** Medium
 
 Recommended: **Zustand** (lightweight, simple API)
@@ -533,6 +562,7 @@ Before you can fully test the UI, you need these backend features:
 | Foundation | **TypeScript models** | ✅ Complete | Feb 5 |
 | Foundation | **API service layer** | ✅ Complete | Feb 5 |
 | UI - Step 5 | **Template Builder Component** | ✅ Complete | Feb 6 |
+| UI - Step 5.5 | **Generic Modal, Form, and Input Components** | ✅ Complete | Feb 6 |
 | UI - Step 6 | **Template List Component** | ⏭️ Current | Feb 7 |
 | UI - Step 6 | Template List Component | Queued | — |
 | UI - Step 7 | Chat Window Component | Queued | — |
