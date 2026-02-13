@@ -340,54 +340,6 @@
   100% { background-position: 200px 0; }
 }
 
-/* ConfirmDialog modal styles */
-.confirm-dialog-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-.confirm-dialog {
-  background: var(--color-panel);
-  color: var(--color-text);
-  border-radius: 12px;
-  box-shadow: 0 2px 16px #0008;
-  padding: 2rem;
-  min-width: 320px;
-  max-width: 90vw;
-}
-.confirm-dialog-title {
-  font-size: 1.2rem;
-  font-weight: 600;
-  margin-bottom: 1rem;
-}
-.confirm-dialog-message {
-  margin-bottom: 1.5rem;
-}
-.confirm-dialog-actions {
-  display: flex;
-  gap: 1rem;
-  justify-content: flex-end;
-}
-.confirm-dialog-cancel,
-.confirm-dialog-confirm {
-  padding: 0.5rem 1.2rem;
-  border-radius: 6px;
-  border: none;
-  font-size: 1rem;
-}
-.confirm-dialog-cancel {
-  background: var(--color-surface);
-  color: var(--color-muted);
-}
-.confirm-dialog-confirm {
-  background: var(--color-accent);
-  color: var(--color-panel);
-  font-weight: 600;
-}
 .app-shell {
   /* Two-column shell: sidebar + main content */
   display: grid;
