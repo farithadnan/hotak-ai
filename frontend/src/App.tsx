@@ -1,7 +1,7 @@
 import { useMemo, useState, useRef, useEffect } from 'react'
 import { SquarePen, PanelRightClose, PanelRightOpen, Copy, Volume2, ThumbsUp, ThumbsDown, RefreshCw, ChevronDown, Search, Settings, Archive, LogOut, BookType } from 'lucide-react'
 import { useClickOutside } from './hooks/useClickOutside'
-import { Composer } from './components/Composer'
+import { Composer } from './components/common/Composer/Composer'
 import TemplateList from './components/TemplateList'
 import TemplateBuilder from './components/TemplateBuilder'
 import type { ChatThread, Model } from './types'

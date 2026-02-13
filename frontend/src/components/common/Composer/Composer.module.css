@@ -1,1 +1,156 @@
-/* Composer component styles (migrated from App.css) */
+
+.composer {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  padding: 12px 20px 18px;
+  background: transparent;
+}
+
+.composer-inner {
+  max-width: 760px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.main-panel.is-empty > .composer {
+  display: none;
+}
+
+.empty-composer {
+  width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: transparent;
+  padding: 12px 16px;
+}
+
+.empty-composer .composer-inner {
+  width: 100%;
+}
+
+.composer-input-wrapper {
+  /* Input container with focus styling and actions slot */
+  position: relative;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  padding: 12px 14px 48px 14px;
+  transition: all 0.2s ease;
+}
+
+.composer-input-wrapper:focus-within {
+  border-color: var(--color-accent);
+}
+
+.composer-input-wrapper textarea {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: var(--color-text);
+  font-family: inherit;
+  font-size: inherit;
+  line-height: 1.5;
+  resize: none;
+  overflow-y: hidden;
+  max-height: 200px;
+  min-height: 20px;
+  outline: none;
+}
+
+.composer-input-wrapper textarea::placeholder {
+  color: var(--color-muted);
+}
+
+.composer-actions {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.composer-actions-left,
+.composer-actions-right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.composer-action-button {
+  background: transparent;
+  border: none;
+  color: var(--color-text);
+  padding: 6px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.composer-action-button:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.composer-action-button.send-button {
+  color: var(--color-accent);
+}
+
+.composer-action-button.send-button:hover {
+  color: #ffffff;
+  background: var(--color-accent);
+}
+
+.attach-wrapper {
+  position: relative;
+}
+
+.attach-popover {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  padding: 6px;
+  z-index: 1000;
+  min-width: 180px;
+  animation: slideUpFade 0.15s ease;
+}
+
+@keyframes slideUpFade {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.attach-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: var(--color-text);
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-size: 0.9rem;
+  text-align: left;
+}
+
+.attach-menu-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
