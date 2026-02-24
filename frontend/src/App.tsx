@@ -202,9 +202,6 @@ function App() {
     setInputValue('')
   }
 
-  const handleCreateTemplate = () => {
-    setActiveView('template-create')
-  }
 
   const handleBackToTemplates = () => {
     setActiveView('templates')
@@ -474,14 +471,16 @@ function App() {
         )}
 
         {activeView === 'templates' && (
-          <TemplateList
-            onCreate={handleCreateTemplate}
-            onEdit={() => setActiveView('template-create')}
-          />
+          <TemplateList />
         )}
 
         {activeView === 'template-create' && (
-          <TemplateBuilder onBack={handleBackToTemplates} />
+          <TemplateBuilder
+            open={activeView === 'template-create'}
+            onClose={handleBackToTemplates}
+            mode="create"
+            onSuccess={() => setActiveView('templates')}
+          />
         )}
 
         {activeView === 'chat' && hasChatSession && (
