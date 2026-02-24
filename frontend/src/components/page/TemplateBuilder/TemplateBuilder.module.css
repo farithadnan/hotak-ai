@@ -5,9 +5,12 @@
 .template-builder-root {
   width: 100%;
   display: block;
-  padding: 24px;
+  padding: 2rem 2rem 1.5rem 2rem;
   box-sizing: border-box;
-  height: auto;
+  height: 100%;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .template-builder-form {
@@ -16,7 +19,9 @@
   max-width: 600px;
   margin: 0 auto;
   margin-top: 10px;
-  height: auto;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: auto;
 }
 
 .back-to-template-btn {
