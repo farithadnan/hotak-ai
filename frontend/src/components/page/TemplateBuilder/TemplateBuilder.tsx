@@ -86,7 +86,7 @@ function TemplateBuilder({ open, onClose, mode, initialData, onSuccess }: Templa
                         Settings
                     </button>
                 </div>
-                <form className={`form ${style['template-builder-form']}`} onSubmit={handleSubmit} autoComplete="off">
+                <form className={`${style['template-builder-form']}`} onSubmit={handleSubmit} autoComplete="off">
                     <div className="form-tab-panel">
                         {activeTab === 'basic' && (
                             <>
