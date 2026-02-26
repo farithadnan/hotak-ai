@@ -167,8 +167,28 @@ function App() {
   }
 
   const handleSend = () => {
-    if (!inputValue.trim() || !activeChatId) {
-      return
+    if (!inputValue.trim()) {
+      return;
+    }
+    if (!activeChatId) {
+      // Create a new chat session and add the first message
+      const newChatId = `chat-${Date.now()}`;
+      const newChat: ChatThread = {
+        id: newChatId,
+        title: inputValue.slice(0, 32) || 'New Chat',
+        messages: [
+          {
+            id: `m${Date.now()}`,
+            role: 'user',
+            content: inputValue,
+          },
+        ],
+      };
+      setChats((prev) => [...prev, newChat]);
+      setActiveView('chat');
+      setActiveChatId(newChatId);
+      setInputValue('');
+      return;
     }
     // Add new message to the active chat
     setChats((prevChats) => prevChats.map(chat => {
@@ -185,9 +205,9 @@ function App() {
           ],
         }
       }
-      return chat
-    }))
-    setInputValue('')
+      return chat;
+    }));
+    setInputValue('');
   }
 
   const handleOpenTemplates = () => {
