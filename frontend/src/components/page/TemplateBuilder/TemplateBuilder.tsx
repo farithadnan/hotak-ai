@@ -68,8 +68,8 @@ function TemplateBuilder({ open, onClose, mode, initialData, onSuccess }: Templa
 
     return (
         <Modal open={open} onClose={onClose} title={mode === 'create' ? 'Create New Template' : `Edit: ${formData.name || 'Template'}` }>
-            <div className={style['template-builder-root']}>
-                <div className={style['template-builder-header']} />
+            <div className={style['template-builder-root']} style={{marginTop: 0, paddingTop: 0}}>
+                <div className={style['template-builder-header']} style={{marginTop: 0, paddingTop: 0}} />
                 <div className="form-tabs">
                     <button
                         type="button"

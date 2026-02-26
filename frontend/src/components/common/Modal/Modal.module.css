@@ -1,3 +1,8 @@
+/* Reduce gap between modal title and children */
+.modalContent h2 {
+  margin-bottom: 0.5rem;
+  margin-left: 30px;
+}
 /* Modal overlay covers the whole screen with a semi-transparent background */
 .modalOverlay {
   position: fixed;
