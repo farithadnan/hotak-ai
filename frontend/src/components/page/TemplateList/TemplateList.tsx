@@ -66,12 +66,16 @@ function TemplateList() {
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [pendingDelete, setPendingDelete] = useState<Template | null>(null)
   const [toastrOpen, setToastrOpen] = useState(false)
+  const [toastrTitle, setToastrTitle] = useState('')
   const [toastrMsg, setToastrMsg] = useState('')
   const [toastrType, setToastrType] = useState<ToastrType>('info')
+  const [toastrPosition, setToastrPosition] = useState<'top-right' | 'bottom-right' | 'top-left' | 'bottom-left'>('top-right')
 
-  const showToastr = (msg: string, type: ToastrType = 'info') => {
+  const showToastr = (msg: string, type: ToastrType = 'info', title: string = '', position: 'top-right' | 'bottom-right' | 'top-left' | 'bottom-left' = 'top-right') => {
     setToastrMsg(msg)
+    setToastrTitle(title)
     setToastrType(type)
+    setToastrPosition(position)
     setToastrOpen(true)
   }
 
@@ -126,6 +130,11 @@ function TemplateList() {
       setShowBuilder(false)
       setEditTemplate(null)
       loadTemplates()
+      if (builderMode === 'create') {
+        showToastr('Template created!', 'success', 'Success', 'bottom-right')
+      } else {
+        showToastr('Template updated!', 'success', 'Success', 'bottom-right')
+      }
     }
 
     const handleDeleteClick = (template: Template) => {
@@ -140,10 +149,10 @@ function TemplateList() {
         await deleteTemplate(pendingDelete.id)
         await loadTemplates()
         setPendingDelete(null)
-        showToastr('Template deleted', 'success')
+        showToastr('Template deleted', 'success', 'Success', 'bottom-right')
       } catch (err: any) {
         setError(err.message || 'Failed to delete template')
-        showToastr(err.message || 'Failed to delete template', 'error')
+        showToastr(err.message || 'Failed to delete template', 'error', 'Error', 'bottom-right')
       }
     }
 
@@ -266,7 +275,7 @@ function TemplateList() {
           onConfirm={handleConfirmDelete}
           onCancel={handleCancelDelete}
         />
-        <Toastr open={toastrOpen} message={toastrMsg} type={toastrType} onClose={() => setToastrOpen(false)} />
+        <Toastr open={toastrOpen} message={toastrMsg} title={toastrTitle} type={toastrType} position={toastrPosition} onClose={() => setToastrOpen(false)} />
       </div>
     )
   }

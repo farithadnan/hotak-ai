@@ -1,8 +1,6 @@
 /* Toastr notification styles */
 .toastr {
   position: fixed;
-  top: 32px;
-  right: 32px;
   z-index: 2000;
   min-width: 220px;
   padding: 1rem 1.5rem;
@@ -14,6 +12,28 @@
   color: var(--color-text);
   opacity: 0.98;
   transition: all 0.2s;
+}
+.toastr--top-right {
+  top: 32px;
+  right: 32px;
+}
+.toastr--bottom-right {
+  bottom: 32px;
+  right: 32px;
+}
+.toastr--top-left {
+  top: 32px;
+  left: 32px;
+}
+.toastr--bottom-left {
+  bottom: 32px;
+  left: 32px;
+}
+.toastr-title {
+  font-size: 1.08em;
+  font-weight: 700;
+  margin-bottom: 0.3em;
+  display: block;
 }
 .toastr--success {
   background: #2e3a2e;
