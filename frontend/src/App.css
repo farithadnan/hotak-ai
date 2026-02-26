@@ -1,3 +1,17 @@
+.chat-scroll.chat-scroll-fixed {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  align-self: stretch;
+  padding: 0 110px 0 110px;
+  box-sizing: border-box;
+  overflow-y: auto;
+  max-height: calc(100vh - 250px); /* Adjust 210px to fit your header/footer/composer height */
+  scrollbar-width: none; /* Firefox */
+}
+.chat-scroll.chat-scroll-fixed::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
 .chat-area.chat-area-stack {
   width: 100%;
 }

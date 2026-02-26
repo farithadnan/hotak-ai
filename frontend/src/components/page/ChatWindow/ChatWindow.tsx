@@ -1,16 +1,17 @@
-import React from 'react'
-import { Composer } from '../../common/Composer/Composer'
-import type { ChatThread } from '../../../types'
+
+import React from 'react';
+import { Composer } from '../../common/Composer/Composer';
+import type { ChatThread } from '../../../types';
 
 interface ChatWindowProps {
-  chat: ChatThread | null
-  inputValue: string
-  onInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void
-  onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void
-  onSend: () => void
-  textareaRef: React.RefObject<HTMLTextAreaElement | null>
-  username?: string
-  hasChatSession?: boolean
+  chat: ChatThread | null;
+  inputValue: string;
+  onInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+  onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
+  onSend: () => void;
+  textareaRef: React.RefObject<HTMLTextAreaElement | null>;
+  username?: string;
+  hasChatSession?: boolean;
 }
 
 const ChatWindow: React.FC<ChatWindowProps> = ({
@@ -25,10 +26,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 }) => {
   const lastUserMessageId = chat
     ? [...chat.messages].reverse().find((message) => message.role === 'user')?.id || null
-    : null
+    : null;
 
   return (
-    <section className="chat-area chat-area-stack">
+    <section className="chat-area">
       {!hasChatSession && (
         <div className="empty-state">
           <div className="empty-greeting">
@@ -47,7 +48,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
       {chat && (
         <>
-          <div className="chat-scroll chat-scroll-stack">
+          <div className="chat-scroll chat-scroll-fixed">
             {chat.messages.map((message) => (
               <div
                 key={message.id}
@@ -83,17 +84,19 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
               </div>
             ))}
           </div>
-          <Composer
-            inputValue={inputValue}
-            onInputChange={onInputChange}
-            onKeyDown={onKeyDown}
-            onSend={onSend}
-            textareaRef={textareaRef}
-          />
+          <div className="composer-fixed-global">
+            <Composer
+              inputValue={inputValue}
+              onInputChange={onInputChange}
+              onKeyDown={onKeyDown}
+              onSend={onSend}
+              textareaRef={textareaRef}
+            />
+          </div>
         </>
       )}
     </section>
-  )
-}
+  );
+};
 
-export default ChatWindow
+export default ChatWindow;
