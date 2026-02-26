@@ -28,6 +28,16 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     ? [...chat.messages].reverse().find((message) => message.role === 'user')?.id || null
     : null;
 
+  // Ref for chat scroll area
+  const chatScrollRef = React.useRef<HTMLDivElement>(null);
+
+  // Scroll to bottom when chat.messages changes
+  React.useEffect(() => {
+    if (chatScrollRef.current) {
+      chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
+    }
+  }, [chat?.messages.length]);
+
   return (
     <section className="chat-area">
       {!hasChatSession && (
@@ -48,7 +58,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
       {chat && (
         <>
-          <div className="chat-scroll chat-scroll-fixed">
+          <div className="chat-scroll chat-scroll-fixed" ref={chatScrollRef}>
             {chat.messages.map((message) => (
               <div
                 key={message.id}
