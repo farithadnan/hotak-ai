@@ -1,9 +1,10 @@
 import { useMemo, useState, useRef, useEffect } from 'react'
-import { SquarePen, PanelRightClose, PanelRightOpen, Copy, Volume2, ThumbsUp, ThumbsDown, RefreshCw, ChevronDown, Search, Settings, Archive, LogOut, BookType } from 'lucide-react'
+import { SquarePen, PanelRightClose, PanelRightOpen, ChevronDown, Search, Settings, Archive, LogOut, BookType } from 'lucide-react'
 import { useClickOutside } from './hooks/useClickOutside'
-import { Composer } from './components/common/Composer/Composer'
+// ...existing code...
 import TemplateList from './components/page/TemplateList/TemplateList'
 import TemplateBuilder from './components/page/TemplateBuilder/TemplateBuilder'
+import ChatWindow from './components/page/ChatWindow/ChatWindow'
 import type { ChatThread, Model } from './types'
 import './App.css'
 
@@ -13,7 +14,22 @@ function App() {
   const [activeView, setActiveView] = useState<'chat' | 'templates' | 'template-create'>('chat')
   const [model, setModel] = useState('gpt-4o-mini')
   const [inputValue, setInputValue] = useState('')
-  const [hasStartedChat, setHasStartedChat] = useState(false)
+  const [chats, setChats] = useState<ChatThread[]>([{
+    id: 'chat-1',
+    title: 'Product Strategy',
+    messages: [
+      { id: 'm1', role: 'assistant', content: 'What are you working on today?' },
+      { id: 'm2', role: 'user', content: 'Drafting a roadmap for Q2 and syncing with design.' },
+      { id: 'm3', role: 'assistant', content: 'Got it. Do you want a milestone breakdown or a narrative summary first?' },
+    ],
+  }, {
+    id: 'chat-2',
+    title: 'Template Ideas',
+    messages: [
+      { id: 'm4', role: 'assistant', content: 'Want help shaping a template system?' },
+      { id: 'm5', role: 'user', content: 'Yes, make it modular and easy to reuse.' },
+    ],
+  }])
   const [isModelPopoverOpen, setIsModelPopoverOpen] = useState(false)
   const [modelSearch, setModelSearch] = useState('')
   const [isProfilePopoverOpen, setIsProfilePopoverOpen] = useState(false)
@@ -51,34 +67,10 @@ function App() {
 
   const selectedModel = availableModels.find((m) => m.id === model)
 
-  const chats = useMemo<ChatThread[]>(
-    () => [
-      {
-        id: 'chat-1',
-        title: 'Product Strategy',
-        messages: [
-          { id: 'm1', role: 'assistant', content: 'What are you working on today?' },
-          { id: 'm2', role: 'user', content: 'Drafting a roadmap for Q2 and syncing with design.' },
-          { id: 'm3', role: 'assistant', content: 'Got it. Do you want a milestone breakdown or a narrative summary first?' },
-        ],
-      },
-      {
-        id: 'chat-2',
-        title: 'Template Ideas',
-        messages: [
-          { id: 'm4', role: 'assistant', content: 'Want help shaping a template system?' },
-          { id: 'm5', role: 'user', content: 'Yes, make it modular and easy to reuse.' },
-        ],
-      },
-    ],
-    []
-  )
+  // ...existing code...
 
   const activeChat = chats.find((chat) => chat.id === activeChatId) || null
-  const lastUserMessageId = activeChat
-    ? [...activeChat.messages].reverse().find((message) => message.role === 'user')?.id || null
-    : null
-  const hasChatSession = Boolean(activeChat) || hasStartedChat
+  const hasChatSession = Boolean(activeChat)
 
   // Auto-resize textarea
   useEffect(() => {
@@ -175,12 +167,27 @@ function App() {
   }
 
   const handleSend = () => {
-    if (!inputValue.trim()) {
+    if (!inputValue.trim() || !activeChatId) {
       return
     }
-
-    setHasStartedChat(true)
-    // TODO: Handle message send
+    // Add new message to the active chat
+    setChats((prevChats) => prevChats.map(chat => {
+      if (chat.id === activeChatId) {
+        return {
+          ...chat,
+          messages: [
+            ...chat.messages,
+            {
+              id: `m${Date.now()}`,
+              role: 'user',
+              content: inputValue,
+            },
+          ],
+        }
+      }
+      return chat
+    }))
+    setInputValue('')
   }
 
   const handleOpenTemplates = () => {
@@ -196,9 +203,16 @@ function App() {
   }
 
   const handleNewChat = () => {
+    // Create a new chat object
+    const newChatId = `chat-${Date.now()}`
+    const newChat: ChatThread = {
+      id: newChatId,
+      title: 'New Chat',
+      messages: [],
+    }
+    setChats((prev) => [...prev, newChat])
     setActiveView('chat')
-    setActiveChatId(null)
-    setHasStartedChat(false)
+    setActiveChatId(newChatId)
     setInputValue('')
   }
 
@@ -393,81 +407,16 @@ function App() {
         </header>
 
         {activeView === 'chat' && (
-          <section className="chat-area">
-            {!hasChatSession && (
-              <div className="empty-state">
-                <div className="empty-greeting">
-                  <h2 className="greeting-kicker">Nice to meet you, {username}</h2>
-                </div>
-                <Composer
-                  inputValue={inputValue}
-                  onInputChange={handleInputChange}
-                  onKeyDown={handleKeyDown}
-                  onSend={handleSend}
-                  textareaRef={textareaRef}
-                  className="empty-composer"
-                />
-              </div>
-            )}
-
-            {activeChat && (
-              <div className="chat-scroll">
-                {activeChat.messages.map((message) => (
-                  <div
-                    key={message.id}
-                    className={
-                      message.role === 'user'
-                        ? message.id === lastUserMessageId
-                          ? 'message-row user is-last'
-                          : 'message-row user'
-                        : 'message-row assistant'
-                    }
-                  >
-                    {message.role === 'user' && (
-                      <div className="message-block">
-                        <div className="message-timestamp">11/02/2026 at 10:41 AM</div>
-                        <div className="bubble">{message.content}</div>
-                        {message.id === lastUserMessageId && (
-                          <div className="message-actions">
-                            <button className="ghost-button" type="button" title="Copy">
-                              <Copy size={14} />
-                            </button>
-                            <button className="ghost-button" type="button" title="Edit">
-                              <SquarePen size={14} />
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {message.role === 'assistant' && (
-                      <div className="assistant-block">
-                        <div className="message-timestamp">11/02/2026 at 10:41 AM</div>
-                        <div className="assistant-text">{message.content}</div>
-                        <div className="assistant-actions">
-                          <button className="ghost-button" type="button" title="Copy">
-                            <Copy size={14} />
-                          </button>
-                          <button className="ghost-button" type="button" title="Read aloud">
-                            <Volume2 size={14} />
-                          </button>
-                          <button className="ghost-button" type="button" title="Good response">
-                            <ThumbsUp size={14} />
-                          </button>
-                          <button className="ghost-button" type="button" title="Bad response">
-                            <ThumbsDown size={14} />
-                          </button>
-                          <button className="ghost-button" type="button" title="Regenerate">
-                            <RefreshCw size={14} />
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
+          <ChatWindow
+            chat={activeChat}
+            inputValue={inputValue}
+            onInputChange={handleInputChange}
+            onKeyDown={handleKeyDown}
+            onSend={handleSend}
+            textareaRef={textareaRef}
+            username={username}
+            hasChatSession={hasChatSession}
+          />
         )}
 
         {activeView === 'templates' && (
@@ -483,15 +432,7 @@ function App() {
           />
         )}
 
-        {activeView === 'chat' && hasChatSession && (
-          <Composer
-            inputValue={inputValue}
-            onInputChange={handleInputChange}
-            onKeyDown={handleKeyDown}
-            onSend={handleSend}
-            textareaRef={textareaRef}
-          />
-        )}
+        {/* Composer is only rendered inside ChatWindow, not here */}
       </main>
     </div>
   )

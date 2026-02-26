@@ -268,6 +268,14 @@ You've completed the foundation! The models and API layer are ready. Now it's ti
 
 ---
 
+### Step 6 - Template List Component
+
+**Status:** In progress
+- TemplateList now uses improved Toastr notification pattern
+- UI is more maintainable and ready for future notification features
+
+---
+
 ### Step 7: Chat Window Component
 
 **Goal:** Display chat messages and accept user input
@@ -422,15 +430,9 @@ frontend/
 
 ### Step 6 - Template List Component
 
-**Status:** Queued (after Step 5 works)  
-**Time Estimate:** 2-3 hours  
-**Difficulty:** Medium
-
-**Depends on:** Step 5 complete
-
-Use your new `getTemplates()` function to fetch and display all templates.
-
-**File:** `frontend/src/components/TemplateList.tsx`
+**Status:** In progress
+- TemplateList now uses improved Toastr notification pattern
+- UI is more maintainable and ready for future notification features
 
 ---
 
