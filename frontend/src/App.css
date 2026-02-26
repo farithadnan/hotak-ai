@@ -976,7 +976,7 @@
 
 .empty-state {
   margin: auto;
-  width: min(640px, 100%);
+  width: min(1000px, 100%);
   text-align: center;
   display: flex;
   flex-direction: column;
