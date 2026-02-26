@@ -1,3 +1,18 @@
+.chat-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.chat-scroll.chat-scroll-fixed {
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+.composer-fixed-global {
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
 .chat-scroll.chat-scroll-fixed {
   position: relative;
   width: 100%;
