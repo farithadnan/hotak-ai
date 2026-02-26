@@ -15,17 +15,18 @@
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  overflow: hidden;
 }
 
 /* Modal content box */
 .modalContent {
-  display: inline-block; 
-  max-width: fit-content; 
-  max-height: 90vh; 
-  margin: auto; 
-  position: relative;
   display: flex;
   flex-direction: column;
+  max-width: 40vw;
+  width: 100%;
+  max-height: 90vh;
+  margin: auto;
+  position: relative;
   gap: 1rem;
   background: var(--color-panel);
   border-radius: 12px;
@@ -33,6 +34,7 @@
   box-shadow: 0 2px 12px #0004;
   box-sizing: border-box;
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
 @keyframes modalIn {
