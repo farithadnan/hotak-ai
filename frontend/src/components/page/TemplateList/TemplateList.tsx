@@ -3,7 +3,7 @@ import { Pencil, Search, Trash2, Plus } from 'lucide-react'
 import { deleteTemplate, getTemplates } from '../../../services'
 import { ConfirmDialog } from '../../common/ConfirmDialog/ConfirmDialog'
 import { Toastr } from '../../common/Toastr/Toastr'
-import type { ToastrType } from '../../common/Toastr/Toastr'
+import type { ToastrType, ToastrPosition } from '../../common/Toastr/Toastr'
 import type { Template } from '../../../types/models'
 import { TemplateSkeleton } from './TemplateSkeleton'
 import TemplateBuilder from '../TemplateBuilder/TemplateBuilder'
@@ -56,28 +56,31 @@ const formatDate = (value: string | null) => {
 }
 
 function TemplateList() {
-  const [showBuilder, setShowBuilder] = useState(false)
-  const [builderMode, setBuilderMode] = useState<'create' | 'edit'>('create')
-  const [editTemplate, setEditTemplate] = useState<Template | null>(null)
-  const [templates, setTemplates] = useState<Template[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [searchValue, setSearchValue] = useState('')
-  const [confirmOpen, setConfirmOpen] = useState(false)
-  const [pendingDelete, setPendingDelete] = useState<Template | null>(null)
-  const [toastrOpen, setToastrOpen] = useState(false)
-  const [toastrTitle, setToastrTitle] = useState('')
-  const [toastrMsg, setToastrMsg] = useState('')
-  const [toastrType, setToastrType] = useState<ToastrType>('info')
-  const [toastrPosition, setToastrPosition] = useState<'top-right' | 'bottom-right' | 'top-left' | 'bottom-left'>('top-right')
+    const [showBuilder, setShowBuilder] = useState(false)
+    const [builderMode, setBuilderMode] = useState<'create' | 'edit'>('create')
+    const [editTemplate, setEditTemplate] = useState<Template | null>(null)
+    const [templates, setTemplates] = useState<Template[]>([])
+    const [isLoading, setIsLoading] = useState(true)
+    const [error, setError] = useState<string | null>(null)
+    const [searchValue, setSearchValue] = useState('')
+    const [confirmOpen, setConfirmOpen] = useState(false)
+    const [pendingDelete, setPendingDelete] = useState<Template | null>(null)
+    const [toastr, setToastr] = useState({
+      open: false,
+      message: '',
+      title: '',
+      type: 'info' as ToastrType,
+      position: 'top-right' as ToastrPosition,
+      // Add more properties here as needed
+    });
 
-  const showToastr = (msg: string, type: ToastrType = 'info', title: string = '', position: 'top-right' | 'bottom-right' | 'top-left' | 'bottom-left' = 'top-right') => {
-    setToastrMsg(msg)
-    setToastrTitle(title)
-    setToastrType(type)
-    setToastrPosition(position)
-    setToastrOpen(true)
-  }
+    const showToastr = (options: Partial<typeof toastr>) => {
+      setToastr(prev => ({
+        ...prev,
+        ...options,
+        open: true,
+      }));
+    };
 
     useEffect(() => {
       void loadTemplates()
@@ -131,9 +134,9 @@ function TemplateList() {
       setEditTemplate(null)
       loadTemplates()
       if (builderMode === 'create') {
-        showToastr('Template created!', 'success', 'Success', 'bottom-right')
+        showToastr({ message: 'Template created!', type: 'success', title: 'Success', position: 'bottom-right' })
       } else {
-        showToastr('Template updated!', 'success', 'Success', 'bottom-right')
+        showToastr({ message: 'Template updated!', type: 'success', title: 'Success', position: 'bottom-right' })
       }
     }
 
@@ -149,10 +152,10 @@ function TemplateList() {
         await deleteTemplate(pendingDelete.id)
         await loadTemplates()
         setPendingDelete(null)
-        showToastr('Template deleted', 'success', 'Success', 'bottom-right')
+        showToastr({ message: 'Template deleted', type: 'success', title: 'Success', position: 'bottom-right' })
       } catch (err: any) {
         setError(err.message || 'Failed to delete template')
-        showToastr(err.message || 'Failed to delete template', 'error', 'Error', 'bottom-right')
+        showToastr({ message: err.message || 'Failed to delete template', type: 'error', title: 'Error', position: 'bottom-right' })
       }
     }
 
@@ -275,7 +278,14 @@ function TemplateList() {
           onConfirm={handleConfirmDelete}
           onCancel={handleCancelDelete}
         />
-        <Toastr open={toastrOpen} message={toastrMsg} title={toastrTitle} type={toastrType} position={toastrPosition} onClose={() => setToastrOpen(false)} />
+        <Toastr
+          open={toastr.open}
+          message={toastr.message}
+          title={toastr.title}
+          type={toastr.type}
+          position={toastr.position}
+          onClose={() => setToastr(prev => ({ ...prev, open: false }))}
+        />
       </div>
     )
   }
