@@ -1151,4 +1151,13 @@
     width: 220px;
     max-width: calc(100vw - 32px);
   }
+
+  .empty-composer {
+    width: 90vw !important;
+    max-width: 98vw !important;
+    margin: 0 auto !important;
+    font-size: 1rem;
+    padding: 8px;
+    box-sizing: border-box;
+  }
 }
