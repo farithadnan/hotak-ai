@@ -1,7 +1,6 @@
 import { useMemo, useState, useRef, useEffect } from 'react'
 import { SquarePen, PanelRightClose, PanelRightOpen, ChevronDown, Search, Settings, Archive, LogOut, BookType } from 'lucide-react'
 import { useClickOutside } from './hooks/useClickOutside'
-// ...existing code...
 import TemplateList from './components/page/TemplateList/TemplateList'
 import TemplateBuilder from './components/page/TemplateBuilder/TemplateBuilder'
 import ChatWindow from './components/page/ChatWindow/ChatWindow'
@@ -66,9 +65,6 @@ function App() {
   )
 
   const selectedModel = availableModels.find((m) => m.id === model)
-
-  // ...existing code...
-
   const activeChat = chats.find((chat) => chat.id === activeChatId) || null
 
   // Auto-resize textarea
