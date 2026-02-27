@@ -70,7 +70,6 @@ function App() {
   // ...existing code...
 
   const activeChat = chats.find((chat) => chat.id === activeChatId) || null
-  const hasChatSession = Boolean(activeChat)
 
   // Auto-resize textarea
   useEffect(() => {
@@ -223,17 +222,10 @@ function App() {
   }
 
   const handleNewChat = () => {
-    // Create a new chat object
-    const newChatId = `chat-${Date.now()}`
-    const newChat: ChatThread = {
-      id: newChatId,
-      title: 'New Chat',
-      messages: [],
-    }
-    setChats((prev) => [...prev, newChat])
-    setActiveView('chat')
-    setActiveChatId(newChatId)
-    setInputValue('')
+    // Just clear active chat and input, do not create a new chat session
+    setActiveView('chat');
+    setActiveChatId(null);
+    setInputValue('');
   }
 
 
@@ -357,7 +349,7 @@ function App() {
         </div>
       </aside>
 
-      <main className={activeView === 'chat' && !hasChatSession ? 'main-panel is-empty' : 'main-panel'}>
+      <main className={activeView === 'chat' && (!activeChat || (activeChat && activeChat.messages.length === 0)) ? 'main-panel is-empty' : 'main-panel'}>
         <header className="main-header">
           <div className="header-left">
             <button
@@ -435,7 +427,6 @@ function App() {
             onSend={handleSend}
             textareaRef={textareaRef}
             username={username}
-            hasChatSession={hasChatSession}
           />
         )}
 

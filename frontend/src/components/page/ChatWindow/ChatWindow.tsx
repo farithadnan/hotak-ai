@@ -11,7 +11,6 @@ interface ChatWindowProps {
   onSend: () => void;
   textareaRef: React.RefObject<HTMLTextAreaElement | null>;
   username?: string;
-  hasChatSession?: boolean;
 }
 
 const ChatWindow: React.FC<ChatWindowProps> = ({
@@ -22,7 +21,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   onSend,
   textareaRef,
   username = 'User',
-  hasChatSession = false,
 }) => {
   const lastUserMessageId = chat
     ? [...chat.messages].reverse().find((message) => message.role === 'user')?.id || null
@@ -40,7 +38,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
   return (
     <section className="chat-area">
-      {!hasChatSession && (
+      {(!chat || (chat && chat.messages.length === 0)) && (
         <div className="empty-state">
           <div className="empty-greeting">
             <h2 className="greeting-kicker">Nice to meet you, {username}</h2>
@@ -56,7 +54,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         </div>
       )}
 
-      {chat && (
+      {chat && chat.messages.length > 0 && (
         <>
           <div className="chat-scroll chat-scroll-fixed" ref={chatScrollRef}>
             {chat.messages.map((message) => (
