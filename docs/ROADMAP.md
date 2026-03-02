@@ -34,11 +34,11 @@ We are building a template-based knowledge management system ("Brains") allowing
 
 ### Backend Status
 - [x] Template API Endpoints (CRUD) - Done
-- [ ] **Chat Session API** - 🎯 **REQUIRED NEXT FOR FULL UI**
-  - [ ] POST `/chats` - Create session.
-  - [ ] GET `/chats` - List sessions.
-  - [ ] GET `/chats/{id}` - Get history.
-  - [ ] POST `/chats/{id}/message` - Send message.
+- [x] **Chat Session API** - ✅ Done (Basic CRUD & Persistence)
+- [ ] **AI Response Integration** - 🎯 **NEXT STEP**
+  - [ ] Connect chat endpoint to RAG agent.
+  - [ ] Support template-specific knowledge retrieval.
+
 
 ---
 
