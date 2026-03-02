@@ -1,0 +1,46 @@
+"""
+Chat and Message data models.
+
+A Chat represents a conversation session.
+A Message represents a single entry in a Chat.
+"""
+
+from pydantic import BaseModel, Field
+from typing import List, Optional
+from datetime import datetime
+import uuid
+
+
+class Message(BaseModel):
+    """Individual message in a chat session."""
+    
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    role: str = Field(..., pattern="^(user|assistant|system)$", description="Role of the message sender")
+    content: str = Field(..., description="The message text")
+    sources: Optional[List[str]] = Field(default=None, description="Cited sources for assistant messages")
+    created_at: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
+
+
+class ChatCreate(BaseModel):
+    """Data required to start a new chat."""
+    
+    title: str = Field(default="New Chat", max_length=100)
+    template_id: Optional[str] = Field(None, description="Optional template ID to bind this chat to")
+
+
+class Chat(BaseModel):
+    """Complete chat session model."""
+    
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    title: str
+    template_id: Optional[str] = None
+    messages: List[Message] = Field(default_factory=list)
+    created_at: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
+    updated_at: Optional[str] = None
+
+
+class ChatUpdate(BaseModel):
+    """Data for updating a chat session (e.g., renaming)."""
+    
+    title: Optional[str] = Field(None, max_length=100)
+    template_id: Optional[str] = None

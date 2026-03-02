@@ -1,6 +1,6 @@
 """Data models for the application."""
 
-# Export template models for easier imports
+# Export template models
 from .template import (
     Template,
     TemplateCreate,
@@ -8,9 +8,21 @@ from .template import (
     TemplateSettings
 )
 
+# Export chat models
+from .chat import (
+    Message,
+    Chat,
+    ChatCreate,
+    ChatUpdate
+)
+
 __all__ = [
     'Template',
     'TemplateCreate', 
     'TemplateUpdate',
-    'TemplateSettings'
+    'TemplateSettings',
+    'Message',
+    'Chat',
+    'ChatCreate',
+    'ChatUpdate'
 ]
