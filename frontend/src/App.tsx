@@ -4,6 +4,7 @@ import { useClickOutside } from './hooks/useClickOutside'
 import TemplateList from './components/page/TemplateList/TemplateList'
 import TemplateBuilder from './components/page/TemplateBuilder/TemplateBuilder'
 import ChatWindow from './components/page/ChatWindow/ChatWindow'
+import { getChats, createChat, addMessage } from './services/chats'
 import type { ChatThread, Model } from './types'
 import './App.css'
 
@@ -13,22 +14,9 @@ function App() {
   const [activeView, setActiveView] = useState<'chat' | 'templates' | 'template-create'>('chat')
   const [model, setModel] = useState('gpt-4o-mini')
   const [inputValue, setInputValue] = useState('')
-  const [chats, setChats] = useState<ChatThread[]>([{
-    id: 'chat-1',
-    title: 'Product Strategy',
-    messages: [
-      { id: 'm1', role: 'assistant', content: 'What are you working on today?' },
-      { id: 'm2', role: 'user', content: 'Drafting a roadmap for Q2 and syncing with design.' },
-      { id: 'm3', role: 'assistant', content: 'Got it. Do you want a milestone breakdown or a narrative summary first?' },
-    ],
-  }, {
-    id: 'chat-2',
-    title: 'Template Ideas',
-    messages: [
-      { id: 'm4', role: 'assistant', content: 'Want help shaping a template system?' },
-      { id: 'm5', role: 'user', content: 'Yes, make it modular and easy to reuse.' },
-    ],
-  }])
+  const [chats, setChats] = useState<ChatThread[]>([])
+  const [isLoadingChats, setIsLoadingChats] = useState(true)
+
   const [isModelPopoverOpen, setIsModelPopoverOpen] = useState(false)
   const [modelSearch, setModelSearch] = useState('')
   const [isProfilePopoverOpen, setIsProfilePopoverOpen] = useState(false)
@@ -66,6 +54,22 @@ function App() {
 
   const selectedModel = availableModels.find((m) => m.id === model)
   const activeChat = chats.find((chat) => chat.id === activeChatId) || null
+
+  // Fetch chats on mount
+  useEffect(() => {
+    const loadChats = async () => {
+      try {
+        setIsLoadingChats(true)
+        const data = await getChats()
+        setChats(data)
+      } catch (error) {
+        console.error('Failed to load chats:', error)
+      } finally {
+        setIsLoadingChats(false)
+      }
+    }
+    void loadChats()
+  }, [])
 
   // Auto-resize textarea
   useEffect(() => {
@@ -161,48 +165,53 @@ function App() {
     }
   }
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!inputValue.trim()) {
       return;
     }
-    if (!activeChatId) {
-      // Create a new chat session and add the first message
-      const newChatId = `chat-${Date.now()}`;
-      const newChat: ChatThread = {
-        id: newChatId,
-        title: inputValue.slice(0, 32) || 'New Chat',
-        messages: [
-          {
-            id: `m${Date.now()}`,
-            role: 'user',
-            content: inputValue,
-          },
-        ],
-      };
-      setChats((prev) => [...prev, newChat]);
-      setActiveView('chat');
-      setActiveChatId(newChatId);
-      setInputValue('');
-      return;
-    }
-    // Add new message to the active chat
-    setChats((prevChats) => prevChats.map(chat => {
-      if (chat.id === activeChatId) {
-        return {
-          ...chat,
-          messages: [
-            ...chat.messages,
-            {
-              id: `m${Date.now()}`,
-              role: 'user',
-              content: inputValue,
-            },
-          ],
-        }
+
+    try {
+      let chatId = activeChatId;
+      
+      // 1. Create a new chat session if none is active
+      if (!chatId) {
+        const newChat = await createChat({
+          title: inputValue.slice(0, 32) || 'New Chat'
+        });
+        chatId = newChat.id;
+        setChats(prev => [newChat, ...prev]);
+        setActiveChatId(chatId);
       }
-      return chat;
-    }));
-    setInputValue('');
+
+      // 2. Create the user message object
+      const userMessage: ChatThread['messages'][0] = {
+        id: crypto.randomUUID(),
+        role: 'user',
+        content: inputValue,
+        created_at: new Date().toISOString()
+      };
+
+      // 3. Update local state immediately for responsiveness
+      setChats(prevChats => prevChats.map(chat => {
+        if (chat.id === chatId) {
+          return {
+            ...chat,
+            messages: [...chat.messages, userMessage]
+          }
+        }
+        return chat;
+      }));
+      setInputValue('');
+
+      // 4. Save user message to backend
+      await addMessage(chatId, userMessage);
+
+      // TODO: Here we will later call the RAG agent endpoint 
+      // and append the assistant's response.
+      
+    } catch (error) {
+      console.error('Failed to send message:', error);
+    }
   }
 
   const handleOpenTemplates = () => {
@@ -218,11 +227,11 @@ function App() {
   }
 
   const handleNewChat = () => {
-    // Just clear active chat and input, do not create a new chat session
     setActiveView('chat');
     setActiveChatId(null);
     setInputValue('');
   }
+
 
 
   const handleBackToTemplates = () => {

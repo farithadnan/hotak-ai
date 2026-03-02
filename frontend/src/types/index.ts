@@ -1,14 +1,7 @@
-export type ChatMessage = {
-  id: string
-  role: 'user' | 'assistant'
-  content: string
-}
+import type { Chat, Message } from './models'
 
-export type ChatThread = {
-  id: string
-  title: string
-  messages: ChatMessage[]
-}
+export type ChatMessage = Message
+export type ChatThread = Chat
 
 export type Model = {
   id: string

@@ -126,48 +126,32 @@ export interface TemplateUpdate {
  */
 export interface Chat {
   id: string;
-  name: string;                        // e.g., "Python Help Session"
-  template_ids: string[];              // Which templates this chat uses
-  messages: Message[];                 // Conversation history
+  title: string;                       // Matches backend 'title'
+  template_id: string | null;          // Matches backend 'template_id'
+  messages: Message[];
   created_at: string;
   updated_at: string | null;
 }
 
 /**
  * Message Interface
- * 
- * FUTURE USE: Individual messages in a chat
- * 
- * ROLE EXPLAINED:
- * - "user": Messages sent by the human
- * - "assistant": Responses from the AI
- * - "system": Internal instructions (usually hidden from UI)
- * 
- * SOURCES:
- * - Only present for assistant messages with RAG
- * - Shows which documents were cited
  */
 export interface Message {
   id: string;
-  chat_id: string;                     // Which chat this belongs to
-  role: 'user' | 'assistant' | 'system';  // Limited to these 3 values
-  content: string;                     // The actual message text
-  sources?: string[];                  // URLs of cited sources (if RAG used)
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  sources?: string[];                  // Optional array of sources
   created_at: string;
 }
 
 /**
- * Message Create Interface
- * 
- * FUTURE USE: Sending a new message
- * 
- * WHY: User only provides content and role
- * Backend generates id, timestamp, and fetches sources via RAG
+ * Chat Create Interface
  */
-export interface MessageCreate {
-  role: 'user' | 'assistant';
-  content: string;
+export interface ChatCreate {
+  title?: string;
+  template_id?: string;
 }
+
 
 // ==========================================
 // API RESPONSE TYPES
