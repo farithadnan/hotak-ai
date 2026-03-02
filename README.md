@@ -1,118 +1,39 @@
-# CLI Reference
+# Hotak AI - RAG System with Template Management
 
-## Hotak AI
+## 🚀 Quick Start
 
+### Backend (FastAPI)
 ```bash
-# Backend (FastAPI)
+cd app
 conda activate hotak-ai-venv
-uvicorn app.server:app --reload
-
-# Frontend (React)
-cd frontend
-npm run dev
-
-# Access
-# Frontend: http://localhost:5173
-# Backend API: http://localhost:8000
+uvicorn server:app --reload
 # API Docs: http://localhost:8000/docs
 ```
 
-## Conda
-
+### Frontend (React + Vite)
 ```bash
-# Create environment
-conda create -p ./venv
-
-# Create environment with packages
-conda create -p ./venv numpy pandas
-
-# Activate / Deactivate
-conda activate ./venv
-conda deactivate
-
-# Install packages
-conda install matplotlib numpy pandas
-conda install -p ./venv package-name
-
-# List environments / packages
-conda env list
-conda list
-
-# Remove environment
-conda remove -p ./venv --all
+cd frontend
+npm install
+npm run dev
+# App URL: http://localhost:5173
 ```
 
-### From environment.yaml
+---
 
-Create `environment.yaml`:
+## 📂 Documentation & Progress
 
-```yaml
-name: test-env
-channels:
-  - conda-forge
-dependencies:
-  - python>=3.5
-  - numpy
-  - pandas
-  - pip
-  - pip:
-    - -r file:requirements.txt
-```
+- **🎯 [Current Tasks](docs/TODO.md):** The next 3 things to work on.
+- **🗺️ [Development Roadmap](docs/ROADMAP.md):** Full project status and architecture.
 
-Then create environment:
+---
 
-```bash
-conda env create -f environment.yaml
-```
+## 📁 Project Structure
 
-### Export Environments
-
-```bash
-# Save environment
-conda export --format=environment-yaml --file=environment.yaml
-
-# Or traditional
-conda env export > environment.yml
-```
-
-## Ollama
-
-```bash
-# Container
-docker start ollama
-docker stop ollama
-docker ps | grep ollama
-
-# Models
-docker exec -it ollama ollama pull llama2
-docker exec -it ollama ollama list
-docker exec -it ollama ollama rm llama2
-
-# Run
-docker exec -it ollama ollama run llama2
-docker exec -it ollama ollama run llama2 "Your question"
-
-# Logs / Shell
-docker logs ollama
-docker exec -it ollama /bin/bash
-```
-
-## Python + Ollama
-
-```bash
-# Install
-conda install ollama
-```
-
-```python
-import ollama
-
-# Generate
-response = ollama.generate(model='llama2', prompt='Your question')
-print(response['response'])
-
-# Chat
-messages = [{'role': 'user', 'content': 'Hello!'}]
-response = ollama.chat(model='llama2', messages=messages)
-print(response['message']['content'])
-```
+| Layer | Folder | Responsibility |
+| :--- | :--- | :--- |
+| **Frontend** | `frontend/src` | React UI (Vite + TS + Tailwind). |
+| **API** | `app/api/` | FastAPI routes for docs, queries, and templates. |
+| **Logic** | `app/agents/` | RAG logic (LLM + Vector Search). |
+| **Ingestion** | `app/loaders/` | Document extractors (PDF, URL, DOCX). |
+| **Storage** | `app/storage/` | Template storage (JSON) and Vectors (ChromaDB). |
+| **Config** | `app/config/` | System prompts and environment settings. |
