@@ -1,17 +1,16 @@
 import { useState, useRef, useEffect } from 'react'
-import { SquarePen, PanelRightClose, PanelRightOpen, Settings, Archive, LogOut, BookType, MoreHorizontal } from 'lucide-react'
+import { Archive, BookType, LogOut, MoreHorizontal, PanelRightClose, PanelRightOpen, Settings, SquarePen } from './icons'
 import { useClickOutside } from './hooks/useClickOutside'
-import TemplateList from './components/page/TemplateList/TemplateList'
-import TemplateBuilder from './components/page/TemplateBuilder/TemplateBuilder'
-import ChatPage from './components/page/ChatPage/ChatPage'
+import { useAppRouting } from './hooks/useAppRouting'
+import AppRoutes from './routes/AppRoutes'
 import { getChats, createChat, addMessage } from './services/chats'
 import type { ChatThread } from './types'
 import './App.css'
 
 function App() {
+  const { activeChatId, isChatView, openTemplates, openChat, openNewChat } = useAppRouting()
+
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
-  const [activeChatId, setActiveChatId] = useState<string | null>(null)
-  const [activeView, setActiveView] = useState<'chat' | 'templates' | 'template-create'>('chat')
   const [inputValue, setInputValue] = useState('')
   const [chats, setChats] = useState<ChatThread[]>([])
   const [isLoadingChats, setIsLoadingChats] = useState(true)
@@ -140,7 +139,7 @@ function App() {
         });
         chatId = newChat.id;
         setChats(prev => [newChat, ...prev]);
-        setActiveChatId(chatId);
+        openChat(chatId)
       }
 
       // 2. Create the user message object
@@ -225,27 +224,16 @@ function App() {
   }
 
   const handleOpenTemplates = () => {
-    setActiveView('templates')
+    openTemplates()
   }
 
   const handleOpenChat = (chatId?: string) => {
-    setActiveView('chat')
-    if (chatId === undefined) {
-      return
-    }
-    setActiveChatId(chatId)
+    openChat(chatId)
   }
 
   const handleNewChat = () => {
-    setActiveView('chat');
-    setActiveChatId(null);
-    setInputValue('');
-  }
-
-
-
-  const handleBackToTemplates = () => {
-    setActiveView('templates')
+    openNewChat()
+    setInputValue('')
   }
 
   return (
@@ -372,8 +360,8 @@ function App() {
         </div>
       </aside>
 
-      <main className={activeView === 'chat' && (!activeChat || (activeChat && activeChat.messages.length === 0)) ? 'main-panel is-empty' : 'main-panel'}>
-        {activeView !== 'chat' && (
+      <main className={isChatView && (!activeChat || (activeChat && activeChat.messages.length === 0)) ? 'main-panel is-empty' : 'main-panel'}>
+        {!isChatView && (
           <header className="main-header">
             <div className="header-left">
               <button
@@ -387,43 +375,24 @@ function App() {
               </button>
             </div>
             <div className="header-center">
-              <div className="header-title">
-                {activeView === 'templates' ? 'Templates' : 'New Template'}
-              </div>
+              <div className="header-title">Templates</div>
             </div>
             <div className="header-right"></div>
           </header>
         )}
 
-        {activeView === 'chat' && (
-          <ChatPage
-            activeChat={activeChat}
-            inputValue={inputValue}
-            onInputChange={handleInputChange}
-            onKeyDown={handleKeyDown}
-            onSend={handleSend}
-            onUpdateUserMessage={handleUpdateUserMessage}
-            onRegenerateAssistantMessage={handleRegenerateAssistantMessage}
-            textareaRef={textareaRef}
-            username={username}
-            onToggleSidebar={() => setIsSidebarCollapsed((prev) => !prev)}
-          />
-        )}
-
-        {activeView === 'templates' && (
-          <TemplateList />
-        )}
-
-        {activeView === 'template-create' && (
-          <TemplateBuilder
-            open={activeView === 'template-create'}
-            onClose={handleBackToTemplates}
-            mode="create"
-            onSuccess={() => setActiveView('templates')}
-          />
-        )}
-
-        {/* Composer is only rendered inside ChatWindow, not here */}
+        <AppRoutes
+          activeChat={activeChat}
+          inputValue={inputValue}
+          onInputChange={handleInputChange}
+          onKeyDown={handleKeyDown}
+          onSend={handleSend}
+          onUpdateUserMessage={handleUpdateUserMessage}
+          onRegenerateAssistantMessage={handleRegenerateAssistantMessage}
+          textareaRef={textareaRef}
+          username={username}
+          onToggleSidebar={() => setIsSidebarCollapsed((prev) => !prev)}
+        />
       </main>
     </div>
   )
