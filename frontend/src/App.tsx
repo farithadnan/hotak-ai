@@ -18,6 +18,8 @@ type ChatRuntimeState = {
   isGeneratingTitle: boolean
 }
 
+const STREAM_MODEL_FALLBACK_PATTERN = /\[\[MODEL_FALLBACK:([^\]]+)\]\]\n?/g
+
 function App() {
   const { activeChatId, isChatView, openTemplates, openChat, openNewChat } = useAppRouting()
 
@@ -128,26 +130,70 @@ function App() {
     })
   }
 
+  const ensureChatModel = async (chatId: string, modelId?: string) => {
+    const nextModel = modelId?.trim()
+    if (!nextModel) {
+      return
+    }
+
+    const chat = chats.find((item) => item.id === chatId)
+    if (!chat || chat.model === nextModel) {
+      return
+    }
+
+    setChats((prevChats) =>
+      prevChats.map((item) => (item.id === chatId ? { ...item, model: nextModel } : item))
+    )
+
+    try {
+      const updated = await updateChat(chatId, { model: nextModel })
+      setChats((prevChats) => prevChats.map((item) => (item.id === chatId ? updated : item)))
+    } catch (error) {
+      console.error('Failed to persist chat model:', error)
+    }
+  }
+
   const streamAssistantText = async (
     question: string,
     onPartial: (partialText: string) => void,
     modelId?: string,
+    onModelResolved?: (resolvedModelId: string) => void,
   ) => {
     let streamedContent = ''
+    let reportedModel: string | undefined
+
+    const parseStreamContent = (raw: string) => {
+      let fallbackModel: string | undefined
+      const cleaned = raw.replace(STREAM_MODEL_FALLBACK_PATTERN, (_match, modelFromStream) => {
+        fallbackModel = String(modelFromStream).trim()
+        return ''
+      })
+      return { cleaned, fallbackModel }
+    }
 
     try {
       for await (const chunk of streamQuery({ question, model: modelId })) {
         streamedContent += chunk
-        onPartial(streamedContent)
+        const parsed = parseStreamContent(streamedContent)
+        if (parsed.fallbackModel && parsed.fallbackModel !== reportedModel) {
+          reportedModel = parsed.fallbackModel
+          onModelResolved?.(parsed.fallbackModel)
+        }
+        onPartial(parsed.cleaned)
       }
     } catch (streamError) {
       console.warn('Stream failed, falling back to non-stream query:', streamError)
       const fallback = await queryAgent({ question, model: modelId })
       streamedContent = fallback.answer?.trim() || streamedContent
+      if (fallback.model && fallback.model !== reportedModel) {
+        reportedModel = fallback.model
+        onModelResolved?.(fallback.model)
+      }
       onPartial(streamedContent)
     }
 
-    return streamedContent
+    const parsed = parseStreamContent(streamedContent)
+    return parsed.cleaned
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>, modelId?: string) => {
@@ -173,12 +219,17 @@ function App() {
       if (!chatId) {
         const newChat = await createChat({
           title: 'New Chat',
+          model: modelId,
         })
         chatId = newChat.id
         requestChatId = chatId
         shouldGenerateTitle = true
         setChats((prev) => [newChat, ...prev])
         openChat(chatId)
+      }
+
+      if (chatId) {
+        await ensureChatModel(chatId, modelId)
       }
 
       const pendingAssistantId = crypto.randomUUID()
@@ -237,7 +288,11 @@ function App() {
             }
           })
         )
-      }, modelId)
+      }, modelId, (resolvedModelId) => {
+        if (chatId) {
+          void ensureChatModel(chatId, resolvedModelId)
+        }
+      })
 
       const parsedAssistant = parseAssistantResponse(streamedContent)
       const finalAssistantContent = parsedAssistant.content || "I'm sorry, I couldn't generate a response."
@@ -339,6 +394,8 @@ function App() {
         (message, idx) => idx > userIndex && message.role === 'assistant'
       )
 
+      await ensureChatModel(activeChatId, modelId)
+
       const pendingAssistantId = assistantTarget?.id ?? crypto.randomUUID()
       const pendingAssistantCreatedAt = assistantTarget?.created_at ?? new Date().toISOString()
 
@@ -406,7 +463,9 @@ function App() {
               }
             })
           )
-        }, modelId)
+        }, modelId, (resolvedModelId) => {
+          void ensureChatModel(activeChatId, resolvedModelId)
+        })
 
         const parsedAssistant = parseAssistantResponse(streamedContent)
         const finalAssistantContent = parsedAssistant.content || "I'm sorry, I couldn't generate a response."
@@ -485,6 +544,8 @@ function App() {
 
     void (async () => {
       try {
+        await ensureChatModel(activeChatId, modelId)
+
         const regeneratePrompt = [
           previousUserMessage.content,
           '',
@@ -511,7 +572,9 @@ function App() {
               }
             })
           )
-        }, modelId)
+        }, modelId, (resolvedModelId) => {
+          void ensureChatModel(activeChatId, resolvedModelId)
+        })
 
         const parsedAssistant = parseAssistantResponse(streamedContent)
         const finalAssistantContent = parsedAssistant.content || "I'm sorry, I couldn't generate a response."
@@ -550,6 +613,35 @@ function App() {
   const handleOpenTemplates = () => {
     openTemplates()
     setActiveChatMenuId(null)
+  }
+
+  const handleChangeActiveChatModel = (modelId: string) => {
+    if (!activeChatId) {
+      return
+    }
+
+    const nextModel = modelId.trim()
+    if (!nextModel) {
+      return
+    }
+
+    const currentChat = chats.find((chat) => chat.id === activeChatId)
+    if (currentChat?.model === nextModel) {
+      return
+    }
+
+    setChats((prevChats) =>
+      prevChats.map((chat) => (chat.id === activeChatId ? { ...chat, model: nextModel } : chat))
+    )
+
+    void (async () => {
+      try {
+        const updated = await updateChat(activeChatId, { model: nextModel })
+        setChats((prevChats) => prevChats.map((chat) => (chat.id === activeChatId ? updated : chat)))
+      } catch (error) {
+        console.error('Failed to update active chat model:', error)
+      }
+    })()
   }
 
   const handleOpenChat = (chatId?: string) => {
@@ -888,6 +980,7 @@ function App() {
           onInputChange={handleInputChange}
           onKeyDown={handleKeyDown}
           onSend={handleSend}
+          onChangeActiveChatModel={handleChangeActiveChatModel}
           onUpdateUserMessage={handleUpdateUserMessage}
           onRegenerateAssistantMessage={handleRegenerateAssistantMessage}
           regeneratingAssistantMessageId={regeneratingAssistantMessageId}

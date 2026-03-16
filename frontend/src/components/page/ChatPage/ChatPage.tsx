@@ -13,6 +13,7 @@ interface ChatPageProps {
   onInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void
   onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>, modelId?: string) => void
   onSend: (modelId?: string) => void
+  onChangeActiveChatModel: (modelId: string) => void
   onUpdateUserMessage: (messageId: string, content: string, modelId?: string) => void
   onRegenerateAssistantMessage: (messageId: string, modelId?: string) => void
   regeneratingAssistantMessageId: string | null
@@ -29,6 +30,7 @@ function ChatPage({
   onInputChange,
   onKeyDown,
   onSend,
+  onChangeActiveChatModel,
   onUpdateUserMessage,
   onRegenerateAssistantMessage,
   regeneratingAssistantMessageId,
@@ -36,6 +38,7 @@ function ChatPage({
   username,
   onToggleSidebar,
 }: ChatPageProps) {
+  const defaultModelId = 'gpt-4o-mini'
   const [model, setModel] = useState('gpt-4o-mini')
   const [isLoadingModels, setIsLoadingModels] = useState(false)
   const [isModelPopoverOpen, setIsModelPopoverOpen] = useState(false)
@@ -77,6 +80,29 @@ function ChatPage({
 
   const selectedModel = availableModels.find((m) => m.id === model)
 
+  const formatModelName = (modelId: string) =>
+    modelId
+      .replace(/-/g, ' ')
+      .replace(/\b\w/g, (char) => char.toUpperCase())
+
+  const persistedChatModelId = activeChat?.model || defaultModelId
+  const persistedChatModelLabel =
+    availableModels.find((m) => m.id === persistedChatModelId)?.name || formatModelName(persistedChatModelId)
+
+  useEffect(() => {
+    if (!activeChat) {
+      return
+    }
+
+    const desiredModel = activeChat.model && availableModels.some((m) => m.id === activeChat.model)
+      ? activeChat.model
+      : defaultModelId
+
+    if (desiredModel !== model) {
+      setModel(desiredModel)
+    }
+  }, [activeChat?.id, activeChat?.model, availableModels, defaultModelId])
+
   useClickOutside(
     modelPopoverRef,
     () => {
@@ -88,6 +114,9 @@ function ChatPage({
 
   const handleModelSelect = (modelId: string) => {
     setModel(modelId)
+    if (activeChat) {
+      onChangeActiveChatModel(modelId)
+    }
     setIsModelPopoverOpen(false)
     setModelSearch('')
   }
@@ -159,6 +188,7 @@ function ChatPage({
         chat={activeChat}
         isLoadingChats={isLoadingChats}
         hasActiveChatId={hasActiveChatId}
+        activeModelLabel={persistedChatModelLabel}
         inputValue={inputValue}
         onInputChange={onInputChange}
         onKeyDown={(e) => onKeyDown(e, model)}

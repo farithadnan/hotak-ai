@@ -11,6 +11,7 @@ interface ChatWindowProps {
   chat: ChatThread | null;
   isLoadingChats: boolean;
   hasActiveChatId: boolean;
+  activeModelLabel?: string;
   inputValue: string;
   onInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
@@ -26,6 +27,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   chat,
   isLoadingChats,
   hasActiveChatId,
+  activeModelLabel,
   inputValue,
   onInputChange,
   onKeyDown,
@@ -229,6 +231,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                         <Bot size={14} />
                       </span>
                       <span className="assistant-label">Hotak AI</span>
+                      {activeModelLabel && <span className="assistant-model-badge">[{activeModelLabel}]</span>}
                     </div>
                     <div className="message-timestamp">{formatMessageTimestamp(message.created_at)}</div>
                     {message.content.trim() === '' ? (
