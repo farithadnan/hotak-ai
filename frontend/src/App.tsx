@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect } from 'react'
-import { Archive, BookType, Loader2, LogOut, MoreHorizontal, PanelRightClose, PanelRightOpen, Pencil, Pin, Settings, SquarePen, Trash2 } from './icons'
+import { Archive, BookType, LoaderCircle, LogOut, MoreHorizontal, PanelRightClose, PanelRightOpen, Pencil, Pin, Settings, SquarePen, Trash2 } from './icons'
 import { useFloatingPopover } from './hooks/useFloatingPopover'
 import { useAppRouting } from './hooks/useAppRouting'
 import AppRoutes from './routes/AppRoutes'
-import { queryAgent } from './services/query'
+import { queryAgent, streamQuery } from './services/query'
 import { getChats, createChat, addMessage, generateChatTitle } from './services/chats'
 import type { ChatThread } from './types'
 import './App.css'
@@ -153,18 +153,49 @@ function App() {
       // 3. Persist user message
       await addMessage(chatId, userMessage)
 
-      // 4. Query LLM
-      const queryResponse = await queryAgent({ question: trimmedInput })
-      const assistantContent = queryResponse.answer?.trim() || "I'm sorry, I couldn't generate a response."
+      // 4. Stream LLM response and update pending assistant in real-time.
+      // Fallback to non-stream endpoint if streaming transport fails.
+      let streamedContent = ''
+      try {
+        for await (const chunk of streamQuery({ question: trimmedInput })) {
+          streamedContent += chunk
+          const nextContent = streamedContent
 
+          setChats((prevChats) =>
+            prevChats.map((chat) => {
+              if (chat.id !== chatId) {
+                return chat
+              }
+
+              return {
+                ...chat,
+                messages: chat.messages.map((message) =>
+                  message.id === pendingAssistantId
+                    ? {
+                        ...message,
+                        content: nextContent,
+                      }
+                    : message
+                ),
+              }
+            })
+          )
+        }
+      } catch (streamError) {
+        console.warn('Stream failed, falling back to non-stream query:', streamError)
+        const fallback = await queryAgent({ question: trimmedInput })
+        streamedContent = fallback.answer?.trim() || streamedContent
+      }
+
+      const finalAssistantContent = streamedContent.trim() || "I'm sorry, I couldn't generate a response."
       const assistantMessage: ChatThread['messages'][0] = {
         id: crypto.randomUUID(),
         role: 'assistant',
-        content: assistantContent,
+        content: finalAssistantContent,
         created_at: new Date().toISOString(),
       }
 
-      // 5. Replace pending assistant with real answer
+      // 5. Replace pending assistant with finalized assistant message
       setChats((prevChats) =>
         prevChats.map((chat) => {
           if (chat.id === chatId) {
@@ -172,18 +203,10 @@ function App() {
               message.id === pendingAssistantId ? assistantMessage : message
             )
 
-            const hasPendingStill = nextMessages.some((message) => message.id === pendingAssistantId)
-            if (!hasPendingStill) {
-              return {
-                ...chat,
-                messages: nextMessages,
-              }
+            return {
+              ...chat,
+              messages: nextMessages,
             }
-
-          return {
-            ...chat,
-            messages: [...chat.messages, assistantMessage],
-          }
           }
 
           return chat
@@ -373,7 +396,7 @@ function App() {
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleOpenChat(chat.id) }}
             >
               <span className="sidebar-item-title-wrap">
-                {chatRuntime[chat.id]?.isGeneratingTitle && <Loader2 size={12} className="sidebar-title-loader spin" />}
+                {chatRuntime[chat.id]?.isGeneratingTitle && <LoaderCircle size={12} className="sidebar-title-loader spin" />}
                 <span className="sidebar-item-title">{chat.title}</span>
               </span>
               <button
