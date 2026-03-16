@@ -158,6 +158,7 @@ export interface ChatCreate {
 export interface ChatUpdate {
   title?: string;
   template_id?: string;
+  messages?: Message[];
 }
 
 
