@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
-import { useClickOutside } from './useClickOutside'
 
 type FloatingPlacement = 'top-start' | 'bottom-start' | 'left-start' | 'right-start'
 
@@ -31,11 +30,30 @@ export function useFloatingPopover({
   const [position, setPosition] = useState<Position>({ top: 0, left: 0 })
   const [resolvedWidth, setResolvedWidth] = useState(panelWidth)
 
-  useClickOutside(popoverRef, onClose, isOpen)
-
   const openFromElement = (element: HTMLElement) => {
     setAnchorElement(element)
   }
+
+  useEffect(() => {
+    if (!isOpen) {
+      return
+    }
+
+    const handleMouseDown = (event: MouseEvent) => {
+      const target = event.target as Node
+      const isInsidePopover = Boolean(popoverRef.current?.contains(target))
+      const isInsideAnchor = Boolean(anchorElement?.contains(target))
+
+      if (!isInsidePopover && !isInsideAnchor) {
+        onClose()
+      }
+    }
+
+    document.addEventListener('mousedown', handleMouseDown)
+    return () => {
+      document.removeEventListener('mousedown', handleMouseDown)
+    }
+  }, [anchorElement, isOpen, onClose])
 
   useEffect(() => {
     if (!isOpen || !anchorElement) {
