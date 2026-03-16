@@ -1,6 +1,6 @@
 # Hotak AI - Development Roadmap (Active)
 
-## 🎯 Current Status: Phase 6 - Web UI with Template System
+## 🎯 Current Status: Phase 6.5 - Chat + Model UX Stabilization
 
 We are building a template-based knowledge management system ("Brains") allowing users to create reusable knowledge templates for chat sessions.
 
@@ -21,23 +21,30 @@ We are building a template-based knowledge management system ("Brains") allowing
 - [x] **Template List Component (Step 6)** - ✅ Done
   - Display all templates as cards.
   - Implement Edit/Delete operations.
-- [ ] **Chat Components (Step 7-8)** - 🔄 **In Progress**
-  - [x] Basic UI shell for `ChatWindow.tsx` and `Composer.tsx`.
-  - [ ] Message display with citation formatting (needs backend).
-  - [ ] Streaming responses (needs backend).
-  - [ ] Chat sidebar/session management (needs backend).
-- [ ] **App Layout Polish (Step 9)** - 🔄 **In Progress**
-  - [x] Initial shell in `App.tsx` (collapsible sidebar, responsive header).
+- [x] **Chat Components (Step 7-8)** - ✅ Done
+  - [x] Chat shell for `ChatWindow.tsx` and `Composer.tsx`.
+  - [x] Message display with source/citation rendering.
+  - [x] Streaming responses with graceful fallback.
+  - [x] Sidebar chat/session management (rename, pin, delete).
+- [x] **App Layout Polish (Step 9)** - ✅ Done
+  - [x] `App.tsx` shell (collapsible sidebar, responsive header).
   - [x] Navigation between Chat/Templates views.
-  - [ ] Model selector integration.
+  - [x] Model selector integration.
 - [ ] **Tailwind CSS Styling (Step 10)** - Planned
 
 ### Backend Status
 - [x] Template API Endpoints (CRUD) - Done
-- [x] **Chat Session API** - ✅ Done (Basic CRUD & Persistence)
-- [ ] **AI Response Integration** - 🎯 **NEXT STEP**
-  - [ ] Connect chat endpoint to RAG agent.
-  - [ ] Support template-specific knowledge retrieval.
+- [x] **Chat Session API** - ✅ Done (CRUD + Persistence)
+- [x] **AI Response Integration** - ✅ Done
+  - [x] Query endpoint connected to RAG agent.
+  - [x] Streaming query endpoint connected to RAG agent.
+  - [x] Rate-limit and permission-denied handling.
+- [x] **Model Catalog API** - ✅ Done
+  - [x] `GET /models` list endpoint.
+  - [x] `GET /models/{model_id}` retrieve endpoint.
+- [ ] **Model Access UX Hardening** - 🎯 **NEXT STEP**
+  - [ ] Filter inaccessible models from `GET /models`.
+  - [ ] Remove telemetry warning noise in logs.
 
 
 ---
@@ -54,6 +61,7 @@ We are building a template-based knowledge management system ("Brains") allowing
 - **Header:** Model selector in top-right.
 - **Input Bar:** Rounded corners, left action cluster (+ for templates/files).
 - **Empty State:** Greeting + centered composer; send starts session.
+- **Model Visibility:** Active model badge appears next to assistant name per chat.
 
 ---
 
