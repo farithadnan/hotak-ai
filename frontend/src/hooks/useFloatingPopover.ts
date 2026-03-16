@@ -1,0 +1,106 @@
+import { useEffect, useRef, useState } from 'react'
+import type { CSSProperties } from 'react'
+import { useClickOutside } from './useClickOutside'
+
+type FloatingPlacement = 'top-start' | 'bottom-start' | 'left-start' | 'right-start'
+
+type UseFloatingPopoverOptions = {
+  isOpen: boolean
+  onClose: () => void
+  placement?: FloatingPlacement
+  panelWidth?: number
+  panelHeight?: number
+  offset?: number
+}
+
+type Position = {
+  top: number
+  left: number
+}
+
+export function useFloatingPopover({
+  isOpen,
+  onClose,
+  placement = 'bottom-start',
+  panelWidth = 240,
+  panelHeight = 180,
+  offset = 8,
+}: UseFloatingPopoverOptions) {
+  const popoverRef = useRef<HTMLDivElement>(null)
+  const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null)
+  const [position, setPosition] = useState<Position>({ top: 0, left: 0 })
+  const [resolvedWidth, setResolvedWidth] = useState(panelWidth)
+
+  useClickOutside(popoverRef, onClose, isOpen)
+
+  const openFromElement = (element: HTMLElement) => {
+    setAnchorElement(element)
+  }
+
+  useEffect(() => {
+    if (!isOpen || !anchorElement) {
+      return
+    }
+
+    const updatePosition = () => {
+      const rect = anchorElement.getBoundingClientRect()
+      const viewportWidth = window.innerWidth
+      const viewportHeight = window.innerHeight
+      const gap = 8
+      const maxAllowedWidth = Math.max(120, viewportWidth - gap * 2)
+      const nextWidth = Math.min(panelWidth, maxAllowedWidth)
+
+      let nextTop = rect.bottom + offset
+      let nextLeft = rect.left
+
+      if (placement === 'top-start') {
+        nextTop = rect.top - panelHeight - offset
+        nextLeft = rect.left
+      }
+
+      if (placement === 'left-start') {
+        nextTop = rect.top
+        nextLeft = rect.left - nextWidth - offset
+      }
+
+      if (placement === 'right-start') {
+        nextTop = rect.top
+        nextLeft = rect.right + offset
+      }
+
+      if (placement === 'bottom-start') {
+        nextTop = rect.bottom + offset
+        nextLeft = rect.left
+      }
+
+      nextLeft = Math.max(gap, Math.min(nextLeft, viewportWidth - nextWidth - gap))
+      nextTop = Math.max(gap, Math.min(nextTop, viewportHeight - panelHeight - gap))
+
+      setResolvedWidth(nextWidth)
+      setPosition({ top: nextTop, left: nextLeft })
+    }
+
+    updatePosition()
+    window.addEventListener('resize', updatePosition)
+    window.addEventListener('scroll', updatePosition, true)
+
+    return () => {
+      window.removeEventListener('resize', updatePosition)
+      window.removeEventListener('scroll', updatePosition, true)
+    }
+  }, [anchorElement, isOpen, offset, panelHeight, panelWidth, placement])
+
+  const floatingStyle: CSSProperties = {
+    position: 'fixed',
+    top: `${position.top}px`,
+    left: `${position.left}px`,
+    width: `${resolvedWidth}px`,
+  }
+
+  return {
+    popoverRef,
+    position,
+    floatingStyle,
+    openFromElement,
+  }
+}
