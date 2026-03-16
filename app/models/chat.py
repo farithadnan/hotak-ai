@@ -44,3 +44,4 @@ class ChatUpdate(BaseModel):
     
     title: Optional[str] = Field(None, max_length=100)
     template_id: Optional[str] = None
+    messages: Optional[List[Message]] = None
