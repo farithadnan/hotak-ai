@@ -6,6 +6,7 @@ import AppRoutes from './routes/AppRoutes'
 import { queryAgent, streamQuery } from './services/query'
 import { getChats, createChat, addMessage, generateChatTitle } from './services/chats'
 import type { ChatThread } from './types'
+import { parseAssistantResponse } from './utils/assistantResponse'
 import './App.css'
 
 type ChatRuntimeState = {
@@ -187,11 +188,13 @@ function App() {
         streamedContent = fallback.answer?.trim() || streamedContent
       }
 
-      const finalAssistantContent = streamedContent.trim() || "I'm sorry, I couldn't generate a response."
+      const parsedAssistant = parseAssistantResponse(streamedContent)
+      const finalAssistantContent = parsedAssistant.content || "I'm sorry, I couldn't generate a response."
       const assistantMessage: ChatThread['messages'][0] = {
         id: crypto.randomUUID(),
         role: 'assistant',
         content: finalAssistantContent,
+        sources: parsedAssistant.sources,
         created_at: new Date().toISOString(),
       }
 
