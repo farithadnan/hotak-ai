@@ -174,6 +174,56 @@ function App() {
     }
   }
 
+  const handleUpdateUserMessage = (messageId: string, content: string) => {
+    if (!activeChatId) {
+      return
+    }
+
+    setChats((prevChats) =>
+      prevChats.map((chat) => {
+        if (chat.id !== activeChatId) {
+          return chat
+        }
+
+        return {
+          ...chat,
+          messages: chat.messages.map((message) =>
+            message.id === messageId
+              ? {
+                  ...message,
+                  content,
+                }
+              : message
+          ),
+        }
+      })
+    )
+  }
+
+  const handleRegenerateAssistantMessage = (assistantMessageId: string) => {
+    if (!activeChat) {
+      return
+    }
+
+    const assistantIndex = activeChat.messages.findIndex((message) => message.id === assistantMessageId)
+    if (assistantIndex === -1) {
+      return
+    }
+
+    const previousUserMessage = [...activeChat.messages.slice(0, assistantIndex)]
+      .reverse()
+      .find((message) => message.role === 'user')
+
+    if (!previousUserMessage) {
+      return
+    }
+
+    setInputValue(previousUserMessage.content)
+    requestAnimationFrame(() => {
+      textareaRef.current?.focus()
+    })
+  }
+
   const handleOpenTemplates = () => {
     setActiveView('templates')
   }
@@ -340,6 +390,8 @@ function App() {
             onInputChange={handleInputChange}
             onKeyDown={handleKeyDown}
             onSend={handleSend}
+            onUpdateUserMessage={handleUpdateUserMessage}
+            onRegenerateAssistantMessage={handleRegenerateAssistantMessage}
             textareaRef={textareaRef}
             username={username}
             onToggleSidebar={() => setIsSidebarCollapsed((prev) => !prev)}

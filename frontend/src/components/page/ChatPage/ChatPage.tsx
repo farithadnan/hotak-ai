@@ -10,6 +10,8 @@ interface ChatPageProps {
   onInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void
   onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void
   onSend: () => void
+  onUpdateUserMessage: (messageId: string, content: string) => void
+  onRegenerateAssistantMessage: (messageId: string) => void
   textareaRef: React.RefObject<HTMLTextAreaElement | null>
   username: string
   onToggleSidebar: () => void
@@ -21,6 +23,8 @@ function ChatPage({
   onInputChange,
   onKeyDown,
   onSend,
+  onUpdateUserMessage,
+  onRegenerateAssistantMessage,
   textareaRef,
   username,
   onToggleSidebar,
@@ -139,6 +143,8 @@ function ChatPage({
         onInputChange={onInputChange}
         onKeyDown={onKeyDown}
         onSend={onSend}
+        onUpdateUserMessage={onUpdateUserMessage}
+        onRegenerateAssistantMessage={onRegenerateAssistantMessage}
         textareaRef={textareaRef}
         username={username}
       />
