@@ -1,11 +1,17 @@
 import { useState, useRef, useEffect } from 'react'
-import { Archive, BookType, LogOut, MoreHorizontal, PanelRightClose, PanelRightOpen, Pencil, Pin, Settings, SquarePen, Trash2 } from './icons'
+import { Archive, BookType, Loader2, LogOut, MoreHorizontal, PanelRightClose, PanelRightOpen, Pencil, Pin, Settings, SquarePen, Trash2 } from './icons'
 import { useFloatingPopover } from './hooks/useFloatingPopover'
 import { useAppRouting } from './hooks/useAppRouting'
 import AppRoutes from './routes/AppRoutes'
-import { getChats, createChat, addMessage } from './services/chats'
+import { queryAgent } from './services/query'
+import { getChats, createChat, addMessage, generateChatTitle } from './services/chats'
 import type { ChatThread } from './types'
 import './App.css'
+
+type ChatRuntimeState = {
+  isResponding: boolean
+  isGeneratingTitle: boolean
+}
 
 function App() {
   const { activeChatId, isChatView, openTemplates, openChat, openNewChat } = useAppRouting()
@@ -14,6 +20,7 @@ function App() {
   const [inputValue, setInputValue] = useState('')
   const [chats, setChats] = useState<ChatThread[]>([])
   const [isLoadingChats, setIsLoadingChats] = useState(true)
+  const [chatRuntime, setChatRuntime] = useState<Record<string, ChatRuntimeState>>({})
 
   const [isProfilePopoverOpen, setIsProfilePopoverOpen] = useState(false)
   const [activeChatMenuId, setActiveChatMenuId] = useState<string | null>(null)
@@ -75,51 +82,163 @@ function App() {
   }
 
   const handleSend = async () => {
-    if (!inputValue.trim()) {
-      return;
+    const trimmedInput = inputValue.trim()
+    if (!trimmedInput) {
+      return
+    }
+
+    let requestChatId: string | null = activeChatId
+
+    const markRuntime = (chatId: string, patch: Partial<ChatRuntimeState>) => {
+      setChatRuntime((prev) => {
+        const current = prev[chatId] ?? { isResponding: false, isGeneratingTitle: false }
+        return {
+          ...prev,
+          [chatId]: {
+            ...current,
+            ...patch,
+          },
+        }
+      })
     }
 
     try {
-      let chatId = activeChatId;
-      
-      // 1. Create a new chat session if none is active
+      let chatId = activeChatId
+      let shouldGenerateTitle = activeChat?.title.trim().toLowerCase() === 'new chat'
+
+      // 1. Create new chat if none is active (temporary placeholder title)
       if (!chatId) {
         const newChat = await createChat({
-          title: inputValue.slice(0, 32) || 'New Chat'
-        });
-        chatId = newChat.id;
-        setChats(prev => [newChat, ...prev]);
+          title: 'New Chat',
+        })
+        chatId = newChat.id
+        requestChatId = chatId
+        shouldGenerateTitle = true
+        setChats((prev) => [newChat, ...prev])
         openChat(chatId)
       }
 
-      // 2. Create the user message object
+      const pendingAssistantId = crypto.randomUUID()
+
+      // 2. Add user + pending assistant locally for immediate UX
       const userMessage: ChatThread['messages'][0] = {
         id: crypto.randomUUID(),
         role: 'user',
-        content: inputValue,
-        created_at: new Date().toISOString()
-      };
+        content: trimmedInput,
+        created_at: new Date().toISOString(),
+      }
 
-      // 3. Update local state immediately for responsiveness
-      setChats(prevChats => prevChats.map(chat => {
-        if (chat.id === chatId) {
+      const pendingAssistantMessage: ChatThread['messages'][0] = {
+        id: pendingAssistantId,
+        role: 'assistant',
+        content: '',
+        created_at: new Date().toISOString(),
+      }
+
+      markRuntime(chatId, { isResponding: true })
+
+      setChats((prevChats) =>
+        prevChats.map((chat) => {
+          if (chat.id === chatId) {
+            return {
+              ...chat,
+              messages: [...chat.messages, userMessage, pendingAssistantMessage],
+            }
+          }
+          return chat
+        })
+      )
+      setInputValue('')
+
+      // 3. Persist user message
+      await addMessage(chatId, userMessage)
+
+      // 4. Query LLM
+      const queryResponse = await queryAgent({ question: trimmedInput })
+      const assistantContent = queryResponse.answer?.trim() || "I'm sorry, I couldn't generate a response."
+
+      const assistantMessage: ChatThread['messages'][0] = {
+        id: crypto.randomUUID(),
+        role: 'assistant',
+        content: assistantContent,
+        created_at: new Date().toISOString(),
+      }
+
+      // 5. Replace pending assistant with real answer
+      setChats((prevChats) =>
+        prevChats.map((chat) => {
+          if (chat.id === chatId) {
+            const nextMessages = chat.messages.map((message) =>
+              message.id === pendingAssistantId ? assistantMessage : message
+            )
+
+            const hasPendingStill = nextMessages.some((message) => message.id === pendingAssistantId)
+            if (!hasPendingStill) {
+              return {
+                ...chat,
+                messages: nextMessages,
+              }
+            }
+
           return {
             ...chat,
-            messages: [...chat.messages, userMessage]
+            messages: [...chat.messages, assistantMessage],
           }
+          }
+
+          return chat
+        })
+      )
+
+      // 6. Persist assistant message
+      await addMessage(chatId, assistantMessage)
+      markRuntime(chatId, { isResponding: false })
+
+      // 7. Generate and persist final title for placeholder chats
+      if (shouldGenerateTitle) {
+        markRuntime(chatId, { isGeneratingTitle: true })
+        try {
+          const updatedChat = await generateChatTitle(chatId)
+          setChats((prevChats) =>
+            prevChats.map((chat) => (chat.id === chatId ? updatedChat : chat))
+          )
+        } catch (titleError) {
+          console.error('Failed to generate title:', titleError)
+        } finally {
+          markRuntime(chatId, { isGeneratingTitle: false })
         }
-        return chat;
-      }));
-      setInputValue('');
+      }
 
-      // 4. Save user message to backend
-      await addMessage(chatId, userMessage);
-
-      // TODO: Here we will later call the RAG agent endpoint 
-      // and append the assistant's response.
-      
     } catch (error) {
-      console.error('Failed to send message:', error);
+      console.error('Failed to send message:', error)
+
+      if (requestChatId) {
+        markRuntime(requestChatId, { isResponding: false, isGeneratingTitle: false })
+      }
+
+      const errorAssistantMessage: ChatThread['messages'][0] = {
+        id: crypto.randomUUID(),
+        role: 'assistant',
+        content: 'Sorry, I hit an error while generating a response. Please try again.',
+        created_at: new Date().toISOString(),
+      }
+
+      setChats((prevChats) =>
+        prevChats.map((chat) => {
+          if (!requestChatId || chat.id !== requestChatId) {
+            return chat
+          }
+
+          const messagesWithoutPending = chat.messages.filter(
+            (message) => !(message.role === 'assistant' && message.content.trim() === '')
+          )
+
+          return {
+            ...chat,
+            messages: [...messagesWithoutPending, errorAssistantMessage],
+          }
+        })
+      )
     }
   }
 
@@ -253,7 +372,10 @@ function App() {
               title={chat.title}
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleOpenChat(chat.id) }}
             >
-              <span className="sidebar-item-title">{chat.title}</span>
+              <span className="sidebar-item-title-wrap">
+                {chatRuntime[chat.id]?.isGeneratingTitle && <Loader2 size={12} className="sidebar-title-loader spin" />}
+                <span className="sidebar-item-title">{chat.title}</span>
+              </span>
               <button
                 className="sidebar-chat-menu-btn"
                 type="button"
