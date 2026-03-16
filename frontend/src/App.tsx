@@ -1,10 +1,10 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { Archive, BookType, LoaderCircle, LogOut, MoreHorizontal, PanelRightClose, PanelRightOpen, Pencil, Pin, Settings, SquarePen, Trash2 } from './icons'
 import { useFloatingPopover } from './hooks/useFloatingPopover'
 import { useAppRouting } from './hooks/useAppRouting'
 import AppRoutes from './routes/AppRoutes'
 import { queryAgent, streamQuery } from './services/query'
-import { getChats, createChat, addMessage, generateChatTitle, updateChat } from './services/chats'
+import { getChats, createChat, addMessage, deleteChat, generateChatTitle, updateChat } from './services/chats'
 import type { ChatThread } from './types'
 import { parseAssistantResponse } from './utils/assistantResponse'
 import './App.css'
@@ -23,12 +23,30 @@ function App() {
   const [isLoadingChats, setIsLoadingChats] = useState(true)
   const [chatRuntime, setChatRuntime] = useState<Record<string, ChatRuntimeState>>({})
   const [regeneratingAssistantMessageId, setRegeneratingAssistantMessageId] = useState<string | null>(null)
+  const [renamingChatId, setRenamingChatId] = useState<string | null>(null)
+  const [renamingValue, setRenamingValue] = useState('')
 
   const [isProfilePopoverOpen, setIsProfilePopoverOpen] = useState(false)
   const [activeChatMenuId, setActiveChatMenuId] = useState<string | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const renameCommitLockRef = useRef(false)
   const username = 'Avery'
   const activeChat = chats.find((chat) => chat.id === activeChatId) || null
+
+  const orderedChats = useMemo(() => {
+    const pinned: ChatThread[] = []
+    const unpinned: ChatThread[] = []
+
+    chats.forEach((chat) => {
+      if (chat.pinned) {
+        pinned.push(chat)
+      } else {
+        unpinned.push(chat)
+      }
+    })
+
+    return [...pinned, ...unpinned]
+  }, [chats])
 
   const profilePopover = useFloatingPopover({
     isOpen: isProfilePopoverOpen,
@@ -523,6 +541,85 @@ function App() {
     setActiveChatMenuId(null)
   }
 
+  const handleStartRenameChat = (chatId: string) => {
+    const chat = chats.find((item) => item.id === chatId)
+    if (!chat) {
+      return
+    }
+
+    setRenamingChatId(chatId)
+    setRenamingValue(chat.title)
+    setActiveChatMenuId(null)
+  }
+
+  const handleSubmitRenameChat = async (chatId: string) => {
+    if (renameCommitLockRef.current) {
+      return
+    }
+    renameCommitLockRef.current = true
+
+    const chat = chats.find((item) => item.id === chatId)
+    const nextTitle = renamingValue.trim()
+
+    setRenamingChatId(null)
+    setRenamingValue('')
+
+    if (!chat || !nextTitle || nextTitle === chat.title) {
+      setTimeout(() => {
+        renameCommitLockRef.current = false
+      }, 0)
+      return
+    }
+
+    try {
+      const updated = await updateChat(chatId, { title: nextTitle })
+      setChats((prevChats) => prevChats.map((item) => (item.id === chatId ? updated : item)))
+    } catch (error) {
+      console.error('Failed to rename chat:', error)
+    } finally {
+      setTimeout(() => {
+        renameCommitLockRef.current = false
+      }, 0)
+    }
+  }
+
+  const handleTogglePinChat = async (chatId: string) => {
+    const chat = chats.find((item) => item.id === chatId)
+    if (!chat) {
+      return
+    }
+
+    try {
+      const updated = await updateChat(chatId, { pinned: !chat.pinned })
+      setChats((prevChats) => prevChats.map((item) => (item.id === chatId ? updated : item)))
+    } catch (error) {
+      console.error('Failed to toggle pin chat:', error)
+    } finally {
+      setActiveChatMenuId(null)
+    }
+  }
+
+  const handleDeleteChat = async (chatId: string) => {
+    const confirmed = window.confirm('Delete this chat? This action cannot be undone.')
+    if (!confirmed) {
+      return
+    }
+
+    try {
+      await deleteChat(chatId)
+      setChats((prevChats) => prevChats.filter((chat) => chat.id !== chatId))
+
+      if (activeChatId === chatId) {
+        openNewChat()
+        setInputValue('')
+      }
+    } catch (error) {
+      console.error('Failed to delete chat:', error)
+    } finally {
+      setActiveChatMenuId(null)
+    }
+  }
+
   return (
     <div className="app-shell">
       {/* Mobile backdrop */}
@@ -577,20 +674,55 @@ function App() {
           <div className="section-title">Chats</div>
           {isLoadingChats && <div className="model-empty">Loading chats...</div>}
           {!isLoadingChats && chats.length === 0 && <div className="model-empty">No chats yet</div>}
-          {!isLoadingChats && chats.map((chat) => (
+          {!isLoadingChats && orderedChats.map((chat) => (
             <div
               key={chat.id}
               className={chat.id === activeChatId ? 'sidebar-chat-row is-active' : 'sidebar-chat-row'}
               role="button"
               tabIndex={0}
-              onClick={() => handleOpenChat(chat.id)}
+              onClick={() => {
+                if (renamingChatId === chat.id) {
+                  return
+                }
+                handleOpenChat(chat.id)
+              }}
               title={chat.title}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleOpenChat(chat.id) }}
+              onKeyDown={(e) => {
+                if (renamingChatId === chat.id) {
+                  return
+                }
+                if (e.key === 'Enter' || e.key === ' ') handleOpenChat(chat.id)
+              }}
             >
               <span className="sidebar-item-title-wrap">
                 {chatRuntime[chat.id]?.isGeneratingTitle && <LoaderCircle size={12} className="sidebar-title-loader spin" />}
-                <span className="sidebar-item-title">{chat.title}</span>
+                {renamingChatId === chat.id ? (
+                  <input
+                    className="sidebar-chat-title-input"
+                    value={renamingValue}
+                    onChange={(e) => setRenamingValue(e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
+                    onBlur={() => {
+                      void handleSubmitRenameChat(chat.id)
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        void handleSubmitRenameChat(chat.id)
+                      }
+                      if (e.key === 'Escape') {
+                        e.preventDefault()
+                        setRenamingChatId(null)
+                        setRenamingValue('')
+                      }
+                    }}
+                    autoFocus
+                  />
+                ) : (
+                  <span className="sidebar-item-title">{chat.title}</span>
+                )}
               </span>
+              {chat.pinned && <Pin size={12} className="sidebar-chat-pin-indicator" />}
               <button
                 className="sidebar-chat-menu-btn"
                 type="button"
@@ -617,19 +749,15 @@ function App() {
               className="floating-popover chat-actions-popover"
               style={chatActionsPopover.floatingStyle}
             >
-              <button className="chat-actions-item" type="button" onClick={() => setActiveChatMenuId(null)}>
+              <button className="chat-actions-item" type="button" onClick={() => handleStartRenameChat(activeChatMenuId)}>
                 <Pencil size={16} />
                 <span>Rename</span>
               </button>
-              <button className="chat-actions-item" type="button" onClick={() => setActiveChatMenuId(null)}>
+              <button className="chat-actions-item" type="button" onClick={() => void handleTogglePinChat(activeChatMenuId)}>
                 <Pin size={16} />
-                <span>Pin</span>
+                <span>{chats.find((chat) => chat.id === activeChatMenuId)?.pinned ? 'Unpin' : 'Pin'}</span>
               </button>
-              <button className="chat-actions-item" type="button" onClick={() => setActiveChatMenuId(null)}>
-                <Archive size={16} />
-                <span>Archive</span>
-              </button>
-              <button className="chat-actions-item danger" type="button" onClick={() => setActiveChatMenuId(null)}>
+              <button className="chat-actions-item danger" type="button" onClick={() => handleDeleteChat(activeChatMenuId)}>
                 <Trash2 size={16} />
                 <span>Delete</span>
               </button>
