@@ -27,6 +27,7 @@ class ChatCreate(BaseModel):
     title: str = Field(default="New Chat", max_length=100)
     template_id: Optional[str] = Field(None, description="Optional template ID to bind this chat to")
     pinned: bool = Field(default=False, description="Whether chat is pinned in the sidebar")
+    model: Optional[str] = Field(None, description="Preferred model for this chat")
 
 
 class Chat(BaseModel):
@@ -36,6 +37,7 @@ class Chat(BaseModel):
     title: str
     template_id: Optional[str] = None
     pinned: bool = False
+    model: Optional[str] = None
     messages: List[Message] = Field(default_factory=list)
     created_at: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
     updated_at: Optional[str] = None
@@ -47,4 +49,5 @@ class ChatUpdate(BaseModel):
     title: Optional[str] = Field(None, max_length=100)
     template_id: Optional[str] = None
     pinned: Optional[bool] = None
+    model: Optional[str] = None
     messages: Optional[List[Message]] = None
