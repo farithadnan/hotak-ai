@@ -26,10 +26,16 @@ export function parseAssistantResponse(raw: string): ParsedAssistantResponse {
     sourcesPart = text.slice(sourcesHeaderMatch.index + sourcesHeaderMatch[0].length)
   }
 
+  // Remove wrappers like "Question:" and keep only answer section if present.
+  const answerMatch = /Answer\s*:\s*([\s\S]*)$/i.exec(contentPart)
+  const contentCandidate = answerMatch ? answerMatch[1] : contentPart
+
   // Remove inline citation markers such as [1], [2], etc.
-  const cleanedContent = contentPart
+  const cleanedContent = contentCandidate
     .replace(/\s*\[\d+\]/g, '')
     .replace(/[ \t]+\n/g, '\n')
+    .replace(/^Question\s*:\s*.*$/gim, '')
+    .replace(/^Answer\s*:\s*/gim, '')
     .trim()
 
   if (!sourcesPart) {
@@ -48,7 +54,18 @@ export function parseAssistantResponse(raw: string): ParsedAssistantResponse {
       const numbered = line.match(/^\[?\d+\]?\s*[:.)-]?\s*(.+)$/)
       return numbered ? numbered[1].trim() : line
     })
-    .filter((line) => line.length > 0 && !/^none$/i.test(line))
+    .filter((line) => {
+      if (line.length === 0) {
+        return false
+      }
+
+      // Ignore placeholders/non-sources such as "None" or "None [1]"
+      if (/^none(\s*\[\d+\])?$/i.test(line)) {
+        return false
+      }
+
+      return true
+    })
 
   return {
     content: cleanedContent,
