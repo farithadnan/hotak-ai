@@ -5,9 +5,15 @@ from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from openai import RateLimitError
+from langchain.chat_models import init_chat_model
 
-from ..agents.rag_agent import validate_and_format_response
-from ..config.settings import STREAM_MAX_CHARS
+from ..agents.rag_agent import create_rag_agent, validate_and_format_response
+from ..config.settings import (
+    LLM_MAX_TOKENS,
+    LLM_MODEL,
+    LLM_TEMPERATURE,
+    STREAM_MAX_CHARS,
+)
 from ..utils.logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -41,6 +47,30 @@ async def health_check():
 class QueryRequest(BaseModel):
     """Request model for query endpoint."""
     question: str
+    model: str | None = None
+
+
+def _get_rag_agent_for_model(http_request: Request, requested_model: str | None):
+    model_name = (requested_model or LLM_MODEL).strip() or LLM_MODEL
+
+    if model_name == LLM_MODEL:
+        return http_request.app.state.rag_agent, model_name
+
+    cache = getattr(http_request.app.state, "rag_agents_by_model", None)
+    if cache is None:
+        cache = {}
+        http_request.app.state.rag_agents_by_model = cache
+
+    if model_name not in cache:
+        logger.info("Creating model-specific RAG agent for model=%s", model_name)
+        model_llm = init_chat_model(
+            model=model_name,
+            temperature=LLM_TEMPERATURE,
+            max_tokens=LLM_MAX_TOKENS,
+        )
+        cache[model_name] = create_rag_agent(model_llm, http_request.app.state.vector_store)
+
+    return cache[model_name], model_name
 
 
 @router.post("/query")
@@ -49,7 +79,9 @@ async def query_endpoint(request: QueryRequest, http_request: Request):
     try:
         logger.info(f"Processing query: {request.question}")
 
-        response = http_request.app.state.rag_agent.invoke(
+        rag_agent, model_used = _get_rag_agent_for_model(http_request, request.model)
+
+        response = rag_agent.invoke(
             {"messages": [{"role": "user", "content": request.question}]}
         )
 
@@ -76,7 +108,8 @@ async def query_endpoint(request: QueryRequest, http_request: Request):
 
         return {
             "answer": validated_response,
-            "citation_info": citation_info
+            "citation_info": citation_info,
+            "model": model_used,
         }
 
     except RateLimitError as e:
@@ -125,7 +158,7 @@ async def query_stream_endpoint(request: QueryRequest, http_request: Request):
 
         async def event_generator():
             payload = {"messages": [{"role": "user", "content": request.question}]}
-            rag_agent = http_request.app.state.rag_agent
+            rag_agent, _ = _get_rag_agent_for_model(http_request, request.model)
             full_text = ""
             emitted_chars = 0
             max_stream_chars = max(500, STREAM_MAX_CHARS)
