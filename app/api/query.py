@@ -70,15 +70,24 @@ async def query_stream_endpoint(request: QueryRequest, http_request: Request):
         logger.info(f"Processing streaming query: {request.question}")
 
         async def event_generator():
-            async for event in http_request.app.state.rag_agent.stream(
-                {"messages": [{"role": "user", "content": request.question}]},
-                stream_mode="values",
-            ):
-                last_message = event["messages"][-1]
-                if hasattr(last_message, "content"):
-                    content = last_message.content
-                    if isinstance(content, str):
-                        yield content
+            payload = {"messages": [{"role": "user", "content": request.question}]}
+            rag_agent = http_request.app.state.rag_agent
+
+            # LangGraph/LangChain agents may expose async `astream` or sync `stream`.
+            if hasattr(rag_agent, "astream"):
+                async for event in rag_agent.astream(payload, stream_mode="values"):
+                    last_message = event["messages"][-1]
+                    if hasattr(last_message, "content"):
+                        content = last_message.content
+                        if isinstance(content, str):
+                            yield content
+            else:
+                for event in rag_agent.stream(payload, stream_mode="values"):
+                    last_message = event["messages"][-1]
+                    if hasattr(last_message, "content"):
+                        content = last_message.content
+                        if isinstance(content, str):
+                            yield content
 
         return StreamingResponse(event_generator(), media_type="text/plain")
 
