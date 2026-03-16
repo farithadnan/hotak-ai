@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Copy, Pencil, RotateCcw } from 'lucide-react';
+import { Copy, Pencil, RotateCcw } from '../../../icons';
 import { Composer } from '../../common/Composer/Composer';
 import { Toastr } from '../../common/Toastr/Toastr';
 import type { ChatThread } from '../../../types';

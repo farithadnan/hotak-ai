@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { Briefcase, Mic, SendHorizontal, Plus, Upload, Link, FileText } from 'lucide-react'
+import { Briefcase, Mic, SendHorizontal, Plus, Upload, Link, FileText } from '../../../icons'
 import { useClickOutside } from '../../../hooks/useClickOutside'
 
 import style from './Composer.module.css'

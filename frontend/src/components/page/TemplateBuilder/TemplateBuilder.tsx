@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { createTemplate, updateTemplate } from '../../../services';
 import type { TemplateCreate } from '../../../types/models';
 import { DEFAULT_TEMPLATE_SETTINGS } from '../../../types/models';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2 } from '../../../icons';
 import { Modal } from '../../common/Modal/Modal';
 import style from './TemplateBuilder.module.css';
 

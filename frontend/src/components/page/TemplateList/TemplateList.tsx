@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Pencil, Search, Trash2, Plus } from 'lucide-react'
+import { Pencil, Search, Trash2, Plus } from '../../../icons'
 import { deleteTemplate, getTemplates } from '../../../services'
 import { ConfirmDialog } from '../../common/ConfirmDialog/ConfirmDialog'
 import { Toastr } from '../../common/Toastr/Toastr'

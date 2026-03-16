@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react'
-import { ChevronDown, PanelRightClose, Search } from 'lucide-react'
+import { ChevronDown, PanelRightClose, Search } from '../../../icons'
 import ChatWindow from '../ChatWindow/ChatWindow'
 import type { ChatThread, Model } from '../../../types'
 import { useClickOutside } from '../../../hooks/useClickOutside'
