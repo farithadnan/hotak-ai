@@ -3,6 +3,9 @@ import { Archive, BookType, LoaderCircle, LogOut, MoreHorizontal, PanelRightClos
 import { useFloatingPopover } from './hooks/useFloatingPopover'
 import { useAppRouting } from './hooks/useAppRouting'
 import AppRoutes from './routes/AppRoutes'
+import { ConfirmDialog } from './components/common/ConfirmDialog/ConfirmDialog'
+import { Toastr } from './components/common/Toastr/Toastr'
+import type { ToastrType, ToastrPosition } from './components/common/Toastr/Toastr'
 import { queryAgent, streamQuery } from './services/query'
 import { getChats, createChat, addMessage, deleteChat, generateChatTitle, updateChat } from './services/chats'
 import type { ChatThread } from './types'
@@ -28,10 +31,27 @@ function App() {
 
   const [isProfilePopoverOpen, setIsProfilePopoverOpen] = useState(false)
   const [activeChatMenuId, setActiveChatMenuId] = useState<string | null>(null)
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
+  const [pendingDeleteChatId, setPendingDeleteChatId] = useState<string | null>(null)
+  const [toastr, setToastr] = useState({
+    open: false,
+    message: '',
+    title: '',
+    type: 'info' as ToastrType,
+    position: 'top-right' as ToastrPosition,
+  })
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const renameCommitLockRef = useRef(false)
   const username = 'Avery'
   const activeChat = chats.find((chat) => chat.id === activeChatId) || null
+
+  const showToastr = (options: Partial<typeof toastr>) => {
+    setToastr((prev) => ({
+      ...prev,
+      ...options,
+      open: true,
+    }))
+  }
 
   const orderedChats = useMemo(() => {
     const pinned: ChatThread[] = []
@@ -599,15 +619,33 @@ function App() {
     }
   }
 
-  const handleDeleteChat = async (chatId: string) => {
-    const confirmed = window.confirm('Delete this chat? This action cannot be undone.')
-    if (!confirmed) {
+  const handleRequestDeleteChat = (chatId: string) => {
+    setPendingDeleteChatId(chatId)
+    setIsDeleteConfirmOpen(true)
+    setActiveChatMenuId(null)
+  }
+
+  const handleCancelDeleteChat = () => {
+    setIsDeleteConfirmOpen(false)
+    setPendingDeleteChatId(null)
+  }
+
+  const handleConfirmDeleteChat = async () => {
+    const chatId = pendingDeleteChatId
+    if (!chatId) {
       return
     }
+
+    setIsDeleteConfirmOpen(false)
 
     try {
       await deleteChat(chatId)
       setChats((prevChats) => prevChats.filter((chat) => chat.id !== chatId))
+      showToastr({
+        title: 'Deleted',
+        message: 'Chat deleted successfully.',
+        type: 'success',
+      })
 
       if (activeChatId === chatId) {
         openNewChat()
@@ -615,8 +653,13 @@ function App() {
       }
     } catch (error) {
       console.error('Failed to delete chat:', error)
+      showToastr({
+        title: 'Delete failed',
+        message: 'Failed to delete chat. Please try again.',
+        type: 'error',
+      })
     } finally {
-      setActiveChatMenuId(null)
+      setPendingDeleteChatId(null)
     }
   }
 
@@ -757,7 +800,7 @@ function App() {
                 <Pin size={16} />
                 <span>{chats.find((chat) => chat.id === activeChatMenuId)?.pinned ? 'Unpin' : 'Pin'}</span>
               </button>
-              <button className="chat-actions-item danger" type="button" onClick={() => handleDeleteChat(activeChatMenuId)}>
+              <button className="chat-actions-item danger" type="button" onClick={() => handleRequestDeleteChat(activeChatMenuId)}>
                 <Trash2 size={16} />
                 <span>Delete</span>
               </button>
@@ -849,6 +892,31 @@ function App() {
           onToggleSidebar={() => setIsSidebarCollapsed((prev) => !prev)}
         />
       </main>
+
+      <ConfirmDialog
+        open={isDeleteConfirmOpen}
+        title="Delete Chat"
+        message={
+          pendingDeleteChatId
+            ? `Delete "${chats.find((chat) => chat.id === pendingDeleteChatId)?.title || 'this chat'}"? This cannot be undone.`
+            : ''
+        }
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={() => {
+          void handleConfirmDeleteChat()
+        }}
+        onCancel={handleCancelDeleteChat}
+      />
+
+      <Toastr
+        open={toastr.open}
+        title={toastr.title || undefined}
+        message={toastr.message}
+        type={toastr.type}
+        position={toastr.position}
+        onClose={() => setToastr((prev) => ({ ...prev, open: false }))}
+      />
     </div>
   )
 }
