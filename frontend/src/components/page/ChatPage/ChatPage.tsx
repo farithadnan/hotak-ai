@@ -1,8 +1,9 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronDown, PanelRightClose, Search } from '../../../icons'
 import ChatWindow from '../ChatWindow/ChatWindow'
 import type { ChatThread, Model } from '../../../types'
 import { useClickOutside } from '../../../hooks/useClickOutside'
+import { getAvailableModels } from '../../../services/models'
 
 interface ChatPageProps {
   activeChat: ChatThread | null
@@ -10,10 +11,10 @@ interface ChatPageProps {
   hasActiveChatId: boolean
   inputValue: string
   onInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void
-  onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void
-  onSend: () => void
-  onUpdateUserMessage: (messageId: string, content: string) => void
-  onRegenerateAssistantMessage: (messageId: string) => void
+  onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>, modelId?: string) => void
+  onSend: (modelId?: string) => void
+  onUpdateUserMessage: (messageId: string, content: string, modelId?: string) => void
+  onRegenerateAssistantMessage: (messageId: string, modelId?: string) => void
   regeneratingAssistantMessageId: string | null
   textareaRef: React.RefObject<HTMLTextAreaElement | null>
   username: string
@@ -36,24 +37,33 @@ function ChatPage({
   onToggleSidebar,
 }: ChatPageProps) {
   const [model, setModel] = useState('gpt-4o-mini')
+  const [isLoadingModels, setIsLoadingModels] = useState(false)
   const [isModelPopoverOpen, setIsModelPopoverOpen] = useState(false)
   const [modelSearch, setModelSearch] = useState('')
   const modelPopoverRef = useRef<HTMLDivElement>(null)
 
-  const availableModels = useMemo<Model[]>(
-    () => [
-      { id: 'gpt-4o', name: 'GPT-4o', category: 'OpenAI' },
-      { id: 'gpt-4o-mini', name: 'GPT-4o Mini', category: 'OpenAI' },
-      { id: 'gpt-4-turbo', name: 'GPT-4 Turbo', category: 'OpenAI' },
-      { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', category: 'OpenAI' },
-      { id: 'claude-3-opus', name: 'Claude 3 Opus', category: 'Anthropic' },
-      { id: 'claude-3-sonnet', name: 'Claude 3 Sonnet', category: 'Anthropic' },
-      { id: 'claude-3-haiku', name: 'Claude 3 Haiku', category: 'Anthropic' },
-      { id: 'gemini-pro', name: 'Gemini Pro', category: 'Google' },
-      { id: 'gemini-pro-vision', name: 'Gemini Pro Vision', category: 'Google' },
-    ],
-    []
-  )
+  const [availableModels, setAvailableModels] = useState<Model[]>([
+    { id: 'gpt-4o-mini', name: 'Gpt 4o Mini', category: 'OpenAI' },
+  ])
+
+  useEffect(() => {
+    const loadModels = async () => {
+      try {
+        setIsLoadingModels(true)
+        const models = await getAvailableModels()
+        if (models.length > 0) {
+          setAvailableModels(models)
+          setModel((current) => (models.some((item) => item.id === current) ? current : models[0].id))
+        }
+      } catch (error) {
+        console.error('Failed to load models:', error)
+      } finally {
+        setIsLoadingModels(false)
+      }
+    }
+
+    void loadModels()
+  }, [])
 
   const filteredModels = useMemo(
     () =>
@@ -120,7 +130,9 @@ function ChatPage({
                   />
                 </div>
                 <div className="model-list">
-                  {filteredModels.length === 0 ? (
+                  {isLoadingModels ? (
+                    <div className="model-empty">Loading models...</div>
+                  ) : filteredModels.length === 0 ? (
                     <div className="model-empty">No models found</div>
                   ) : (
                     filteredModels.map((m) => (
@@ -149,10 +161,10 @@ function ChatPage({
         hasActiveChatId={hasActiveChatId}
         inputValue={inputValue}
         onInputChange={onInputChange}
-        onKeyDown={onKeyDown}
-        onSend={onSend}
-        onUpdateUserMessage={onUpdateUserMessage}
-        onRegenerateAssistantMessage={onRegenerateAssistantMessage}
+        onKeyDown={(e) => onKeyDown(e, model)}
+        onSend={() => onSend(model)}
+        onUpdateUserMessage={(messageId, content) => onUpdateUserMessage(messageId, content, model)}
+        onRegenerateAssistantMessage={(messageId) => onRegenerateAssistantMessage(messageId, model)}
         regeneratingAssistantMessageId={regeneratingAssistantMessageId}
         textareaRef={textareaRef}
         username={username}

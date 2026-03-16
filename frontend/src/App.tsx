@@ -130,18 +130,19 @@ function App() {
 
   const streamAssistantText = async (
     question: string,
-    onPartial: (partialText: string) => void
+    onPartial: (partialText: string) => void,
+    modelId?: string,
   ) => {
     let streamedContent = ''
 
     try {
-      for await (const chunk of streamQuery({ question })) {
+      for await (const chunk of streamQuery({ question, model: modelId })) {
         streamedContent += chunk
         onPartial(streamedContent)
       }
     } catch (streamError) {
       console.warn('Stream failed, falling back to non-stream query:', streamError)
-      const fallback = await queryAgent({ question })
+      const fallback = await queryAgent({ question, model: modelId })
       streamedContent = fallback.answer?.trim() || streamedContent
       onPartial(streamedContent)
     }
@@ -149,14 +150,14 @@ function App() {
     return streamedContent
   }
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>, modelId?: string) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
-      handleSend()
+      handleSend(modelId)
     }
   }
 
-  const handleSend = async () => {
+  const handleSend = async (modelId?: string) => {
     const trimmedInput = inputValue.trim()
     if (!trimmedInput) {
       return
@@ -236,7 +237,7 @@ function App() {
             }
           })
         )
-      })
+      }, modelId)
 
       const parsedAssistant = parseAssistantResponse(streamedContent)
       const finalAssistantContent = parsedAssistant.content || "I'm sorry, I couldn't generate a response."
@@ -318,7 +319,7 @@ function App() {
     }
   }
 
-  const handleUpdateUserMessage = (messageId: string, content: string) => {
+  const handleUpdateUserMessage = (messageId: string, content: string, modelId?: string) => {
     if (!activeChatId || !activeChat) {
       return
     }
@@ -405,7 +406,7 @@ function App() {
               }
             })
           )
-        })
+        }, modelId)
 
         const parsedAssistant = parseAssistantResponse(streamedContent)
         const finalAssistantContent = parsedAssistant.content || "I'm sorry, I couldn't generate a response."
@@ -440,7 +441,7 @@ function App() {
     })()
   }
 
-  const handleRegenerateAssistantMessage = (assistantMessageId: string) => {
+  const handleRegenerateAssistantMessage = (assistantMessageId: string, modelId?: string) => {
     if (!activeChat || !activeChatId) {
       return
     }
@@ -510,7 +511,7 @@ function App() {
               }
             })
           )
-        })
+        }, modelId)
 
         const parsedAssistant = parseAssistantResponse(streamedContent)
         const finalAssistantContent = parsedAssistant.content || "I'm sorry, I couldn't generate a response."
