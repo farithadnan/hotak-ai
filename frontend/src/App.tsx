@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { SquarePen, PanelRightClose, PanelRightOpen, Settings, Archive, LogOut, BookType } from 'lucide-react'
+import { SquarePen, PanelRightClose, PanelRightOpen, Settings, Archive, LogOut, BookType, MoreHorizontal } from 'lucide-react'
 import { useClickOutside } from './hooks/useClickOutside'
 import TemplateList from './components/page/TemplateList/TemplateList'
 import TemplateBuilder from './components/page/TemplateBuilder/TemplateBuilder'
@@ -303,14 +303,26 @@ function App() {
           {isLoadingChats && <div className="model-empty">Loading chats...</div>}
           {!isLoadingChats && chats.length === 0 && <div className="model-empty">No chats yet</div>}
           {!isLoadingChats && chats.map((chat) => (
-            <button
+            <div
               key={chat.id}
-              className={chat.id === activeChatId ? 'sidebar-item is-active' : 'sidebar-item'}
-              type="button"
+              className={chat.id === activeChatId ? 'sidebar-chat-row is-active' : 'sidebar-chat-row'}
+              role="button"
+              tabIndex={0}
               onClick={() => handleOpenChat(chat.id)}
+              title={chat.title}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleOpenChat(chat.id) }}
             >
-              {chat.title}
-            </button>
+              <span className="sidebar-item-title">{chat.title}</span>
+              <button
+                className="sidebar-chat-menu-btn"
+                type="button"
+                title="Chat actions"
+                aria-label="Chat actions"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <MoreHorizontal size={14} />
+              </button>
+            </div>
           ))}
         </div>
 
