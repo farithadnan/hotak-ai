@@ -1219,4 +1219,49 @@
     padding: 8px;
     box-sizing: border-box;
   }
+
+  .chat-area {
+    padding: 12px 8px;
+  }
+
+  .chat-scroll,
+  .chat-scroll.chat-scroll-fixed {
+    padding: 0 8px;
+    gap: 12px;
+    max-height: calc(100vh - 220px);
+  }
+
+  .composer-fixed-global {
+    width: 100%;
+    max-width: none;
+  }
+
+  .message-block,
+  .assistant-block {
+    max-width: 90%;
+  }
+
+  .message-block.is-editing {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  .chat-area {
+    padding: 10px 4px;
+  }
+
+  .chat-scroll,
+  .chat-scroll.chat-scroll-fixed {
+    padding: 0 4px;
+  }
+
+  .message-block,
+  .assistant-block {
+    max-width: 96%;
+  }
+
+  .bubble {
+    padding: 10px 12px;
+  }
 }

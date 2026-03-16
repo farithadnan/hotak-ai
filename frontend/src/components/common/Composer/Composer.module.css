@@ -203,3 +203,34 @@
   background: var(--color-accent);
   border-color: var(--color-accent);
 }
+
+@media (max-width: 900px) {
+  .composer {
+    padding: 10px 8px 14px;
+    gap: 8px;
+  }
+
+  .empty-composer {
+    padding: 8px 10px;
+    border-radius: 14px;
+  }
+
+  .composer-input-wrapper {
+    min-height: 96px;
+    padding: 10px 12px 44px 12px;
+  }
+
+  .composer-edit-mode .composer-input-wrapper {
+    min-height: 78px;
+  }
+}
+
+@media (max-width: 600px) {
+  .composer {
+    padding: 8px 4px 10px;
+  }
+
+  .composer-action-button {
+    padding: 5px;
+  }
+}
