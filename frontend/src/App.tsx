@@ -4,7 +4,7 @@ import { useFloatingPopover } from './hooks/useFloatingPopover'
 import { useAppRouting } from './hooks/useAppRouting'
 import AppRoutes from './routes/AppRoutes'
 import { queryAgent, streamQuery } from './services/query'
-import { getChats, createChat, addMessage, generateChatTitle } from './services/chats'
+import { getChats, createChat, addMessage, generateChatTitle, updateChat } from './services/chats'
 import type { ChatThread } from './types'
 import { parseAssistantResponse } from './utils/assistantResponse'
 import './App.css'
@@ -22,6 +22,7 @@ function App() {
   const [chats, setChats] = useState<ChatThread[]>([])
   const [isLoadingChats, setIsLoadingChats] = useState(true)
   const [chatRuntime, setChatRuntime] = useState<Record<string, ChatRuntimeState>>({})
+  const [regeneratingAssistantMessageId, setRegeneratingAssistantMessageId] = useState<string | null>(null)
 
   const [isProfilePopoverOpen, setIsProfilePopoverOpen] = useState(false)
   const [activeChatMenuId, setActiveChatMenuId] = useState<string | null>(null)
@@ -75,6 +76,40 @@ function App() {
     setInputValue(e.target.value)
   }
 
+  const markRuntime = (chatId: string, patch: Partial<ChatRuntimeState>) => {
+    setChatRuntime((prev) => {
+      const current = prev[chatId] ?? { isResponding: false, isGeneratingTitle: false }
+      return {
+        ...prev,
+        [chatId]: {
+          ...current,
+          ...patch,
+        },
+      }
+    })
+  }
+
+  const streamAssistantText = async (
+    question: string,
+    onPartial: (partialText: string) => void
+  ) => {
+    let streamedContent = ''
+
+    try {
+      for await (const chunk of streamQuery({ question })) {
+        streamedContent += chunk
+        onPartial(streamedContent)
+      }
+    } catch (streamError) {
+      console.warn('Stream failed, falling back to non-stream query:', streamError)
+      const fallback = await queryAgent({ question })
+      streamedContent = fallback.answer?.trim() || streamedContent
+      onPartial(streamedContent)
+    }
+
+    return streamedContent
+  }
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
@@ -89,19 +124,6 @@ function App() {
     }
 
     let requestChatId: string | null = activeChatId
-
-    const markRuntime = (chatId: string, patch: Partial<ChatRuntimeState>) => {
-      setChatRuntime((prev) => {
-        const current = prev[chatId] ?? { isResponding: false, isGeneratingTitle: false }
-        return {
-          ...prev,
-          [chatId]: {
-            ...current,
-            ...patch,
-          },
-        }
-      })
-    }
 
     try {
       let chatId = activeChatId
@@ -155,38 +177,27 @@ function App() {
       await addMessage(chatId, userMessage)
 
       // 4. Stream LLM response and update pending assistant in real-time.
-      // Fallback to non-stream endpoint if streaming transport fails.
-      let streamedContent = ''
-      try {
-        for await (const chunk of streamQuery({ question: trimmedInput })) {
-          streamedContent += chunk
-          const nextContent = streamedContent
+      const streamedContent = await streamAssistantText(trimmedInput, (partialText) => {
+        setChats((prevChats) =>
+          prevChats.map((chat) => {
+            if (chat.id !== chatId) {
+              return chat
+            }
 
-          setChats((prevChats) =>
-            prevChats.map((chat) => {
-              if (chat.id !== chatId) {
-                return chat
-              }
-
-              return {
-                ...chat,
-                messages: chat.messages.map((message) =>
-                  message.id === pendingAssistantId
-                    ? {
-                        ...message,
-                        content: nextContent,
-                      }
-                    : message
-                ),
-              }
-            })
-          )
-        }
-      } catch (streamError) {
-        console.warn('Stream failed, falling back to non-stream query:', streamError)
-        const fallback = await queryAgent({ question: trimmedInput })
-        streamedContent = fallback.answer?.trim() || streamedContent
-      }
+            return {
+              ...chat,
+              messages: chat.messages.map((message) =>
+                message.id === pendingAssistantId
+                  ? {
+                      ...message,
+                      content: partialText,
+                    }
+                  : message
+              ),
+            }
+          })
+        )
+      })
 
       const parsedAssistant = parseAssistantResponse(streamedContent)
       const finalAssistantContent = parsedAssistant.content || "I'm sorry, I couldn't generate a response."
@@ -269,33 +280,129 @@ function App() {
   }
 
   const handleUpdateUserMessage = (messageId: string, content: string) => {
-    if (!activeChatId) {
+    if (!activeChatId || !activeChat) {
       return
     }
 
-    setChats((prevChats) =>
-      prevChats.map((chat) => {
-        if (chat.id !== activeChatId) {
-          return chat
-        }
+    const trimmedContent = content.trim()
+    if (!trimmedContent) {
+      return
+    }
 
-        return {
-          ...chat,
-          messages: chat.messages.map((message) =>
-            message.id === messageId
+    void (async () => {
+      const userIndex = activeChat.messages.findIndex((message) => message.id === messageId)
+      if (userIndex === -1) {
+        return
+      }
+
+      let assistantTarget = activeChat.messages.find(
+        (message, idx) => idx > userIndex && message.role === 'assistant'
+      )
+
+      const pendingAssistantId = assistantTarget?.id ?? crypto.randomUUID()
+      const pendingAssistantCreatedAt = assistantTarget?.created_at ?? new Date().toISOString()
+
+      const baseMessages = activeChat.messages
+        .filter((message, idx) => idx <= userIndex || message.id === pendingAssistantId)
+        .map((message) => {
+          if (message.id === messageId) {
+            return {
+              ...message,
+              content: trimmedContent,
+            }
+          }
+
+          if (message.id === pendingAssistantId) {
+            return {
+              ...message,
+              content: '',
+              sources: undefined,
+            }
+          }
+
+          return message
+        })
+
+      if (!assistantTarget) {
+        baseMessages.push({
+          id: pendingAssistantId,
+          role: 'assistant',
+          content: '',
+          created_at: pendingAssistantCreatedAt,
+        })
+      }
+
+      setChats((prevChats) =>
+        prevChats.map((chat) =>
+          chat.id === activeChatId
+            ? {
+                ...chat,
+                messages: baseMessages,
+              }
+            : chat
+        )
+      )
+
+      markRuntime(activeChatId, { isResponding: true })
+
+      try {
+        const streamedContent = await streamAssistantText(trimmedContent, (partialText) => {
+          setChats((prevChats) =>
+            prevChats.map((chat) => {
+              if (chat.id !== activeChatId) {
+                return chat
+              }
+
+              return {
+                ...chat,
+                messages: chat.messages.map((message) =>
+                  message.id === pendingAssistantId
+                    ? {
+                        ...message,
+                        content: partialText,
+                      }
+                    : message
+                ),
+              }
+            })
+          )
+        })
+
+        const parsedAssistant = parseAssistantResponse(streamedContent)
+        const finalAssistantContent = parsedAssistant.content || "I'm sorry, I couldn't generate a response."
+
+        const finalMessages = baseMessages.map((message) =>
+          message.id === pendingAssistantId
+            ? {
+                ...message,
+                content: finalAssistantContent,
+                sources: parsedAssistant.sources,
+              }
+            : message
+        )
+
+        setChats((prevChats) =>
+          prevChats.map((chat) =>
+            chat.id === activeChatId
               ? {
-                  ...message,
-                  content,
+                  ...chat,
+                  messages: finalMessages,
                 }
-              : message
-          ),
-        }
-      })
-    )
+              : chat
+          )
+        )
+
+        await updateChat(activeChatId, { messages: finalMessages })
+      } catch (error) {
+        console.error('Failed to regenerate after edit:', error)
+      } finally {
+        markRuntime(activeChatId, { isResponding: false })
+      }
+    })()
   }
 
   const handleRegenerateAssistantMessage = (assistantMessageId: string) => {
-    if (!activeChat) {
+    if (!activeChat || !activeChatId) {
       return
     }
 
@@ -312,10 +419,92 @@ function App() {
       return
     }
 
-    setInputValue(previousUserMessage.content)
-    requestAnimationFrame(() => {
-      textareaRef.current?.focus()
-    })
+    const baseMessages = activeChat.messages.map((message) =>
+      message.id === assistantMessageId
+        ? {
+            ...message,
+            content: '',
+            sources: undefined,
+          }
+        : message
+    )
+
+    setChats((prevChats) =>
+      prevChats.map((chat) =>
+        chat.id === activeChatId
+          ? {
+              ...chat,
+              messages: baseMessages,
+            }
+          : chat
+      )
+    )
+
+    markRuntime(activeChatId, { isResponding: true })
+    setRegeneratingAssistantMessageId(assistantMessageId)
+
+    void (async () => {
+      try {
+        const regeneratePrompt = [
+          previousUserMessage.content,
+          '',
+          'Please provide an alternative answer with different wording and structure from your previous response while keeping the same meaning.',
+        ].join('\n')
+
+        const streamedContent = await streamAssistantText(regeneratePrompt, (partialText) => {
+          setChats((prevChats) =>
+            prevChats.map((chat) => {
+              if (chat.id !== activeChatId) {
+                return chat
+              }
+
+              return {
+                ...chat,
+                messages: chat.messages.map((message) =>
+                  message.id === assistantMessageId
+                    ? {
+                        ...message,
+                        content: partialText,
+                      }
+                    : message
+                ),
+              }
+            })
+          )
+        })
+
+        const parsedAssistant = parseAssistantResponse(streamedContent)
+        const finalAssistantContent = parsedAssistant.content || "I'm sorry, I couldn't generate a response."
+
+        const finalMessages = baseMessages.map((message) =>
+          message.id === assistantMessageId
+            ? {
+                ...message,
+                content: finalAssistantContent,
+                sources: parsedAssistant.sources,
+              }
+            : message
+        )
+
+        setChats((prevChats) =>
+          prevChats.map((chat) =>
+            chat.id === activeChatId
+              ? {
+                  ...chat,
+                  messages: finalMessages,
+                }
+              : chat
+          )
+        )
+
+        await updateChat(activeChatId, { messages: finalMessages })
+      } catch (error) {
+        console.error('Failed to regenerate assistant message:', error)
+      } finally {
+        markRuntime(activeChatId, { isResponding: false })
+        setRegeneratingAssistantMessageId(null)
+      }
+    })()
   }
 
   const handleOpenTemplates = () => {
@@ -526,6 +715,7 @@ function App() {
           onSend={handleSend}
           onUpdateUserMessage={handleUpdateUserMessage}
           onRegenerateAssistantMessage={handleRegenerateAssistantMessage}
+          regeneratingAssistantMessageId={regeneratingAssistantMessageId}
           textareaRef={textareaRef}
           username={username}
           onToggleSidebar={() => setIsSidebarCollapsed((prev) => !prev)}

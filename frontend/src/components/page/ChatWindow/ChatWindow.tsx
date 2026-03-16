@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Bot, Copy, RotateCcw, Pencil } from '../../../icons';
+import { Bot, Copy, LoaderCircle, RotateCcw, Pencil } from '../../../icons';
 import { Composer } from '../../common/Composer/Composer';
 import { Toastr } from '../../common/Toastr/Toastr';
 import { parseAssistantResponse } from '../../../utils/assistantResponse';
@@ -14,6 +14,7 @@ interface ChatWindowProps {
   onSend: () => void;
   onUpdateUserMessage: (messageId: string, content: string) => void;
   onRegenerateAssistantMessage: (messageId: string) => void;
+  regeneratingAssistantMessageId: string | null;
   textareaRef: React.RefObject<HTMLTextAreaElement | null>;
   username?: string;
 }
@@ -26,6 +27,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   onSend,
   onUpdateUserMessage,
   onRegenerateAssistantMessage,
+  regeneratingAssistantMessageId,
   textareaRef,
   username = 'User',
 }) => {
@@ -269,8 +271,13 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                             onClick={() => onRegenerateAssistantMessage(message.id)}
                             title="Regenerate"
                             aria-label="Regenerate"
+                            disabled={regeneratingAssistantMessageId === message.id}
                           >
-                            <RotateCcw size={14} />
+                            {regeneratingAssistantMessageId === message.id ? (
+                              <LoaderCircle size={14} className="spin" />
+                            ) : (
+                              <RotateCcw size={14} />
+                            )}
                           </button>
                         </div>
                       </>

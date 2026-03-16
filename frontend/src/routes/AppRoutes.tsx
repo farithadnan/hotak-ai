@@ -11,6 +11,7 @@ type AppRoutesProps = {
   onSend: () => void
   onUpdateUserMessage: (messageId: string, content: string) => void
   onRegenerateAssistantMessage: (messageId: string) => void
+  regeneratingAssistantMessageId: string | null
   textareaRef: React.RefObject<HTMLTextAreaElement | null>
   username: string
   onToggleSidebar: () => void
@@ -24,6 +25,7 @@ function AppRoutes({
   onSend,
   onUpdateUserMessage,
   onRegenerateAssistantMessage,
+  regeneratingAssistantMessageId,
   textareaRef,
   username,
   onToggleSidebar,
@@ -36,6 +38,7 @@ function AppRoutes({
     onSend,
     onUpdateUserMessage,
     onRegenerateAssistantMessage,
+    regeneratingAssistantMessageId,
     textareaRef,
     username,
     onToggleSidebar,

@@ -12,6 +12,7 @@ interface ChatPageProps {
   onSend: () => void
   onUpdateUserMessage: (messageId: string, content: string) => void
   onRegenerateAssistantMessage: (messageId: string) => void
+  regeneratingAssistantMessageId: string | null
   textareaRef: React.RefObject<HTMLTextAreaElement | null>
   username: string
   onToggleSidebar: () => void
@@ -25,6 +26,7 @@ function ChatPage({
   onSend,
   onUpdateUserMessage,
   onRegenerateAssistantMessage,
+  regeneratingAssistantMessageId,
   textareaRef,
   username,
   onToggleSidebar,
@@ -145,6 +147,7 @@ function ChatPage({
         onSend={onSend}
         onUpdateUserMessage={onUpdateUserMessage}
         onRegenerateAssistantMessage={onRegenerateAssistantMessage}
+        regeneratingAssistantMessageId={regeneratingAssistantMessageId}
         textareaRef={textareaRef}
         username={username}
       />
