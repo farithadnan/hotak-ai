@@ -12,6 +12,7 @@ export {
   PanelRightClose,
   PanelRightOpen,
   Pencil,
+  Pin,
   Plus,
   RotateCcw,
   Search,
