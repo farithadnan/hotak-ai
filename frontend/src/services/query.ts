@@ -16,6 +16,8 @@ export interface QueryRequest {
 export interface QueryResponse {
   answer: string;
   citation_info: string;
+  model?: string;
+  warning?: string;
 }
 
 export type QueryStreamChunk = string;

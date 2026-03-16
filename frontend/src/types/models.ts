@@ -129,6 +129,7 @@ export interface Chat {
   title: string;                       // Matches backend 'title'
   template_id: string | null;          // Matches backend 'template_id'
   pinned: boolean;
+  model?: string | null;
   messages: Message[];
   created_at: string;
   updated_at: string | null;
@@ -151,6 +152,7 @@ export interface Message {
 export interface ChatCreate {
   title?: string;
   template_id?: string;
+  model?: string;
 }
 
 /**
@@ -160,6 +162,7 @@ export interface ChatUpdate {
   title?: string;
   template_id?: string;
   pinned?: boolean;
+  model?: string;
   messages?: Message[];
 }
 
