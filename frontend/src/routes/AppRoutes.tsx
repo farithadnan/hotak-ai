@@ -11,6 +11,7 @@ type AppRoutesProps = {
   onInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void
   onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>, modelId?: string) => void
   onSend: (modelId?: string) => void
+  onChangeActiveChatModel: (modelId: string) => void
   onUpdateUserMessage: (messageId: string, content: string, modelId?: string) => void
   onRegenerateAssistantMessage: (messageId: string, modelId?: string) => void
   regeneratingAssistantMessageId: string | null
@@ -27,6 +28,7 @@ function AppRoutes({
   onInputChange,
   onKeyDown,
   onSend,
+  onChangeActiveChatModel,
   onUpdateUserMessage,
   onRegenerateAssistantMessage,
   regeneratingAssistantMessageId,
@@ -42,6 +44,7 @@ function AppRoutes({
     onInputChange,
     onKeyDown,
     onSend,
+    onChangeActiveChatModel,
     onUpdateUserMessage,
     onRegenerateAssistantMessage,
     regeneratingAssistantMessageId,
