@@ -1,5 +1,6 @@
 export {
   Archive,
+  Bot,
   BookType,
   Briefcase,
   ChevronDown,
@@ -7,6 +8,7 @@ export {
   FileText,
   Link,
   LogOut,
+  Loader2,
   Mic,
   MoreHorizontal,
   PanelRightClose,
