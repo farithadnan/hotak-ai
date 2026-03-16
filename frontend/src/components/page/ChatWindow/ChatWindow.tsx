@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Copy, Pencil, RotateCcw } from '../../../icons';
+import { Bot, Copy, RotateCcw, Pencil } from '../../../icons';
 import { Composer } from '../../common/Composer/Composer';
 import { Toastr } from '../../common/Toastr/Toastr';
 import type { ChatThread } from '../../../types';
@@ -204,28 +204,44 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
                 {message.role === 'assistant' && (
                   <div className="assistant-block">
-                    <div className="message-timestamp">{formatMessageTimestamp(message.created_at)}</div>
-                    <div className="assistant-text">{message.content}</div>
-                    <div className="assistant-actions">
-                      <button
-                        type="button"
-                        className="chat-action-btn icon-only"
-                        onClick={() => void copyToClipboard(message.content)}
-                        title="Copy"
-                        aria-label="Copy"
-                      >
-                        <Copy size={14} />
-                      </button>
-                      <button
-                        type="button"
-                        className="chat-action-btn icon-only"
-                        onClick={() => onRegenerateAssistantMessage(message.id)}
-                        title="Regenerate from previous prompt"
-                        aria-label="Regenerate response"
-                      >
-                        <RotateCcw size={14} />
-                      </button>
+                    <div className="assistant-heading">
+                      <span className="assistant-icon" aria-hidden="true">
+                        <Bot size={14} />
+                      </span>
+                      <span className="assistant-label">Hotak AI</span>
                     </div>
+                    <div className="message-timestamp">{formatMessageTimestamp(message.created_at)}</div>
+                    {message.content.trim() === '' ? (
+                      <div className="assistant-thinking" aria-live="polite" aria-label="Assistant is thinking">
+                        <span className="thinking-dot"></span>
+                        <span className="thinking-dot"></span>
+                        <span className="thinking-dot"></span>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="assistant-text">{message.content}</div>
+                        <div className="assistant-actions">
+                          <button
+                            type="button"
+                            className="chat-action-btn icon-only"
+                            onClick={() => void copyToClipboard(message.content)}
+                            title="Copy"
+                            aria-label="Copy"
+                          >
+                            <Copy size={14} />
+                          </button>
+                          <button
+                            type="button"
+                            className="chat-action-btn icon-only"
+                            onClick={() => onRegenerateAssistantMessage(message.id)}
+                            title="Regenerate from previous prompt"
+                            aria-label="Regenerate response"
+                          >
+                            <RotateCcw size={14} />
+                          </button>
+                        </div>
+                      </>
+                    )}
                   </div>
                 )}
               </div>
