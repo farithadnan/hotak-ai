@@ -4,6 +4,16 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
+
+def _get_int_env(name: str, default: int) -> int:
+	value = os.getenv(name)
+	if value is None:
+		return default
+	try:
+		return int(value)
+	except ValueError:
+		return default
+
 # Load environment variables from .env file
 load_dotenv()
 
@@ -28,7 +38,8 @@ LANGSMITH_PROJECT = os.getenv("LANGSMITH_PROJECT", APP_NAME)
 # ==========================================
 LLM_MODEL = "gpt-4o-mini"
 LLM_TEMPERATURE = 0.2
-LLM_MAX_TOKENS = 512
+LLM_MAX_TOKENS = _get_int_env("LLM_MAX_TOKENS", 512)
+STREAM_MAX_CHARS = _get_int_env("STREAM_MAX_CHARS", 6000)
 
 # ==========================================
 # EMBEDDING SETTINGS
@@ -50,4 +61,4 @@ CHUNK_OVERLAP = 200
 # ==========================================
 # RETRIEVAL SETTINGS
 # ==========================================
-RETRIEVAL_K = 5
+RETRIEVAL_K = _get_int_env("RETRIEVAL_K", 5)

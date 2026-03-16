@@ -26,6 +26,14 @@ npm run dev
 
 ---
 
+## ⚙️ Runtime Settings
+
+- `STREAM_MAX_CHARS` (default: `6000`): Maximum characters emitted by `/query/stream` per response.
+- `LLM_MAX_TOKENS` (default: `512`): Max completion tokens per model response.
+- `RETRIEVAL_K` (default: `5`): Number of chunks retrieved as context; lowering reduces token usage.
+
+---
+
 ## 📁 Project Structure
 
 | Layer | Folder | Responsibility |

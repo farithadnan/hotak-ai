@@ -1,14 +1,35 @@
 """Query-related API routes."""
 
+import re
 from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
+from openai import RateLimitError
 
 from ..agents.rag_agent import validate_and_format_response
+from ..config.settings import STREAM_MAX_CHARS
 from ..utils.logger import setup_logger
 
 logger = setup_logger(__name__)
 router = APIRouter()
+
+
+def _extract_retry_after_seconds(error: Exception) -> float | None:
+    message = str(error)
+    match = re.search(r"try again in\s+([0-9]+(?:\.[0-9]+)?)s", message, flags=re.IGNORECASE)
+    if not match:
+        return None
+    try:
+        return float(match.group(1))
+    except ValueError:
+        return None
+
+
+def _build_rate_limit_message(error: Exception) -> str:
+    retry_after = _extract_retry_after_seconds(error)
+    if retry_after is None:
+        return "OpenAI rate limit reached. Please retry shortly."
+    return f"OpenAI rate limit reached. Please retry in about {retry_after:.1f}s."
 
 
 @router.get("/health")
@@ -58,6 +79,13 @@ async def query_endpoint(request: QueryRequest, http_request: Request):
             "citation_info": citation_info
         }
 
+    except RateLimitError as e:
+        message = _build_rate_limit_message(e)
+        retry_after = _extract_retry_after_seconds(e)
+        headers = {"Retry-After": str(max(1, int(retry_after)))} if retry_after else None
+        logger.warning("Rate limited in /query: %s", e)
+        raise HTTPException(status_code=429, detail=message, headers=headers)
+
     except Exception as e:
         logger.error(f"Agent failed to process query: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -69,25 +97,111 @@ async def query_stream_endpoint(request: QueryRequest, http_request: Request):
     try:
         logger.info(f"Processing streaming query: {request.question}")
 
+        def _is_assistant_message(message) -> bool:
+            message_type = getattr(message, "type", "")
+            message_role = getattr(message, "role", "")
+            return message_type in {"ai", "assistant"} or message_role == "assistant"
+
+        def _extract_text(message) -> str:
+            content = getattr(message, "content", "")
+            if isinstance(content, str):
+                return content
+            if isinstance(content, list):
+                text_parts = []
+                for item in content:
+                    if isinstance(item, dict) and item.get("type") == "text":
+                        text_parts.append(item.get("text", ""))
+                    elif isinstance(item, str):
+                        text_parts.append(item)
+                return "".join(text_parts)
+            return ""
+
+        def _extract_last_assistant_text_from_response(response: dict) -> str:
+            messages = response.get("messages", []) if isinstance(response, dict) else []
+            for message in reversed(messages):
+                if _is_assistant_message(message):
+                    return _extract_text(message)
+            return ""
+
         async def event_generator():
             payload = {"messages": [{"role": "user", "content": request.question}]}
             rag_agent = http_request.app.state.rag_agent
+            full_text = ""
+            emitted_chars = 0
+            max_stream_chars = max(500, STREAM_MAX_CHARS)
 
-            # LangGraph/LangChain agents may expose async `astream` or sync `stream`.
-            if hasattr(rag_agent, "astream"):
-                async for event in rag_agent.astream(payload, stream_mode="values"):
-                    last_message = event["messages"][-1]
-                    if hasattr(last_message, "content"):
-                        content = last_message.content
-                        if isinstance(content, str):
-                            yield content
-            else:
-                for event in rag_agent.stream(payload, stream_mode="values"):
-                    last_message = event["messages"][-1]
-                    if hasattr(last_message, "content"):
-                        content = last_message.content
-                        if isinstance(content, str):
-                            yield content
+            def yield_delta(current_text: str):
+                nonlocal full_text, emitted_chars
+
+                if not current_text:
+                    return None
+                if current_text == full_text:
+                    return None
+
+                # Most providers stream cumulative text snapshots for the same response.
+                if current_text.startswith(full_text):
+                    delta = current_text[len(full_text):]
+                else:
+                    # Fallback when provider sends non-monotonic snapshots.
+                    delta = current_text
+
+                if not delta:
+                    return None
+
+                remaining = max_stream_chars - emitted_chars
+                if remaining <= 0:
+                    return None
+
+                if len(delta) > remaining:
+                    delta = delta[:remaining]
+
+                full_text = current_text
+                emitted_chars += len(delta)
+                return delta
+
+            try:
+                # LangGraph/LangChain agents may expose async `astream` or sync `stream`.
+                if hasattr(rag_agent, "astream"):
+                    async for event in rag_agent.astream(payload, stream_mode="values"):
+                        last_message = event["messages"][-1]
+                        if not _is_assistant_message(last_message):
+                            continue
+
+                        content = _extract_text(last_message)
+                        delta = yield_delta(content)
+                        if delta is not None:
+                            yield delta
+
+                        if emitted_chars >= max_stream_chars:
+                            break
+                else:
+                    for event in rag_agent.stream(payload, stream_mode="values"):
+                        last_message = event["messages"][-1]
+                        if not _is_assistant_message(last_message):
+                            continue
+
+                        content = _extract_text(last_message)
+                        delta = yield_delta(content)
+                        if delta is not None:
+                            yield delta
+
+                        if emitted_chars >= max_stream_chars:
+                            break
+            except RateLimitError as stream_error:
+                logger.warning("Rate limited during stream generation: %s", stream_error)
+                yield _build_rate_limit_message(stream_error)
+            except Exception as stream_error:
+                logger.exception("Streaming failed; falling back to non-stream invoke: %s", stream_error)
+                try:
+                    fallback_response = rag_agent.invoke(payload)
+                    fallback_text = _extract_last_assistant_text_from_response(fallback_response)
+                    if fallback_text:
+                        yield fallback_text[:max_stream_chars]
+                except RateLimitError as fallback_rate_error:
+                    logger.warning("Rate limited during stream fallback invoke: %s", fallback_rate_error)
+                    yield _build_rate_limit_message(fallback_rate_error)
+                except Exception as fallback_error:
+                    logger.exception("Fallback invoke failed in stream endpoint: %s", fallback_error)
 
         return StreamingResponse(event_generator(), media_type="text/plain")
 
