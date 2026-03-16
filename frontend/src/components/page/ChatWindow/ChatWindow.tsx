@@ -3,6 +3,7 @@ import React from 'react';
 import { Bot, Copy, RotateCcw, Pencil } from '../../../icons';
 import { Composer } from '../../common/Composer/Composer';
 import { Toastr } from '../../common/Toastr/Toastr';
+import { parseAssistantResponse } from '../../../utils/assistantResponse';
 import type { ChatThread } from '../../../types';
 
 interface ChatWindowProps {
@@ -32,6 +33,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   const [editingContent, setEditingContent] = React.useState('');
   const [toastrOpen, setToastrOpen] = React.useState(false);
   const [toastrMessage, setToastrMessage] = React.useState('Copied to clipboard');
+  const [openSourcesMessageId, setOpenSourcesMessageId] = React.useState<string | null>(null);
   const editTextareaRef = React.useRef<HTMLTextAreaElement>(null);
 
   const lastUserMessageId = chat
@@ -204,6 +206,14 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
                 {message.role === 'assistant' && (
                   <div className="assistant-block">
+                    {(() => {
+                      const parsed = parseAssistantResponse(message.content);
+                      const displayContent = parsed.content || message.content;
+                      const sourceItems = message.sources && message.sources.length > 0 ? message.sources : parsed.sources;
+                      const hasSources = sourceItems.length > 0;
+
+                      return (
+                        <>
                     <div className="assistant-heading">
                       <span className="assistant-icon" aria-hidden="true">
                         <Bot size={14} />
@@ -219,7 +229,30 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                       </div>
                     ) : (
                       <>
-                        <div className="assistant-text">{message.content}</div>
+                        <div className="assistant-text">{displayContent}</div>
+                        {hasSources && (
+                          <div className="assistant-sources-wrap">
+                            <button
+                              type="button"
+                              className="sources-pill"
+                              onClick={() => setOpenSourcesMessageId((prev) => (prev === message.id ? null : message.id))}
+                              title="Show sources"
+                              aria-label="Show sources"
+                            >
+                              {sourceItems.length} {sourceItems.length === 1 ? 'Source' : 'Sources'}
+                            </button>
+                            {openSourcesMessageId === message.id && (
+                              <div className="sources-list-panel">
+                                {sourceItems.map((source, idx) => (
+                                  <div key={`${message.id}-source-${idx}`} className="sources-list-item">
+                                    <span className="sources-list-index-badge">{idx + 1}</span>
+                                    <span className="sources-list-name">{source}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
                         <div className="assistant-actions">
                           <button
                             type="button"
@@ -234,14 +267,17 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                             type="button"
                             className="chat-action-btn icon-only"
                             onClick={() => onRegenerateAssistantMessage(message.id)}
-                            title="Regenerate from previous prompt"
-                            aria-label="Regenerate response"
+                            title="Regenerate"
+                            aria-label="Regenerate"
                           >
                             <RotateCcw size={14} />
                           </button>
                         </div>
                       </>
                     )}
+                        </>
+                      );
+                    })()}
                   </div>
                 )}
               </div>
