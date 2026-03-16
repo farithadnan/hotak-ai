@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
-import { Archive, BookType, LogOut, MoreHorizontal, PanelRightClose, PanelRightOpen, Settings, SquarePen } from './icons'
-import { useClickOutside } from './hooks/useClickOutside'
+import { Archive, BookType, LogOut, MoreHorizontal, PanelRightClose, PanelRightOpen, Pencil, Pin, Settings, SquarePen, Trash2 } from './icons'
+import { useFloatingPopover } from './hooks/useFloatingPopover'
 import { useAppRouting } from './hooks/useAppRouting'
 import AppRoutes from './routes/AppRoutes'
 import { getChats, createChat, addMessage } from './services/chats'
@@ -16,12 +16,26 @@ function App() {
   const [isLoadingChats, setIsLoadingChats] = useState(true)
 
   const [isProfilePopoverOpen, setIsProfilePopoverOpen] = useState(false)
-  const [profilePopoverPosition, setProfilePopoverPosition] = useState({ top: 0, left: 0 })
+  const [activeChatMenuId, setActiveChatMenuId] = useState<string | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const profilePopoverRef = useRef<HTMLDivElement>(null)
-  const profileButtonRef = useRef<HTMLButtonElement>(null)
   const username = 'Avery'
   const activeChat = chats.find((chat) => chat.id === activeChatId) || null
+
+  const profilePopover = useFloatingPopover({
+    isOpen: isProfilePopoverOpen,
+    onClose: () => setIsProfilePopoverOpen(false),
+    placement: isSidebarCollapsed ? 'right-start' : 'top-start',
+    panelWidth: 240,
+    panelHeight: 200,
+  })
+
+  const chatActionsPopover = useFloatingPopover({
+    isOpen: Boolean(activeChatMenuId),
+    onClose: () => setActiveChatMenuId(null),
+    placement: 'right-start',
+    panelWidth: 152,
+    panelHeight: 176,
+  })
 
   // Fetch chats on mount
   useEffect(() => {
@@ -48,70 +62,6 @@ function App() {
       textareaRef.current.style.overflowY = textareaRef.current.scrollHeight > 200 ? 'auto' : 'hidden'
     }
   }, [inputValue])
-
-  // Close popovers on click outside
-  useClickOutside(profilePopoverRef, () => setIsProfilePopoverOpen(false), isProfilePopoverOpen)
-
-  // Calculate profile popover position
-  useEffect(() => {
-    if (isProfilePopoverOpen && profileButtonRef.current) {
-      const buttonRect = profileButtonRef.current.getBoundingClientRect()
-      const viewportWidth = window.innerWidth
-      const viewportHeight = window.innerHeight
-      const gap = 8
-      
-      // Responsive popover width
-      const isMobile = viewportWidth <= 900
-      const maxPopoverWidth = isMobile ? Math.min(220, viewportWidth - 32) : 240
-      const popoverHeight = 200
-
-      let top = 0
-      let left = 0
-
-      if (isSidebarCollapsed) {
-        // Position to the right when collapsed
-        left = buttonRect.right + gap
-        top = buttonRect.top
-
-        // Check if popover goes off the right edge
-        if (left + maxPopoverWidth > viewportWidth - gap) {
-          left = buttonRect.left - maxPopoverWidth - gap
-        }
-
-        // Check if popover goes off the bottom edge
-        if (top + popoverHeight > viewportHeight) {
-          top = viewportHeight - popoverHeight - gap
-        }
-
-        // Check if popover goes off the top edge
-        if (top < gap) {
-          top = gap
-        }
-      } else {
-        // Position above when expanded
-        left = buttonRect.left
-        top = buttonRect.top - popoverHeight - gap
-
-        // Check if popover goes off the top edge
-        if (top < gap) {
-          // Position below instead
-          top = buttonRect.bottom + gap
-        }
-
-        // Check if popover goes off the right edge
-        if (left + maxPopoverWidth > viewportWidth - gap) {
-          left = viewportWidth - maxPopoverWidth - gap
-        }
-
-        // Check if popover goes off the left edge
-        if (left < gap) {
-          left = gap
-        }
-      }
-
-      setProfilePopoverPosition({ top, left })
-    }
-  }, [isProfilePopoverOpen, isSidebarCollapsed])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInputValue(e.target.value)
@@ -225,15 +175,18 @@ function App() {
 
   const handleOpenTemplates = () => {
     openTemplates()
+    setActiveChatMenuId(null)
   }
 
   const handleOpenChat = (chatId?: string) => {
     openChat(chatId)
+    setActiveChatMenuId(null)
   }
 
   const handleNewChat = () => {
     openNewChat()
     setInputValue('')
+    setActiveChatMenuId(null)
   }
 
   return (
@@ -306,33 +259,69 @@ function App() {
                 type="button"
                 title="Chat actions"
                 aria-label="Chat actions"
-                onClick={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  if (activeChatMenuId === chat.id) {
+                    setActiveChatMenuId(null)
+                    return
+                  }
+                  setActiveChatMenuId(chat.id)
+                  chatActionsPopover.openFromElement(e.currentTarget)
+                }}
               >
                 <MoreHorizontal size={14} />
               </button>
             </div>
           ))}
+
+          {activeChatMenuId && (
+            <div
+              ref={chatActionsPopover.popoverRef}
+              className="floating-popover chat-actions-popover"
+              style={chatActionsPopover.floatingStyle}
+            >
+              <button className="chat-actions-item" type="button" onClick={() => setActiveChatMenuId(null)}>
+                <Pencil size={16} />
+                <span>Rename</span>
+              </button>
+              <button className="chat-actions-item" type="button" onClick={() => setActiveChatMenuId(null)}>
+                <Pin size={16} />
+                <span>Pin</span>
+              </button>
+              <button className="chat-actions-item" type="button" onClick={() => setActiveChatMenuId(null)}>
+                <Archive size={16} />
+                <span>Archive</span>
+              </button>
+              <button className="chat-actions-item danger" type="button" onClick={() => setActiveChatMenuId(null)}>
+                <Trash2 size={16} />
+                <span>Delete</span>
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="sidebar-footer">
-          <div className="profile-wrapper" ref={profilePopoverRef}>
+          <div className="profile-wrapper">
             <button
-              ref={profileButtonRef}
               className="profile-button" 
               type="button"
-              onClick={() => setIsProfilePopoverOpen(!isProfilePopoverOpen)}
+              onClick={(e) => {
+                if (isProfilePopoverOpen) {
+                  setIsProfilePopoverOpen(false)
+                  return
+                }
+                profilePopover.openFromElement(e.currentTarget)
+                setIsProfilePopoverOpen(true)
+              }}
             >
               <span className="profile-avatar">U</span>
               {!isSidebarCollapsed && <span className="profile-name">User Profile</span>}
             </button>
             {isProfilePopoverOpen && (
               <div 
-                className="profile-popover" 
-                style={{
-                  position: 'fixed',
-                  top: `${profilePopoverPosition.top}px`,
-                  left: `${profilePopoverPosition.left}px`
-                }}
+                ref={profilePopover.popoverRef}
+                className="floating-popover profile-popover" 
+                style={profilePopover.floatingStyle}
               >
                 <div className="profile-menu-header">
                   <span className="profile-menu-avatar">U</span>
