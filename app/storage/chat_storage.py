@@ -88,6 +88,8 @@ def update_chat(chat_id: str, update_data: ChatUpdate) -> Optional[Chat]:
     
     update_dict = update_data.model_dump(exclude_unset=True)
     for field, value in update_dict.items():
+        if field == "messages" and isinstance(value, list):
+            value = [m if isinstance(m, Message) else Message.model_validate(m) for m in value]
         setattr(chat, field, value)
     
     chat.updated_at = datetime.utcnow().isoformat()
