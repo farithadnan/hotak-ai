@@ -152,6 +152,14 @@ export interface ChatCreate {
   template_id?: string;
 }
 
+/**
+ * Chat Update Interface
+ */
+export interface ChatUpdate {
+  title?: string;
+  template_id?: string;
+}
+
 
 // ==========================================
 // API RESPONSE TYPES
