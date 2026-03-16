@@ -4,7 +4,7 @@ import re
 from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
-from openai import RateLimitError
+from openai import PermissionDeniedError, RateLimitError
 from langchain.chat_models import init_chat_model
 
 from ..agents.rag_agent import create_rag_agent, validate_and_format_response
@@ -18,6 +18,8 @@ from ..utils.logger import setup_logger
 
 logger = setup_logger(__name__)
 router = APIRouter()
+
+STREAM_MODEL_FALLBACK_PREFIX = "[[MODEL_FALLBACK:"
 
 
 def _extract_retry_after_seconds(error: Exception) -> float | None:
@@ -36,6 +38,14 @@ def _build_rate_limit_message(error: Exception) -> str:
     if retry_after is None:
         return "OpenAI rate limit reached. Please retry shortly."
     return f"OpenAI rate limit reached. Please retry in about {retry_after:.1f}s."
+
+
+def _build_model_access_message(model_name: str | None) -> str:
+    selected = model_name or "the selected model"
+    return (
+        f"Your project does not have access to {selected}. "
+        f"Please choose a different model or request access in OpenAI settings."
+    )
 
 
 @router.get("/health")
@@ -81,9 +91,22 @@ async def query_endpoint(request: QueryRequest, http_request: Request):
 
         rag_agent, model_used = _get_rag_agent_for_model(http_request, request.model)
 
-        response = rag_agent.invoke(
-            {"messages": [{"role": "user", "content": request.question}]}
-        )
+        warning_message = None
+
+        try:
+            response = rag_agent.invoke(
+                {"messages": [{"role": "user", "content": request.question}]}
+            )
+        except PermissionDeniedError as e:
+            if request.model and model_used != LLM_MODEL:
+                warning_message = _build_model_access_message(model_used)
+                logger.warning("Model access denied for %s. Falling back to %s", model_used, LLM_MODEL)
+                model_used = LLM_MODEL
+                response = http_request.app.state.rag_agent.invoke(
+                    {"messages": [{"role": "user", "content": request.question}]}
+                )
+            else:
+                raise e
 
         final_message = response["messages"][-1]
 
@@ -106,11 +129,16 @@ async def query_endpoint(request: QueryRequest, http_request: Request):
 
         logger.info("Query processed successfully.")
 
-        return {
+        result = {
             "answer": validated_response,
             "citation_info": citation_info,
             "model": model_used,
         }
+
+        if warning_message:
+            result["warning"] = warning_message
+
+        return result
 
     except RateLimitError as e:
         message = _build_rate_limit_message(e)
@@ -118,6 +146,11 @@ async def query_endpoint(request: QueryRequest, http_request: Request):
         headers = {"Retry-After": str(max(1, int(retry_after)))} if retry_after else None
         logger.warning("Rate limited in /query: %s", e)
         raise HTTPException(status_code=429, detail=message, headers=headers)
+
+    except PermissionDeniedError as e:
+        message = _build_model_access_message(request.model)
+        logger.warning("Permission denied in /query for model=%s: %s", request.model, e)
+        raise HTTPException(status_code=403, detail=message)
 
     except Exception as e:
         logger.error(f"Agent failed to process query: {e}")
@@ -220,6 +253,51 @@ async def query_stream_endpoint(request: QueryRequest, http_request: Request):
 
                         if emitted_chars >= max_stream_chars:
                             break
+            except PermissionDeniedError as stream_perm_error:
+                if request.model:
+                    logger.warning(
+                        "Permission denied during stream for model=%s. Falling back to %s",
+                        request.model,
+                        LLM_MODEL,
+                    )
+                    # Emit metadata token for frontend to sync selected/persisted model.
+                    yield f"{STREAM_MODEL_FALLBACK_PREFIX}{LLM_MODEL}]]\n"
+                    notice = _build_model_access_message(request.model)
+                    yield notice + "\n\nUsing default model instead.\n\n"
+
+                    default_agent = http_request.app.state.rag_agent
+                    full_text = ""
+                    emitted_chars = 0
+
+                    if hasattr(default_agent, "astream"):
+                        async for event in default_agent.astream(payload, stream_mode="values"):
+                            last_message = event["messages"][-1]
+                            if not _is_assistant_message(last_message):
+                                continue
+
+                            content = _extract_text(last_message)
+                            delta = yield_delta(content)
+                            if delta is not None:
+                                yield delta
+
+                            if emitted_chars >= max_stream_chars:
+                                break
+                    else:
+                        for event in default_agent.stream(payload, stream_mode="values"):
+                            last_message = event["messages"][-1]
+                            if not _is_assistant_message(last_message):
+                                continue
+
+                            content = _extract_text(last_message)
+                            delta = yield_delta(content)
+                            if delta is not None:
+                                yield delta
+
+                            if emitted_chars >= max_stream_chars:
+                                break
+                else:
+                    logger.warning("Permission denied during stream: %s", stream_perm_error)
+                    yield _build_model_access_message(request.model)
             except RateLimitError as stream_error:
                 logger.warning("Rate limited during stream generation: %s", stream_error)
                 yield _build_rate_limit_message(stream_error)
@@ -230,6 +308,9 @@ async def query_stream_endpoint(request: QueryRequest, http_request: Request):
                     fallback_text = _extract_last_assistant_text_from_response(fallback_response)
                     if fallback_text:
                         yield fallback_text[:max_stream_chars]
+                except PermissionDeniedError as fallback_permission_error:
+                    logger.warning("Permission denied during stream fallback invoke: %s", fallback_permission_error)
+                    yield _build_model_access_message(request.model)
                 except RateLimitError as fallback_rate_error:
                     logger.warning("Rate limited during stream fallback invoke: %s", fallback_rate_error)
                     yield _build_rate_limit_message(fallback_rate_error)
