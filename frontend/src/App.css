@@ -606,6 +606,32 @@
   letter-spacing: 0.08em;
 }
 
+.sidebar-chat-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sidebar-chat-skeleton-row {
+  display: flex;
+  align-items: center;
+  min-height: 36px;
+  border-radius: 10px;
+  padding: 0 10px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.sidebar-chat-skeleton-line {
+  display: block;
+  width: 78%;
+  height: 10px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #1f2430 25%, #2a3141 50%, #1f2430 75%);
+  background-size: 280px 100%;
+  animation: chat-loading-shimmer 1.25s linear infinite;
+}
+
 .sidebar-chat-row {
   position: relative;
   display: flex;
@@ -1487,6 +1513,7 @@
 .sidebar.is-collapsed .logo-text,
 .sidebar.is-collapsed .section-title,
 .sidebar.is-collapsed .sidebar-chat-row,
+.sidebar.is-collapsed .sidebar-chat-skeleton,
 .sidebar.is-collapsed .profile-name {
   display: none;
 }

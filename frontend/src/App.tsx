@@ -3,6 +3,7 @@ import { Archive, BookType, LoaderCircle, LogOut, MoreHorizontal, PanelRightClos
 import { useFloatingPopover } from './hooks/useFloatingPopover'
 import { useAppRouting } from './hooks/useAppRouting'
 import AppRoutes from './routes/AppRoutes'
+import { SidebarChatListSkeleton } from './components/layout/SidebarChatListSkeleton'
 import { ConfirmDialog } from './components/common/ConfirmDialog/ConfirmDialog'
 import { Toastr } from './components/common/Toastr/Toastr'
 import type { ToastrType, ToastrPosition } from './components/common/Toastr/Toastr'
@@ -715,7 +716,7 @@ function App() {
 
         <div className="sidebar-section sidebar-section--scroll">
           <div className="section-title">Chats</div>
-          {isLoadingChats && <div className="model-empty">Loading chats...</div>}
+          {isLoadingChats && <SidebarChatListSkeleton />}
           {!isLoadingChats && chats.length === 0 && <div className="model-empty">No chats yet</div>}
           {!isLoadingChats && orderedChats.map((chat) => (
             <div
