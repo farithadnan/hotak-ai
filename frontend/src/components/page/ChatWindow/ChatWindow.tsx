@@ -8,6 +8,8 @@ import type { ChatThread } from '../../../types';
 
 interface ChatWindowProps {
   chat: ChatThread | null;
+  isLoadingChats: boolean;
+  hasActiveChatId: boolean;
   inputValue: string;
   onInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
@@ -21,6 +23,8 @@ interface ChatWindowProps {
 
 const ChatWindow: React.FC<ChatWindowProps> = ({
   chat,
+  isLoadingChats,
+  hasActiveChatId,
   inputValue,
   onInputChange,
   onKeyDown,
@@ -37,6 +41,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   const [toastrMessage, setToastrMessage] = React.useState('Copied to clipboard');
   const [openSourcesMessageId, setOpenSourcesMessageId] = React.useState<string | null>(null);
   const editTextareaRef = React.useRef<HTMLTextAreaElement>(null);
+  const isResolvingActiveChat = isLoadingChats && hasActiveChatId && !chat;
 
   const lastUserMessageId = chat
     ? [...chat.messages].reverse().find((message) => message.role === 'user')?.id || null
@@ -132,7 +137,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
   return (
     <section className="chat-area">
-      {(!chat || (chat && chat.messages.length === 0)) && (
+      {isResolvingActiveChat && <div className="model-empty">Loading chat...</div>}
+
+      {!isResolvingActiveChat && (!chat || (chat && chat.messages.length === 0)) && (
         <div className="empty-state">
           <div className="empty-greeting">
             <h2 className="greeting-kicker">Nice to meet you, {username}</h2>

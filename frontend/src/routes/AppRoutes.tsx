@@ -5,6 +5,8 @@ import type { ChatThread } from '../types'
 
 type AppRoutesProps = {
   activeChat: ChatThread | null
+  isLoadingChats: boolean
+  hasActiveChatId: boolean
   inputValue: string
   onInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void
   onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void
@@ -19,6 +21,8 @@ type AppRoutesProps = {
 
 function AppRoutes({
   activeChat,
+  isLoadingChats,
+  hasActiveChatId,
   inputValue,
   onInputChange,
   onKeyDown,
@@ -32,6 +36,8 @@ function AppRoutes({
 }: AppRoutesProps) {
   const chatPageProps = {
     activeChat,
+    isLoadingChats,
+    hasActiveChatId,
     inputValue,
     onInputChange,
     onKeyDown,

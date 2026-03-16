@@ -6,6 +6,8 @@ import { useClickOutside } from '../../../hooks/useClickOutside'
 
 interface ChatPageProps {
   activeChat: ChatThread | null
+  isLoadingChats: boolean
+  hasActiveChatId: boolean
   inputValue: string
   onInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void
   onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void
@@ -20,6 +22,8 @@ interface ChatPageProps {
 
 function ChatPage({
   activeChat,
+  isLoadingChats,
+  hasActiveChatId,
   inputValue,
   onInputChange,
   onKeyDown,
@@ -141,6 +145,8 @@ function ChatPage({
 
       <ChatWindow
         chat={activeChat}
+        isLoadingChats={isLoadingChats}
+        hasActiveChatId={hasActiveChatId}
         inputValue={inputValue}
         onInputChange={onInputChange}
         onKeyDown={onKeyDown}

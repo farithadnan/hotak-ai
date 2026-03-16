@@ -880,6 +880,8 @@ function App() {
 
         <AppRoutes
           activeChat={activeChat}
+          isLoadingChats={isLoadingChats}
+          hasActiveChatId={Boolean(activeChatId)}
           inputValue={inputValue}
           onInputChange={handleInputChange}
           onKeyDown={handleKeyDown}
