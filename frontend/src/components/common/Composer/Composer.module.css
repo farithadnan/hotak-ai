@@ -72,6 +72,10 @@
   justify-content: space-between;
 }
 
+.composer-actions-edit {
+  justify-content: flex-end;
+}
+
 .composer-actions-left,
 .composer-actions-right {
   display: flex;
@@ -153,4 +157,49 @@
 
 .attach-menu-item:hover {
   background: rgba(255, 255, 255, 0.1);
+}
+
+.composer-edit-mode {
+  padding: 0;
+}
+
+.composer-edit-mode .composer-input-wrapper {
+  min-height: 84px;
+}
+
+.composer-text-button {
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.composer-text-button:hover:not(:disabled) {
+  background: var(--color-accent-soft);
+  border-color: var(--color-accent-border);
+}
+
+.composer-text-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.composer-text-button-cancel:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--color-border);
+}
+
+.composer-text-button-send {
+  color: var(--color-accent);
+  border-color: var(--color-accent-border);
+}
+
+.composer-text-button-send:hover:not(:disabled) {
+  color: #ffffff;
+  background: var(--color-accent);
+  border-color: var(--color-accent);
 }
