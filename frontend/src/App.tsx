@@ -1,58 +1,27 @@
-import { useMemo, useState, useRef, useEffect } from 'react'
-import { SquarePen, PanelRightClose, PanelRightOpen, ChevronDown, Search, Settings, Archive, LogOut, BookType } from 'lucide-react'
+import { useState, useRef, useEffect } from 'react'
+import { SquarePen, PanelRightClose, PanelRightOpen, Settings, Archive, LogOut, BookType } from 'lucide-react'
 import { useClickOutside } from './hooks/useClickOutside'
 import TemplateList from './components/page/TemplateList/TemplateList'
 import TemplateBuilder from './components/page/TemplateBuilder/TemplateBuilder'
-import ChatWindow from './components/page/ChatWindow/ChatWindow'
+import ChatPage from './components/page/ChatPage/ChatPage'
 import { getChats, createChat, addMessage } from './services/chats'
-import type { ChatThread, Model } from './types'
+import type { ChatThread } from './types'
 import './App.css'
 
 function App() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [activeChatId, setActiveChatId] = useState<string | null>(null)
   const [activeView, setActiveView] = useState<'chat' | 'templates' | 'template-create'>('chat')
-  const [model, setModel] = useState('gpt-4o-mini')
   const [inputValue, setInputValue] = useState('')
   const [chats, setChats] = useState<ChatThread[]>([])
   const [isLoadingChats, setIsLoadingChats] = useState(true)
 
-  const [isModelPopoverOpen, setIsModelPopoverOpen] = useState(false)
-  const [modelSearch, setModelSearch] = useState('')
   const [isProfilePopoverOpen, setIsProfilePopoverOpen] = useState(false)
   const [profilePopoverPosition, setProfilePopoverPosition] = useState({ top: 0, left: 0 })
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const modelPopoverRef = useRef<HTMLDivElement>(null)
   const profilePopoverRef = useRef<HTMLDivElement>(null)
   const profileButtonRef = useRef<HTMLButtonElement>(null)
   const username = 'Avery'
-
-  const availableModels = useMemo<Model[]>(
-    () => [
-      { id: 'gpt-4o', name: 'GPT-4o', category: 'OpenAI' },
-      { id: 'gpt-4o-mini', name: 'GPT-4o Mini', category: 'OpenAI' },
-      { id: 'gpt-4-turbo', name: 'GPT-4 Turbo', category: 'OpenAI' },
-      { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', category: 'OpenAI' },
-      { id: 'claude-3-opus', name: 'Claude 3 Opus', category: 'Anthropic' },
-      { id: 'claude-3-sonnet', name: 'Claude 3 Sonnet', category: 'Anthropic' },
-      { id: 'claude-3-haiku', name: 'Claude 3 Haiku', category: 'Anthropic' },
-      { id: 'gemini-pro', name: 'Gemini Pro', category: 'Google' },
-      { id: 'gemini-pro-vision', name: 'Gemini Pro Vision', category: 'Google' },
-    ],
-    []
-  )
-
-  const filteredModels = useMemo(
-    () =>
-      availableModels.filter(
-        (m) =>
-          m.name.toLowerCase().includes(modelSearch.toLowerCase()) ||
-          m.category.toLowerCase().includes(modelSearch.toLowerCase())
-      ),
-    [availableModels, modelSearch]
-  )
-
-  const selectedModel = availableModels.find((m) => m.id === model)
   const activeChat = chats.find((chat) => chat.id === activeChatId) || null
 
   // Fetch chats on mount
@@ -82,15 +51,6 @@ function App() {
   }, [inputValue])
 
   // Close popovers on click outside
-  useClickOutside(
-    modelPopoverRef,
-    () => {
-      setIsModelPopoverOpen(false)
-      setModelSearch('')
-    },
-    isModelPopoverOpen
-  )
-
   useClickOutside(profilePopoverRef, () => setIsProfilePopoverOpen(false), isProfilePopoverOpen)
 
   // Calculate profile popover position
@@ -238,12 +198,6 @@ function App() {
     setActiveView('templates')
   }
 
-  const handleModelSelect = (modelId: string) => {
-    setModel(modelId)
-    setIsModelPopoverOpen(false)
-    setModelSearch('')
-  }
-
   return (
     <div className="app-shell">
       {/* Mobile backdrop */}
@@ -296,7 +250,9 @@ function App() {
 
         <div className="sidebar-section sidebar-section--scroll">
           <div className="section-title">Chats</div>
-          {chats.map((chat) => (
+          {isLoadingChats && <div className="model-empty">Loading chats...</div>}
+          {!isLoadingChats && chats.length === 0 && <div className="model-empty">No chats yet</div>}
+          {!isLoadingChats && chats.map((chat) => (
             <button
               key={chat.id}
               className={chat.id === activeChatId ? 'sidebar-item is-active' : 'sidebar-item'}
@@ -355,83 +311,38 @@ function App() {
       </aside>
 
       <main className={activeView === 'chat' && (!activeChat || (activeChat && activeChat.messages.length === 0)) ? 'main-panel is-empty' : 'main-panel'}>
-        <header className="main-header">
-          <div className="header-left">
-            <button
-              className="icon-button mobile-toggle"
-              type="button"
-              onClick={() => setIsSidebarCollapsed((prev) => !prev)}
-              aria-label="Toggle sidebar"
-              title="Toggle sidebar"
-            >
-              <PanelRightClose size={20} />
-            </button>
-          </div>
-          <div className="header-center">
-            {activeView === 'chat' ? (
-              <div className="model-selector" ref={modelPopoverRef}>
-                <button
-                  className="model-selector-button"
-                  type="button"
-                  onClick={() => {
-                    setIsModelPopoverOpen(!isModelPopoverOpen)
-                    setIsSidebarCollapsed(true)
-                  }}
-                  title={selectedModel?.name || 'Select Model'}
-                >
-                  <span className="model-selector-text">{selectedModel?.name || 'Select Model'}</span>
-                  <ChevronDown size={16} className="model-selector-icon" />
-                </button>
-                {isModelPopoverOpen && (
-                  <div className="model-popover">
-                    <div className="model-search">
-                      <Search size={16} className="search-icon" />
-                      <input
-                        type="text"
-                        placeholder="Search models..."
-                        value={modelSearch}
-                        onChange={(e) => setModelSearch(e.target.value)}
-                        autoFocus
-                      />
-                    </div>
-                    <div className="model-list">
-                      {filteredModels.length === 0 ? (
-                        <div className="model-empty">No models found</div>
-                      ) : (
-                        filteredModels.map((m) => (
-                          <button
-                            key={m.id}
-                            type="button"
-                            className={m.id === model ? 'model-item is-selected' : 'model-item'}
-                            onClick={() => handleModelSelect(m.id)}
-                          >
-                            <div className="model-name">{m.name}</div>
-                            <div className="model-category">{m.category}</div>
-                          </button>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
+        {activeView !== 'chat' && (
+          <header className="main-header">
+            <div className="header-left">
+              <button
+                className="icon-button mobile-toggle"
+                type="button"
+                onClick={() => setIsSidebarCollapsed((prev) => !prev)}
+                aria-label="Toggle sidebar"
+                title="Toggle sidebar"
+              >
+                <PanelRightClose size={20} />
+              </button>
+            </div>
+            <div className="header-center">
               <div className="header-title">
                 {activeView === 'templates' ? 'Templates' : 'New Template'}
               </div>
-            )}
-          </div>
-          <div className="header-right"></div>
-        </header>
+            </div>
+            <div className="header-right"></div>
+          </header>
+        )}
 
         {activeView === 'chat' && (
-          <ChatWindow
-            chat={activeChat}
+          <ChatPage
+            activeChat={activeChat}
             inputValue={inputValue}
             onInputChange={handleInputChange}
             onKeyDown={handleKeyDown}
             onSend={handleSend}
             textareaRef={textareaRef}
             username={username}
+            onToggleSidebar={() => setIsSidebarCollapsed((prev) => !prev)}
           />
         )}
 
