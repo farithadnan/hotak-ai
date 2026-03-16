@@ -9,10 +9,10 @@ type AppRoutesProps = {
   hasActiveChatId: boolean
   inputValue: string
   onInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void
-  onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void
-  onSend: () => void
-  onUpdateUserMessage: (messageId: string, content: string) => void
-  onRegenerateAssistantMessage: (messageId: string) => void
+  onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>, modelId?: string) => void
+  onSend: (modelId?: string) => void
+  onUpdateUserMessage: (messageId: string, content: string, modelId?: string) => void
+  onRegenerateAssistantMessage: (messageId: string, modelId?: string) => void
   regeneratingAssistantMessageId: string | null
   textareaRef: React.RefObject<HTMLTextAreaElement | null>
   username: string
