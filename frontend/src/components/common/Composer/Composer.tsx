@@ -1,6 +1,6 @@
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import { Briefcase, Mic, SendHorizontal, Plus, Upload, Link, FileText } from '../../../icons'
-import { useClickOutside } from '../../../hooks/useClickOutside'
+import { useFloatingPopover } from '../../../hooks/useFloatingPopover'
 
 import style from './Composer.module.css'
 
@@ -26,10 +26,16 @@ export function Composer({
   mode = 'default',
 }: ComposerProps) {
   const [isAttachPopoverOpen, setIsAttachPopoverOpen] = useState(false)
-  const attachPopoverRef = useRef<HTMLDivElement>(null)
   const isEditMode = mode === 'edit'
 
-  useClickOutside(attachPopoverRef, () => setIsAttachPopoverOpen(false), isAttachPopoverOpen)
+  const attachPopover = useFloatingPopover({
+    isOpen: isAttachPopoverOpen,
+    onClose: () => setIsAttachPopoverOpen(false),
+    placement: 'top-start',
+    panelWidth: 190,
+    panelHeight: 154,
+    offset: -20,
+  })
 
   return (
     <div className={`${style.composer} ${isEditMode ? style['composer-edit-mode'] : ''} ${className}`}>
@@ -47,17 +53,28 @@ export function Composer({
           <div className={`${style['composer-actions']} ${isEditMode ? style['composer-actions-edit'] : ''}`}>
             {!isEditMode && (
               <div className={style['composer-actions-left']}>
-                <div className={style['attach-wrapper']} ref={attachPopoverRef}>
+                <div className={style['attach-wrapper']}>
                   <button 
                     className={style['composer-action-button']} 
                     type="button" 
                     title="More"
-                    onClick={() => setIsAttachPopoverOpen(!isAttachPopoverOpen)}
+                    onClick={(e) => {
+                      if (isAttachPopoverOpen) {
+                        setIsAttachPopoverOpen(false)
+                        return
+                      }
+                      attachPopover.openFromElement(e.currentTarget)
+                      setIsAttachPopoverOpen(true)
+                    }}
                   >
                     <Plus size={20} />
                   </button>
                   {isAttachPopoverOpen && (
-                    <div className={style['attach-popover']}>
+                    <div
+                      ref={attachPopover.popoverRef}
+                      className={style['attach-popover']}
+                      style={attachPopover.floatingStyle}
+                    >
                       <button className={style['attach-menu-item']} type="button">
                         <Upload size={18} />
                         <span>Upload Files</span>
