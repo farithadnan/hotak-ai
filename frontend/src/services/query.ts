@@ -9,6 +9,7 @@ import api, { API_BASE_URL, getErrorMessage } from './api';
  */
 export interface QueryRequest {
   question: string;
+  model?: string;
   stream?: boolean;
 }
 
