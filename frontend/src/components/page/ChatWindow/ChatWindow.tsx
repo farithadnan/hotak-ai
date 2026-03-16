@@ -3,6 +3,7 @@ import React from 'react';
 import { Bot, Copy, LoaderCircle, RotateCcw, Pencil } from '../../../icons';
 import { Composer } from '../../common/Composer/Composer';
 import { Toastr } from '../../common/Toastr/Toastr';
+import { ChatLoadingSkeleton } from './ChatLoadingSkeleton';
 import { parseAssistantResponse } from '../../../utils/assistantResponse';
 import type { ChatThread } from '../../../types';
 
@@ -137,7 +138,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
   return (
     <section className="chat-area">
-      {isResolvingActiveChat && <div className="model-empty">Loading chat...</div>}
+      {isResolvingActiveChat && <ChatLoadingSkeleton />}
 
       {!isResolvingActiveChat && (!chat || (chat && chat.messages.length === 0)) && (
         <div className="empty-state">
