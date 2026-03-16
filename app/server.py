@@ -1,10 +1,20 @@
 """Module to handle fastAPI server setup."""
 
+from pathlib import Path
+import sys
+
+# Support running from inside app/ with: uvicorn server:app --reload
+# by ensuring the project root is importable as a package root.
+if __package__ in (None, ""):
+    project_root = Path(__file__).resolve().parent.parent
+    if str(project_root) not in sys.path:
+        sys.path.insert(0, str(project_root))
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .api import router
-from .utils.logger import setup_logger
+from app.api import router
+from app.utils.logger import setup_logger
 
 logger = setup_logger(__name__)
 
@@ -27,14 +37,13 @@ async def startup_event():
     """Actions to perform on server startup."""
     try:
         import os
-        import sys
         
         # Fix Windows console encoding for emojis
         sys.stdout.reconfigure(encoding='utf-8')
-        
-        from .config.settings import (
+
+        from app.config.settings import (
             OPENAI_API_KEY,
-            LANGSMITH_API_KEY, 
+            LANGSMITH_API_KEY,
             LANGSMITH_TRACING,
             LANGSMITH_PROJECT,
             LLM_MODEL,
@@ -45,8 +54,11 @@ async def startup_event():
             PERSIST_DIRECTORY,
             CHUNK_SIZE,
             CHUNK_OVERLAP,
-            RETRIEVAL_K
+            RETRIEVAL_K,
         )
+        from app.services.llm import initialize_models
+        from app.storage.vector_storage import initialize_vector_store
+        from app.agents.rag_agent import create_rag_agent
 
         # Set environment variables (MUST be before imports that use them)
         os.environ["ANONYMIZED_TELEMETRY"] = "False"  # Disable ChromaDB telemetry
@@ -56,16 +68,10 @@ async def startup_event():
         os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
         os.environ["LANGSMITH_PROJECT"] = LANGSMITH_PROJECT
 
-        # Initialize models
-        from .services.llm import initialize_models
         llm, embeddings = initialize_models()
 
-        # Initialize vector store
-        from .storage.vector_storage import initialize_vector_store
         vector_store = initialize_vector_store(embeddings)
         
-        # Initialize RAG agent
-        from .agents.rag_agent import create_rag_agent
         rag_agent = create_rag_agent(llm, vector_store)
         
         # Store in app.state

@@ -4,9 +4,8 @@
 
 ### Backend (FastAPI)
 ```bash
-cd app
 conda activate hotak-ai-venv
-uvicorn server:app --reload
+uvicorn app.server:app --reload
 # API Docs: http://localhost:8000/docs
 ```
 
