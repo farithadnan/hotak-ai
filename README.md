@@ -21,6 +21,7 @@ npm run dev
 
 ## 📂 Documentation & Progress
 
+- **📖 [Project Documentation](docs/PROJECT.md):** Full architecture docs — every module, component, and function explained.
 - **🎯 [Current Tasks](docs/TODO.md):** The next 3 things to work on.
 - **🗺️ [Development Roadmap](docs/ROADMAP.md):** Full project status and architecture.
 
