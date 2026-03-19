@@ -49,6 +49,7 @@ export function useChatEngine(
   const [chatRuntime, setChatRuntime] = useState<Record<string, ChatRuntimeState>>({})
   const [regeneratingAssistantMessageId, setRegeneratingAssistantMessageId] = useState<string | null>(null)
   const [pendingAttachments, setPendingAttachments] = useState<PendingAttachment[]>([])
+  const [pendingTemplateId, setPendingTemplateId] = useState<string | null>(null)
   const [isAttachingSources, setIsAttachingSources] = useState(false)
   const [attachmentFeedback, setAttachmentFeedback] = useState<AttachmentFeedback>(null)
   const [availableTemplates, setAvailableTemplates] = useState<Template[]>([])
@@ -233,13 +234,16 @@ export function useChatEngine(
 
     const sources = template.sources || []
     if (sources.length === 0) {
+      setPendingTemplateId(template.id)
       showAttachmentFeedback({
-        title: 'Template is empty',
-        message: `${template.name} has no sources to attach.`,
+        title: 'Template settings applied',
+        message: `${template.name} will be used for this message.`,
         type: 'info',
       })
       return
     }
+
+    setPendingTemplateId(template.id)
 
     setPendingAttachments((prev) => {
       const existingSources = new Set(prev.map((item) => item.source))
@@ -287,6 +291,7 @@ export function useChatEngine(
 
   const clearPendingAttachments = () => {
     setPendingAttachments([])
+    setPendingTemplateId(null)
   }
 
   const ingestPendingAttachments = async (extraUrlSources: string[] = []): Promise<MessageAttachment[]> => {
@@ -456,11 +461,32 @@ export function useChatEngine(
     }
   }
 
+  const ensureChatTemplate = async (chatId: string, templateId?: string | null) => {
+    const nextTemplateId = templateId?.trim() || null
+
+    const chat = chats.find((item) => item.id === chatId)
+    if (!chat || (chat.template_id || null) === nextTemplateId) {
+      return
+    }
+
+    setChats((prevChats) =>
+      prevChats.map((item) => (item.id === chatId ? { ...item, template_id: nextTemplateId } : item))
+    )
+
+    try {
+      const updated = await updateChat(chatId, { template_id: nextTemplateId ?? undefined })
+      setChats((prevChats) => prevChats.map((item) => (item.id === chatId ? updated : item)))
+    } catch (error) {
+      console.error('Failed to persist chat template:', error)
+    }
+  }
+
   const streamAssistantText = async (
     question: string,
     onPartial: (partialText: string) => void,
     chatId?: string,
     modelId?: string,
+    templateId?: string,
     onModelResolved?: (resolvedModelId: string) => void,
     contextMessages?: LlmContextMessage[],
   ) => {
@@ -484,6 +510,7 @@ export function useChatEngine(
         question,
         chat_id: chatId,
         model: modelId,
+        template_id: templateId,
         messages: contextMessages,
       })) {
         streamedContent += chunk
@@ -500,6 +527,7 @@ export function useChatEngine(
         question,
         chat_id: chatId,
         model: modelId,
+        template_id: templateId,
         messages: contextMessages,
       })
       streamedContent = fallback.answer?.trim() || streamedContent
@@ -531,6 +559,7 @@ export function useChatEngine(
     }
 
     let requestChatId: string | null = activeChatId
+    const templateIdForSend = pendingTemplateId ?? activeChat?.template_id ?? null
 
     try {
       let chatId = activeChatId
@@ -541,6 +570,7 @@ export function useChatEngine(
         const newChat = await createChat({
           title: 'New Chat',
           model: modelId,
+          template_id: templateIdForSend ?? undefined,
         })
         chatId = newChat.id
         requestChatId = chatId
@@ -551,6 +581,7 @@ export function useChatEngine(
 
       if (chatId) {
         await ensureChatModel(chatId, modelId)
+        await ensureChatTemplate(chatId, templateIdForSend)
       }
 
       const urlSourcesFromPrompt = extractUrlsFromText(trimmedInput)
@@ -625,6 +656,7 @@ export function useChatEngine(
         },
         chatId,
         modelId,
+        templateIdForSend ?? undefined,
         (resolvedModelId) => {
           if (chatId) {
             void ensureChatModel(chatId, resolvedModelId)
@@ -874,6 +906,7 @@ export function useChatEngine(
           },
           activeChatId,
           modelId,
+          undefined,
           (resolvedModelId) => {
             void ensureChatModel(activeChatId, resolvedModelId)
           },
@@ -991,6 +1024,7 @@ export function useChatEngine(
           },
           activeChatId,
           modelId,
+          undefined,
           (resolvedModelId) => {
             void ensureChatModel(activeChatId, resolvedModelId)
           },

@@ -1,6 +1,8 @@
 
 import { useState, useEffect } from 'react';
 import { createTemplate, updateTemplate } from '../../../services';
+import { getAvailableModels, prettifyModelName } from '../../../services/models';
+import type { Model } from '../../../types';
 import type { TemplateCreate } from '../../../types/models';
 import { DEFAULT_TEMPLATE_SETTINGS } from '../../../types/models';
 import { Plus, Trash2 } from '../../../icons';
@@ -24,6 +26,7 @@ function TemplateBuilder({ open, onClose, mode, initialData, onSuccess }: Templa
     const [success, setSuccess] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<'basic' | 'settings'>('basic');
     const [_urlInput, setUrlInput] = useState<string>('');
+    const [availableModels, setAvailableModels] = useState<Model[]>([]);
 
     useEffect(() => {
         if (open) {
@@ -32,6 +35,16 @@ function TemplateBuilder({ open, onClose, mode, initialData, onSuccess }: Templa
             setSuccess(null);
             setActiveTab('basic');
             setUrlInput('');
+
+            void (async () => {
+                try {
+                    const models = await getAvailableModels();
+                    setAvailableModels(models);
+                } catch (modelsError) {
+                    console.error('Failed to load available models for template builder:', modelsError);
+                    setAvailableModels([]);
+                }
+            })();
         }
     }, [open, initialData]);
 
@@ -238,10 +251,16 @@ function TemplateBuilder({ open, onClose, mode, initialData, onSuccess }: Templa
                                             settings: { ...(formData.settings || DEFAULT_TEMPLATE_SETTINGS), model: e.target.value }
                                         })}
                                     >
-                                        <option value="gpt-4o-mini">GPT-4o Mini (Fast, Cheap)</option>
-                                        <option value="gpt-4o">GPT-4o (Better Quality)</option>
-                                        <option value="gpt-4-turbo">GPT-4 Turbo</option>
-                                        <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                                        {availableModels.length === 0 && (
+                                            <option value={formData.settings?.model || DEFAULT_TEMPLATE_SETTINGS.model}>
+                                                {prettifyModelName(formData.settings?.model || DEFAULT_TEMPLATE_SETTINGS.model)}
+                                            </option>
+                                        )}
+                                        {availableModels.map((model) => (
+                                            <option key={model.id} value={model.id}>
+                                                {model.name}
+                                            </option>
+                                        ))}
                                     </select>
                                 </div>
                                 {/* Temperature Slider */}

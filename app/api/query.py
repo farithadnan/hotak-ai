@@ -10,6 +10,7 @@ from langchain.chat_models import init_chat_model
 
 from ..storage.chat_storage import get_chat
 from ..agents.rag_agent import create_rag_agent, validate_and_format_response
+from ..models.template import TemplateSettings
 from ..config.settings import (
     CHAT_HISTORY_MAX_MESSAGES,
     CHAT_HISTORY_MAX_MESSAGE_TOKENS,
@@ -17,6 +18,7 @@ from ..config.settings import (
     LLM_MAX_TOKENS,
     LLM_MODEL,
     LLM_TEMPERATURE,
+    RETRIEVAL_K,
     STREAM_MAX_CHARS,
 )
 from ..utils.logger import setup_logger
@@ -70,7 +72,15 @@ class QueryRequest(BaseModel):
     question: str
     chat_id: str | None = None
     model: str | None = None
+    template_id: str | None = None
     messages: list[QueryMessage] | None = None
+
+
+class AgentRuntimeConfig(BaseModel):
+    model: str
+    system_prompt: str | None = None
+    retrieval_k: int | None = None
+    temperature: float | None = None
 
 
 def _normalize_text(value: str) -> str:
@@ -242,10 +252,75 @@ def _get_messages_for_llm(
     return packed_messages
 
 
-def _get_rag_agent_for_model(http_request: Request, requested_model: str | None):
-    model_name = (requested_model or LLM_MODEL).strip() or LLM_MODEL
+def _resolve_agent_runtime_config(http_request: Request, request: QueryRequest) -> AgentRuntimeConfig:
+    template_settings: TemplateSettings | None = None
 
-    if model_name == LLM_MODEL:
+    if request.template_id:
+        try:
+            from ..storage.template_storage import get_template
+
+            template = get_template(request.template_id)
+            if template:
+                template_settings = template.settings
+            else:
+                logger.warning("Template not found for query runtime config: %s", request.template_id)
+        except Exception as template_error:
+            logger.warning("Failed to load template settings for %s: %s", request.template_id, template_error)
+
+    model_name = (
+        request.model
+        or (template_settings.model if template_settings else None)
+        or LLM_MODEL
+    )
+    model_name = model_name.strip() or LLM_MODEL
+
+    system_prompt = template_settings.system_prompt if template_settings else None
+    retrieval_k = template_settings.retrieval_k if template_settings else None
+    temperature = template_settings.temperature if template_settings else None
+
+    return AgentRuntimeConfig(
+        model=model_name,
+        system_prompt=system_prompt,
+        retrieval_k=retrieval_k,
+        temperature=temperature,
+    )
+
+
+def _build_payload_messages_with_system_prompt(
+    question: str,
+    chat_id: str | None,
+    messages: list[QueryMessage] | None,
+    model_name: str,
+    system_prompt: str | None,
+) -> list[dict[str, str]]:
+    llm_messages = _get_messages_for_llm(question, chat_id, messages, model_name=model_name)
+
+    normalized_system_prompt = (system_prompt or "").strip()
+    if not normalized_system_prompt:
+        return llm_messages
+
+    if llm_messages:
+        first_message = llm_messages[0]
+        if (
+            first_message.get("role") == "system"
+            and _normalize_text(first_message.get("content", "")) == _normalize_text(normalized_system_prompt)
+        ):
+            return llm_messages
+
+    return [{"role": "system", "content": normalized_system_prompt}, *llm_messages]
+
+
+def _get_rag_agent_for_config(http_request: Request, runtime_config: AgentRuntimeConfig):
+    model_name = runtime_config.model
+
+    using_defaults = (
+        model_name == LLM_MODEL
+        and not runtime_config.system_prompt
+        and runtime_config.retrieval_k in {None, RETRIEVAL_K}
+        and runtime_config.temperature in {None, LLM_TEMPERATURE}
+    )
+
+    if using_defaults:
         return http_request.app.state.rag_agent, model_name
 
     cache = getattr(http_request.app.state, "rag_agents_by_model", None)
@@ -253,16 +328,33 @@ def _get_rag_agent_for_model(http_request: Request, requested_model: str | None)
         cache = {}
         http_request.app.state.rag_agents_by_model = cache
 
-    if model_name not in cache:
-        logger.info("Creating model-specific RAG agent for model=%s", model_name)
+    cache_key = "||".join([
+        model_name,
+        str(runtime_config.retrieval_k if runtime_config.retrieval_k is not None else RETRIEVAL_K),
+        f"{runtime_config.temperature if runtime_config.temperature is not None else LLM_TEMPERATURE}",
+        runtime_config.system_prompt or "",
+    ])
+
+    if cache_key not in cache:
+        logger.info(
+            "Creating model-specific RAG agent for model=%s retrieval_k=%s temperature=%s",
+            model_name,
+            runtime_config.retrieval_k,
+            runtime_config.temperature,
+        )
         model_llm = init_chat_model(
             model=model_name,
-            temperature=LLM_TEMPERATURE,
+            temperature=runtime_config.temperature if runtime_config.temperature is not None else LLM_TEMPERATURE,
             max_tokens=LLM_MAX_TOKENS,
         )
-        cache[model_name] = create_rag_agent(model_llm, http_request.app.state.vector_store)
+        cache[cache_key] = create_rag_agent(
+            model_llm,
+            http_request.app.state.vector_store,
+            system_prompt=runtime_config.system_prompt,
+            retrieval_k=runtime_config.retrieval_k,
+        )
 
-    return cache[model_name], model_name
+    return cache[cache_key], model_name
 
 
 @router.post("/query")
@@ -271,26 +363,35 @@ async def query_endpoint(request: QueryRequest, http_request: Request):
     try:
         logger.info(f"Processing query: {request.question}")
 
-        rag_agent, model_used = _get_rag_agent_for_model(http_request, request.model)
+        runtime_config = _resolve_agent_runtime_config(http_request, request)
+        rag_agent, model_used = _get_rag_agent_for_config(http_request, runtime_config)
 
         warning_message = None
         payload = {
-            "messages": _get_messages_for_llm(
+            "messages": _build_payload_messages_with_system_prompt(
                 request.question,
                 request.chat_id,
                 request.messages,
-                model_name=model_used,
+                model_name=runtime_config.model,
+                system_prompt=runtime_config.system_prompt,
             )
         }
 
         try:
             response = rag_agent.invoke(payload)
         except PermissionDeniedError as e:
-            if request.model and model_used != LLM_MODEL:
+            if model_used != LLM_MODEL:
                 warning_message = _build_model_access_message(model_used)
                 logger.warning("Model access denied for %s. Falling back to %s", model_used, LLM_MODEL)
                 model_used = LLM_MODEL
-                response = http_request.app.state.rag_agent.invoke(payload)
+                fallback_config = AgentRuntimeConfig(
+                    model=LLM_MODEL,
+                    system_prompt=runtime_config.system_prompt,
+                    retrieval_k=runtime_config.retrieval_k,
+                    temperature=runtime_config.temperature,
+                )
+                fallback_agent, _ = _get_rag_agent_for_config(http_request, fallback_config)
+                response = fallback_agent.invoke(payload)
             else:
                 raise e
 
@@ -376,13 +477,15 @@ async def query_stream_endpoint(request: QueryRequest, http_request: Request):
             return ""
 
         async def event_generator():
-            rag_agent, model_used = _get_rag_agent_for_model(http_request, request.model)
+            runtime_config = _resolve_agent_runtime_config(http_request, request)
+            rag_agent, model_used = _get_rag_agent_for_config(http_request, runtime_config)
             payload = {
-                "messages": _get_messages_for_llm(
+                "messages": _build_payload_messages_with_system_prompt(
                     request.question,
                     request.chat_id,
                     request.messages,
-                    model_name=model_used,
+                    model_name=runtime_config.model,
+                    system_prompt=runtime_config.system_prompt,
                 )
             }
             full_text = ""
@@ -447,18 +550,24 @@ async def query_stream_endpoint(request: QueryRequest, http_request: Request):
                         if emitted_chars >= max_stream_chars:
                             break
             except PermissionDeniedError as stream_perm_error:
-                if request.model:
+                if model_used != LLM_MODEL:
                     logger.warning(
                         "Permission denied during stream for model=%s. Falling back to %s",
-                        request.model,
+                        model_used,
                         LLM_MODEL,
                     )
                     # Emit metadata token for frontend to sync selected/persisted model.
                     yield f"{STREAM_MODEL_FALLBACK_PREFIX}{LLM_MODEL}]]\n"
-                    notice = _build_model_access_message(request.model)
+                    notice = _build_model_access_message(model_used)
                     yield notice + "\n\nUsing default model instead.\n\n"
 
-                    default_agent = http_request.app.state.rag_agent
+                    fallback_config = AgentRuntimeConfig(
+                        model=LLM_MODEL,
+                        system_prompt=runtime_config.system_prompt,
+                        retrieval_k=runtime_config.retrieval_k,
+                        temperature=runtime_config.temperature,
+                    )
+                    default_agent, _ = _get_rag_agent_for_config(http_request, fallback_config)
                     full_text = ""
                     emitted_chars = 0
 
@@ -490,7 +599,7 @@ async def query_stream_endpoint(request: QueryRequest, http_request: Request):
                                 break
                 else:
                     logger.warning("Permission denied during stream: %s", stream_perm_error)
-                    yield _build_model_access_message(request.model)
+                    yield _build_model_access_message(model_used)
             except RateLimitError as stream_error:
                 logger.warning("Rate limited during stream generation: %s", stream_error)
                 retry_after = _extract_retry_after_seconds(stream_error)
@@ -522,7 +631,7 @@ async def query_stream_endpoint(request: QueryRequest, http_request: Request):
                         yield fallback_text[:max_stream_chars]
                 except PermissionDeniedError as fallback_permission_error:
                     logger.warning("Permission denied during stream fallback invoke: %s", fallback_permission_error)
-                    yield _build_model_access_message(request.model)
+                    yield _build_model_access_message(model_used)
                 except RateLimitError as fallback_rate_error:
                     logger.warning("Rate limited during stream fallback invoke: %s", fallback_rate_error)
                     yield _build_rate_limit_message(fallback_rate_error)

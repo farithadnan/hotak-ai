@@ -10,7 +10,7 @@ from ..utils.citation_extractor import ensure_citations, validate_citations
 
 logger = setup_logger(__name__)
 
-def create_retrieval_tool(vector_store: Chroma):
+def create_retrieval_tool(vector_store: Chroma, retrieval_k: int | None = None):
     """
     Create a retrieval tool using the provided vector store.
     
@@ -20,6 +20,8 @@ def create_retrieval_tool(vector_store: Chroma):
     Returns:
         tool: A LangChain tool for retrieving context from the vector store
     """
+    effective_retrieval_k = retrieval_k if retrieval_k is not None else RETRIEVAL_K
+
     @tool(response_format="content_and_artifact")
     def retrieve_context(query: str):
         """Retrieve information to help answer a query."""
@@ -27,9 +29,9 @@ def create_retrieval_tool(vector_store: Chroma):
             if not query:
                 raise ValueError("Query cannot be empty.")
 
-            k = int(RETRIEVAL_K)
+            k = int(effective_retrieval_k)
             if k <= 0:
-                logger.warning(f"Invalid RETRIEVAL_K value: {RETRIEVAL_K}. Defaulting to 5.")
+                logger.warning(f"Invalid RETRIEVAL_K value: {effective_retrieval_k}. Defaulting to 5.")
                 k = 5
         
             retrieved_docs = vector_store.similarity_search(query, k=k)
@@ -70,7 +72,12 @@ def create_retrieval_tool(vector_store: Chroma):
     return retrieve_context
 
 
-def create_rag_agent(llm, vector_store: Chroma):
+def create_rag_agent(
+    llm,
+    vector_store: Chroma,
+    system_prompt: str | None = None,
+    retrieval_k: int | None = None,
+):
     """
     Create a RAG agent with retrieval capabilities.
     
@@ -88,14 +95,15 @@ def create_rag_agent(llm, vector_store: Chroma):
         logger.info("Creating RAG agent...")
         
         # Create retrieval tool
-        retrieval_tool = create_retrieval_tool(vector_store)
+        retrieval_tool = create_retrieval_tool(vector_store, retrieval_k=retrieval_k)
         tools = [retrieval_tool]
+        effective_system_prompt = (system_prompt or SYSTEM_PROMPT).strip() or SYSTEM_PROMPT
         
         # Create agent
         agent = create_agent(
             model=llm,
             tools=tools,
-            system_prompt=SYSTEM_PROMPT
+            system_prompt=effective_system_prompt
         )
         
         logger.info("RAG agent created successfully.")

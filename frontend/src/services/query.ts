@@ -12,6 +12,7 @@ export interface QueryRequest {
   question: string;
   chat_id?: string;
   model?: string;
+  template_id?: string;
   messages?: Array<{
     role: 'user' | 'assistant' | 'system';
     content: string;
