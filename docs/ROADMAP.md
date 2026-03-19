@@ -63,9 +63,11 @@ We are building a template-based knowledge management system ("Brains") allowing
   - [ ] Add optional rolling summary memory block for long chats.
   - [ ] Tune retrieval reduction based on remaining token budget.
 - [ ] **Attachment UX Hardening** - Planned
-  - [ ] Replace prompt-based URL entry with an inline composer URL field.
-  - [ ] Add pre-upload validation feedback for file size/type.
-  - [ ] Add per-attachment progress indicators during ingestion.
+  - [x] Replace prompt-based URL entry with an inline composer URL field.
+  - [x] Add per-attachment progress indicators during ingestion.
+  - [x] Add toast feedback for attach success/partial failure/failure.
+  - [ ] Add pre-upload validation feedback for file size/type before network call.
+  - [ ] Add drag-and-drop attachment support.
 
 
 ---

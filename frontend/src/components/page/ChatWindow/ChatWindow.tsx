@@ -30,11 +30,19 @@ interface ChatWindowProps {
     id: string;
     kind: 'url' | 'file';
     label: string;
+    status?: 'queued' | 'uploading' | 'ingesting' | 'ready' | 'failed';
+    error?: string;
   }>;
   isAttachingSources: boolean;
+  attachmentFeedback: {
+    title?: string;
+    message: string;
+    type: 'success' | 'error' | 'info';
+  } | null;
   onAttachUrl: (url: string) => void;
   onAttachFiles: (files: File[]) => void;
   onRemovePendingAttachment: (attachmentId: string) => void;
+  onClearAttachmentFeedback: () => void;
   username?: string;
 }
 
@@ -53,9 +61,11 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   textareaRef,
   pendingAttachments,
   isAttachingSources,
+  attachmentFeedback,
   onAttachUrl,
   onAttachFiles,
   onRemovePendingAttachment,
+  onClearAttachmentFeedback,
   username = 'User',
 }) => {
   const [editingMessageId, setEditingMessageId] = React.useState<string | null>(null);
@@ -465,6 +475,14 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         type="success"
         position="top-right"
         onClose={() => setToastrOpen(false)}
+      />
+      <Toastr
+        open={Boolean(attachmentFeedback)}
+        title={attachmentFeedback?.title}
+        message={attachmentFeedback?.message || ''}
+        type={attachmentFeedback?.type || 'info'}
+        position="top-right"
+        onClose={onClearAttachmentFeedback}
       />
     </section>
   );

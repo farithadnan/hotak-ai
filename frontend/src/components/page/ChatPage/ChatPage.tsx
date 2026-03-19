@@ -23,11 +23,19 @@ interface ChatPageProps {
     id: string
     kind: 'url' | 'file'
     label: string
+    status?: 'queued' | 'uploading' | 'ingesting' | 'ready' | 'failed'
+    error?: string
   }>
   isAttachingSources: boolean
+  attachmentFeedback: {
+    title?: string
+    message: string
+    type: 'success' | 'error' | 'info'
+  } | null
   onAttachUrl: (url: string) => void
   onAttachFiles: (files: File[]) => void
   onRemovePendingAttachment: (attachmentId: string) => void
+  onClearAttachmentFeedback: () => void
   username: string
   onToggleSidebar: () => void
 }
@@ -47,9 +55,11 @@ function ChatPage({
   textareaRef,
   pendingAttachments,
   isAttachingSources,
+  attachmentFeedback,
   onAttachUrl,
   onAttachFiles,
   onRemovePendingAttachment,
+  onClearAttachmentFeedback,
   username,
   onToggleSidebar,
 }: ChatPageProps) {
@@ -214,9 +224,11 @@ function ChatPage({
         textareaRef={textareaRef}
         pendingAttachments={pendingAttachments}
         isAttachingSources={isAttachingSources}
+        attachmentFeedback={attachmentFeedback}
         onAttachUrl={onAttachUrl}
         onAttachFiles={onAttachFiles}
         onRemovePendingAttachment={onRemovePendingAttachment}
+        onClearAttachmentFeedback={onClearAttachmentFeedback}
         username={username}
       />
     </>

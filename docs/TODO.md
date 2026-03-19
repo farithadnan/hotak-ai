@@ -25,8 +25,12 @@
 	- [x] Composer can queue URL/file attachments before send.
 	- [x] Send flow ingests URL sources via `/documents/load` and file uploads via `/documents/upload`.
 	- [x] User messages persist attachment metadata and render attachment chips.
-16. [ ] **Frontend:** Replace prompt-based URL attach with inline URL input popover.
-17. [ ] **Frontend:** Add explicit attachment error toasts and progress indicators.
-18. [ ] **Backend:** Optional rolling summary memory block for long conversations.
+16. [x] **Frontend:** Replace prompt-based URL attach with inline URL input popover - ✅ Done.
+17. [x] **Frontend:** Add explicit attachment error toasts and progress indicators - ✅ Done.
+	- [x] Pending attachment chips show queued/uploading/indexing/ready/failed states.
+	- [x] Attachment ingest results surface as success/info/error toasts.
+18. [ ] **Frontend:** Add drag-and-drop attachment support in composer.
+19. [ ] **Frontend:** Replace placeholder "Attach Templates" action with a real template picker.
+20. [ ] **Backend:** Optional rolling summary memory block for long conversations.
 
 *Core chat + model workflow is working, including multi-turn model switching and budgeted history packing. Next: model accessibility UX, telemetry cleanup, and summary-memory hardening.*

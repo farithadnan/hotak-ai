@@ -22,6 +22,8 @@ type ComposerProps = {
     id: string
     kind: 'url' | 'file'
     label: string
+    status?: 'queued' | 'uploading' | 'ingesting' | 'ready' | 'failed'
+    error?: string
   }>
   isAttaching?: boolean
   onAttachUrl?: (url: string) => void
@@ -45,6 +47,8 @@ export function Composer({
   onRemoveAttachment,
 }: ComposerProps) {
   const [isAttachPopoverOpen, setIsAttachPopoverOpen] = useState(false)
+  const [isUrlPanelOpen, setIsUrlPanelOpen] = useState(false)
+  const [urlInputValue, setUrlInputValue] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
   const isEditMode = mode === 'edit'
 
@@ -56,6 +60,18 @@ export function Composer({
     panelHeight: COMPOSER_ATTACH_POPOVER_HEIGHT,
     offset: COMPOSER_ATTACH_POPOVER_OFFSET,
   })
+
+  const handleAddUrl = () => {
+    const nextUrl = urlInputValue.trim()
+    if (!nextUrl) {
+      return
+    }
+
+    onAttachUrl?.(nextUrl)
+    setUrlInputValue('')
+    setIsUrlPanelOpen(false)
+    setIsAttachPopoverOpen(false)
+  }
 
   return (
     <div className={`${style.composer} ${isEditMode ? style['composer-edit-mode'] : ''} ${className}`}>
@@ -89,14 +105,26 @@ export function Composer({
                 <button
                   key={attachment.id}
                   type="button"
-                  className={style['attachment-chip']}
+                  className={`${style['attachment-chip']} ${attachment.status ? style[`attachment-chip-${attachment.status}`] : ''}`}
                   onClick={() => onRemoveAttachment?.(attachment.id)}
                   title={`Remove ${attachment.label}`}
+                  disabled={isAttaching}
                 >
                   <span className={style['attachment-chip-kind']}>
                     {attachment.kind === 'url' ? 'URL' : 'FILE'}
                   </span>
                   <span className={style['attachment-chip-label']}>{attachment.label}</span>
+                  <span className={style['attachment-chip-status']}>
+                    {attachment.status === 'uploading'
+                      ? 'Uploading'
+                      : attachment.status === 'ingesting'
+                        ? 'Indexing'
+                        : attachment.status === 'ready'
+                          ? 'Ready'
+                          : attachment.status === 'failed'
+                            ? 'Failed'
+                            : 'Queued'}
+                  </span>
                   <span className={style['attachment-chip-remove']}>x</span>
                 </button>
               ))}
@@ -131,6 +159,7 @@ export function Composer({
                         className={style['attach-menu-item']}
                         type="button"
                         onClick={() => {
+                          setIsUrlPanelOpen(false)
                           setIsAttachPopoverOpen(false)
                           fileInputRef.current?.click()
                         }}
@@ -142,17 +171,38 @@ export function Composer({
                         className={style['attach-menu-item']}
                         type="button"
                         onClick={() => {
-                          setIsAttachPopoverOpen(false)
-                          const value = window.prompt('Enter URL to attach')
-                          if (!value) {
-                            return
-                          }
-                          onAttachUrl?.(value)
+                          setIsUrlPanelOpen((prev) => !prev)
                         }}
                       >
                         <Link size={18} />
                         <span>Attach URL</span>
                       </button>
+                      {isUrlPanelOpen && (
+                        <div className={style['attach-url-panel']}>
+                          <input
+                            className={style['attach-url-input']}
+                            type="url"
+                            value={urlInputValue}
+                            onChange={(e) => setUrlInputValue(e.target.value)}
+                            placeholder="https://example.com/article"
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault()
+                                handleAddUrl()
+                              }
+                            }}
+                            autoFocus
+                          />
+                          <button
+                            className={style['attach-url-submit']}
+                            type="button"
+                            onClick={handleAddUrl}
+                            disabled={urlInputValue.trim().length === 0}
+                          >
+                            Add
+                          </button>
+                        </div>
+                      )}
                       <button className={style['attach-menu-item']} type="button">
                         <FileText size={18} />
                         <span>Attach Templates</span>

@@ -126,7 +126,8 @@ The message input bar at the bottom of the chat window.
 #### Behavior
 
 - **Default mode:** Shows a Plus button (opens attach popover with Upload Files, Attach URL, Attach Templates), Briefcase button (tools), Mic button, and a Send button (visible only when input is non-empty).
-- Shows queued attachment chips inside the composer; clicking a chip removes it.
+- Attach URL now expands an inline URL input panel inside the popover instead of using a blocking browser prompt.
+- Queued attachment chips show live states (`Queued`, `Uploading`, `Indexing`, `Ready`, `Failed`); clicking a chip removes it when ingestion is not running.
 - **Edit mode:** Shows Cancel and Send text buttons, no left-side action buttons.
 - The attach popover uses `useFloatingPopover` for positioning.
 
@@ -265,6 +266,7 @@ The scrollable conversation view — renders all messages and the composer.
 - Ordered and unordered lists are styled so list items read naturally without extra paragraph-sized gaps between the number marker and the text.
 - Sources are deduplicated before display, so repeated citations collapse to one visible item.
 - HTTP/HTTPS sources render as clickable links that open in a new browser tab.
+- Attachment ingest feedback is shown through a toast in the chat view after send (success, partial success, or failure).
 - Shared UI defaults such as toast duration and floating popover defaults are centralized in frontend constants modules instead of being repeated inside components/hooks.
 
 #### Props

@@ -32,6 +32,7 @@ The core hook that owns **all chat data and operations**. Extracted from App.tsx
 | `textareaRef` | `Ref<HTMLTextAreaElement>` | Ref for auto-resize of the composer. |
 | `pendingAttachments` | `Array<{ id, kind, label, source }>` | Composer-queued URL/file attachments for the next send. |
 | `isAttachingSources` | `boolean` | Whether URL/file ingestion is currently in progress. |
+| `attachmentFeedback` | `{ title?, message, type } \| null` | Latest attachment feedback toast payload. |
 
 ### Returns
 
@@ -54,6 +55,7 @@ The core hook that owns **all chat data and operations**. Extracted from App.tsx
 | `handleAttachFiles` | `(files: File[]) => void` | Queue local file attachments for next send. |
 | `handleRemovePendingAttachment` | `(attachmentId: string) => void` | Remove one queued attachment. |
 | `clearPendingAttachments` | `() => void` | Clear queue after successful user-message persist. |
+| `clearAttachmentFeedback` | `() => void` | Dismiss attachment success/error toast. |
 | `handleSend` | `(modelId?) => Promise<void>` | Full send flow: create chat → optimistic UI → stream → persist → title. |
 | `handleUpdateUserMessage` | `(messageId, content, modelId?) => void` | Edit user message and re-stream assistant response. |
 | `handleRegenerateAssistantMessage` | `(assistantMessageId, modelId?) => void` | Re-stream an existing assistant response. |
@@ -65,7 +67,7 @@ The core hook that owns **all chat data and operations**. Extracted from App.tsx
 - `ensureChatModel(chatId, modelId?)` — syncs chat model with optimistic update
 - `buildLlmContext(messages)` — converts local chat messages to a compact request payload for backend context handoff
 - `streamAssistantText(question, onPartial, chatId?, modelId?, onModelResolved?, contextMessages?)` — streaming engine with fallback and explicit context payload
-- `ingestPendingAttachments()` — ingests queued URLs via `/documents/load` and files via `/documents/upload`, returning message-level attachment metadata with status.
+- `ingestPendingAttachments()` — ingests queued URLs via `/documents/load` and files via `/documents/upload`, updates per-chip progress (`queued` → `uploading` / `ingesting` → `ready` / `failed`), and returns message-level attachment metadata with status.
 
 ### Multi-Turn Model Switching Notes
 

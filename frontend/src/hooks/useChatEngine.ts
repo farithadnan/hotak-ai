@@ -25,7 +25,15 @@ type PendingAttachment = {
   label: string
   source: string
   file?: File
+  status: 'queued' | 'uploading' | 'ingesting' | 'ready' | 'failed'
+  error?: string
 }
+
+type AttachmentFeedback = {
+  title?: string
+  message: string
+  type: 'success' | 'error' | 'info'
+} | null
 
 export function useChatEngine(
   activeChatId: string | null,
@@ -38,6 +46,7 @@ export function useChatEngine(
   const [regeneratingAssistantMessageId, setRegeneratingAssistantMessageId] = useState<string | null>(null)
   const [pendingAttachments, setPendingAttachments] = useState<PendingAttachment[]>([])
   const [isAttachingSources, setIsAttachingSources] = useState(false)
+  const [attachmentFeedback, setAttachmentFeedback] = useState<AttachmentFeedback>(null)
 
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -93,14 +102,42 @@ export function useChatEngine(
     setInputValue(e.target.value)
   }
 
+  const clearAttachmentFeedback = () => {
+    setAttachmentFeedback(null)
+  }
+
+  const showAttachmentFeedback = (feedback: AttachmentFeedback) => {
+    setAttachmentFeedback(feedback)
+  }
+
+  const updatePendingAttachment = (attachmentId: string, patch: Partial<PendingAttachment>) => {
+    setPendingAttachments((prev) =>
+      prev.map((attachment) =>
+        attachment.id === attachmentId
+          ? { ...attachment, ...patch }
+          : attachment
+      )
+    )
+  }
+
   const handleAttachUrl = (rawUrl: string) => {
     const normalizedUrl = normalizeUrl(rawUrl)
     if (!normalizedUrl) {
+      showAttachmentFeedback({
+        title: 'Invalid URL',
+        message: 'Use a full http:// or https:// URL.',
+        type: 'error',
+      })
       return
     }
 
     setPendingAttachments((prev) => {
       if (prev.some((item) => item.kind === 'url' && item.source === normalizedUrl)) {
+        showAttachmentFeedback({
+          title: 'Already attached',
+          message: 'That URL is already queued.',
+          type: 'info',
+        })
         return prev
       }
 
@@ -111,6 +148,7 @@ export function useChatEngine(
           kind: 'url',
           label: normalizedUrl,
           source: normalizedUrl,
+          status: 'queued',
         },
       ]
     })
@@ -137,6 +175,15 @@ export function useChatEngine(
           label: file.name,
           source: sourceKey,
           file,
+          status: 'queued',
+        })
+      }
+
+      if (additions.length === 0) {
+        showAttachmentFeedback({
+          title: 'Already attached',
+          message: 'Selected files are already queued.',
+          type: 'info',
         })
       }
 
@@ -160,18 +207,22 @@ export function useChatEngine(
     const urlAttachments = pendingAttachments.filter((item) => item.kind === 'url')
     const fileAttachments = pendingAttachments.filter((item) => item.kind === 'file' && item.file)
     const resolved: MessageAttachment[] = []
+    let successCount = 0
+    let failedCount = 0
 
     setIsAttachingSources(true)
     try {
       if (urlAttachments.length > 0) {
-        try {
-          const urlSources = urlAttachments.map((item) => item.source)
-          const urlResult = await loadDocuments({ sources: urlSources })
-          const ok = new Set([...urlResult.loaded_sources, ...urlResult.cached_sources])
-          const failed = new Set(urlResult.failed_sources)
-
-          for (const item of urlAttachments) {
-            const status = ok.has(item.source) ? 'ingested' : (failed.has(item.source) ? 'failed' : 'failed')
+        for (const item of urlAttachments) {
+          updatePendingAttachment(item.id, { status: 'ingesting', error: undefined })
+          try {
+            const urlResult = await loadDocuments({ sources: [item.source] })
+            const isReady = urlResult.loaded_sources.includes(item.source) || urlResult.cached_sources.includes(item.source)
+            const status = isReady ? 'ingested' : 'failed'
+            updatePendingAttachment(item.id, {
+              status: isReady ? 'ready' : 'failed',
+              error: isReady ? undefined : 'Failed to load URL',
+            })
             resolved.push({
               id: item.id,
               kind: 'url',
@@ -180,10 +231,14 @@ export function useChatEngine(
               status,
               error: status === 'failed' ? 'Failed to load URL' : undefined,
             })
-          }
-        } catch (error) {
-          const message = error instanceof Error ? error.message : 'Failed to load URL'
-          for (const item of urlAttachments) {
+            if (isReady) {
+              successCount += 1
+            } else {
+              failedCount += 1
+            }
+          } catch (error) {
+            const message = error instanceof Error ? error.message : 'Failed to load URL'
+            updatePendingAttachment(item.id, { status: 'failed', error: message })
             resolved.push({
               id: item.id,
               kind: 'url',
@@ -192,31 +247,23 @@ export function useChatEngine(
               status: 'failed',
               error: message,
             })
+            failedCount += 1
           }
         }
       }
 
       if (fileAttachments.length > 0) {
-        try {
-          const uploadResult = await uploadDocuments(fileAttachments.map((item) => item.file as File))
-          const fileResultsQueueByName = new Map<string, Array<(typeof uploadResult.file_results)[number]>>()
-          for (const result of uploadResult.file_results) {
-            const queue = fileResultsQueueByName.get(result.file_name) || []
-            queue.push(result)
-            fileResultsQueueByName.set(result.file_name, queue)
-          }
-
-          for (const item of fileAttachments) {
-            const queue = fileResultsQueueByName.get(item.label) || []
-            const result = queue.shift()
-            if (queue.length === 0) {
-              fileResultsQueueByName.delete(item.label)
-            } else {
-              fileResultsQueueByName.set(item.label, queue)
-            }
-
+        for (const item of fileAttachments) {
+          updatePendingAttachment(item.id, { status: 'uploading', error: undefined })
+          try {
+            const uploadResult = await uploadDocuments([item.file as File])
+            const result = uploadResult.file_results[0]
             const isIngested = result?.status === 'ingested' || result?.status === 'cached'
             const status: MessageAttachment['status'] = isIngested ? 'ingested' : 'failed'
+            updatePendingAttachment(item.id, {
+              status: isIngested ? 'ready' : 'failed',
+              error: isIngested ? undefined : (result?.error || 'Failed to process file'),
+            })
             resolved.push({
               id: item.id,
               kind: 'file',
@@ -225,10 +272,14 @@ export function useChatEngine(
               status,
               error: status === 'failed' ? (result?.error || 'Failed to process file') : undefined,
             })
-          }
-        } catch (error) {
-          const message = error instanceof Error ? error.message : 'Failed to upload file'
-          for (const item of fileAttachments) {
+            if (isIngested) {
+              successCount += 1
+            } else {
+              failedCount += 1
+            }
+          } catch (error) {
+            const message = error instanceof Error ? error.message : 'Failed to upload file'
+            updatePendingAttachment(item.id, { status: 'failed', error: message })
             resolved.push({
               id: item.id,
               kind: 'file',
@@ -237,11 +288,34 @@ export function useChatEngine(
               status: 'failed',
               error: message,
             })
+            failedCount += 1
           }
         }
       }
     } finally {
       setIsAttachingSources(false)
+    }
+
+    if (successCount > 0 || failedCount > 0) {
+      if (successCount > 0 && failedCount === 0) {
+        showAttachmentFeedback({
+          title: 'Attachments ready',
+          message: `${successCount} attachment${successCount === 1 ? '' : 's'} indexed successfully.`,
+          type: 'success',
+        })
+      } else if (successCount > 0 && failedCount > 0) {
+        showAttachmentFeedback({
+          title: 'Attachments partially ready',
+          message: `${successCount} ready, ${failedCount} failed. Review the failed chips in the message.`,
+          type: 'info',
+        })
+      } else {
+        showAttachmentFeedback({
+          title: 'Attachment ingest failed',
+          message: `${failedCount} attachment${failedCount === 1 ? '' : 's'} could not be prepared.`,
+          type: 'error',
+        })
+      }
     }
 
     return resolved
@@ -838,10 +912,12 @@ export function useChatEngine(
     setInputValue,
     pendingAttachments,
     isAttachingSources,
+    attachmentFeedback,
     handleAttachUrl,
     handleAttachFiles,
     handleRemovePendingAttachment,
     clearPendingAttachments,
+    clearAttachmentFeedback,
 
     // Chat operations
     handleSend,

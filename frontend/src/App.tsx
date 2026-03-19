@@ -94,9 +94,11 @@ function App() {
           textareaRef={engine.textareaRef}
           pendingAttachments={engine.pendingAttachments}
           isAttachingSources={engine.isAttachingSources}
+          attachmentFeedback={engine.attachmentFeedback}
           onAttachUrl={engine.handleAttachUrl}
           onAttachFiles={engine.handleAttachFiles}
           onRemovePendingAttachment={engine.handleRemovePendingAttachment}
+          onClearAttachmentFeedback={engine.clearAttachmentFeedback}
           username={username}
           onToggleSidebar={toggleSidebar}
         />

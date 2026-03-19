@@ -20,11 +20,19 @@ type AppRoutesProps = {
     id: string
     kind: 'url' | 'file'
     label: string
+    status?: 'queued' | 'uploading' | 'ingesting' | 'ready' | 'failed'
+    error?: string
   }>
   isAttachingSources: boolean
+  attachmentFeedback: {
+    title?: string
+    message: string
+    type: 'success' | 'error' | 'info'
+  } | null
   onAttachUrl: (url: string) => void
   onAttachFiles: (files: File[]) => void
   onRemovePendingAttachment: (attachmentId: string) => void
+  onClearAttachmentFeedback: () => void
   username: string
   onToggleSidebar: () => void
 }
@@ -44,9 +52,11 @@ function AppRoutes({
   textareaRef,
   pendingAttachments,
   isAttachingSources,
+  attachmentFeedback,
   onAttachUrl,
   onAttachFiles,
   onRemovePendingAttachment,
+  onClearAttachmentFeedback,
   username,
   onToggleSidebar,
 }: AppRoutesProps) {
@@ -65,9 +75,11 @@ function AppRoutes({
     textareaRef,
     pendingAttachments,
     isAttachingSources,
+    attachmentFeedback,
     onAttachUrl,
     onAttachFiles,
     onRemovePendingAttachment,
+    onClearAttachmentFeedback,
     username,
     onToggleSidebar,
   }
