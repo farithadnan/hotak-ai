@@ -68,8 +68,14 @@ function TemplateBuilder({ open, onClose, mode, initialData, onSuccess }: Templa
 
     return (
         <Modal open={open} onClose={onClose} title={mode === 'create' ? 'Create New Template' : `Edit: ${formData.name || 'Template'}` }>
-            <div className={style['template-builder-root']} style={{marginTop: 0, paddingTop: 0}}>
-                <div className={style['template-builder-header']} style={{marginTop: 0, paddingTop: 0}} />
+            <div className={style['template-builder-root']}>
+                <div className={style['template-builder-header']}>
+                    <p className={style['template-builder-subtitle']}>
+                        {mode === 'create'
+                            ? 'Create a compact reusable knowledge template for future chats.'
+                            : 'Refine sources and model settings for this template.'}
+                    </p>
+                </div>
                 <div className="form-tabs">
                     <button
                         type="button"

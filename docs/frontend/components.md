@@ -368,6 +368,10 @@ A modal form for creating or editing templates.
 
 Calls `createTemplate` or `updateTemplate` on submit. Wrapped in the `<Modal>` component.
 
+UI notes:
+- The builder now uses a compact modal rhythm (reduced paddings, tighter field spacing, denser tabs/inputs) to better match chat-page density.
+- Sources and settings controls were tightened to reduce visual bloat while preserving existing functionality.
+
 ---
 
 ### `TemplateList`
@@ -410,3 +414,6 @@ The `/templates` page — a grid of template cards.
 - `<Toastr>` for notifications
 
 Also imports `<TemplateSkeleton>` from `TemplateSkeleton.tsx` — renders 3 skeleton card placeholders during loading.
+
+UI notes:
+- Template list spacing and card metrics are intentionally tighter (header, controls, cards, metadata) to align visual rhythm with chat surfaces.
