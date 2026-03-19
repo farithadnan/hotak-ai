@@ -10,8 +10,11 @@ import { Toastr } from '../../common/Toastr/Toastr';
 import { ChatLoadingSkeleton } from './ChatLoadingSkeleton';
 import { dedupeSources, getSourceHref, parseAssistantResponse } from '../../../utils/assistantResponse';
 import { prettifyModelName } from '../../../services/models';
+import { uploadDocuments } from '../../../services/documents';
+import { ALLOWED_ATTACHMENT_FILE_EXTENSIONS, MAX_ATTACHMENT_FILE_SIZE_BYTES } from '../../../constants/attachments';
 import { EXTERNAL_LINK_REL, EXTERNAL_LINK_TARGET } from '../../../constants/chat';
 import type { ChatThread } from '../../../types';
+import type { MessageAttachment } from '../../../types/models';
 
 interface ChatWindowProps {
   chat: ChatThread | null;
@@ -22,7 +25,7 @@ interface ChatWindowProps {
   onInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
   onSend: () => void;
-  onUpdateUserMessage: (messageId: string, content: string) => void;
+  onUpdateUserMessage: (messageId: string, content: string, attachments?: MessageAttachment[]) => void;
   onRegenerateAssistantMessage: (messageId: string) => void;
   regeneratingAssistantMessageId: string | null;
   textareaRef: React.RefObject<HTMLTextAreaElement | null>;
@@ -76,8 +79,13 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 }) => {
   const [editingMessageId, setEditingMessageId] = React.useState<string | null>(null);
   const [editingContent, setEditingContent] = React.useState('');
+  const [editingAttachments, setEditingAttachments] = React.useState<MessageAttachment[]>([]);
+  const [isEditSourcesOpen, setIsEditSourcesOpen] = React.useState(false);
+  const [isUploadingEditSources, setIsUploadingEditSources] = React.useState(false);
+  const [openUserSourcesMessageId, setOpenUserSourcesMessageId] = React.useState<string | null>(null);
   const [toastrOpen, setToastrOpen] = React.useState(false);
   const [toastrMessage, setToastrMessage] = React.useState('Copied to clipboard');
+  const [toastrType, setToastrType] = React.useState<'success' | 'error' | 'info'>('success');
   const [openSourcesMessageId, setOpenSourcesMessageId] = React.useState<string | null>(null);
   const editTextareaRef = React.useRef<HTMLTextAreaElement>(null);
   const isResolvingActiveChat = isLoadingChats && hasActiveChatId && !chat;
@@ -120,19 +128,112 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
     if (isCopied) {
       setToastrOpen(false);
+      setToastrType('success');
       setToastrMessage('Copied to clipboard');
       requestAnimationFrame(() => setToastrOpen(true));
     }
   }, []);
 
-  const handleStartEditing = (messageId: string, content: string) => {
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) {
+      return `${bytes} B`;
+    }
+    if (bytes < 1024 * 1024) {
+      return `${(bytes / 1024).toFixed(1)} KB`;
+    }
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const handleStartEditing = (messageId: string, content: string, attachments?: MessageAttachment[]) => {
     setEditingMessageId(messageId);
     setEditingContent(content);
+    setEditingAttachments(attachments ?? []);
+    setIsEditSourcesOpen((attachments?.length ?? 0) > 0);
   };
 
   const handleCancelEditing = () => {
     setEditingMessageId(null);
     setEditingContent('');
+    setEditingAttachments([]);
+    setIsEditSourcesOpen(false);
+  };
+
+  const handleRemoveEditAttachment = (attachmentId: string) => {
+    setEditingAttachments((prev) => prev.filter((item) => item.id !== attachmentId));
+  };
+
+  const handleAttachEditFiles = async (files: File[]) => {
+    if (files.length === 0) {
+      return;
+    }
+
+    const validationErrors: string[] = [];
+    const validFiles: File[] = [];
+
+    for (const file of files) {
+      const extension = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
+      if (!ALLOWED_ATTACHMENT_FILE_EXTENSIONS.includes(extension as (typeof ALLOWED_ATTACHMENT_FILE_EXTENSIONS)[number])) {
+        validationErrors.push(`${file.name}: unsupported file type ${extension || '(none)'}`);
+        continue;
+      }
+      if (file.size > MAX_ATTACHMENT_FILE_SIZE_BYTES) {
+        validationErrors.push(`${file.name}: exceeds ${formatFileSize(MAX_ATTACHMENT_FILE_SIZE_BYTES)}`);
+        continue;
+      }
+      validFiles.push(file);
+    }
+
+    if (validationErrors.length > 0) {
+      setToastrOpen(false);
+      setToastrType('error');
+      setToastrMessage(validationErrors.slice(0, 2).join(' | '));
+      requestAnimationFrame(() => setToastrOpen(true));
+    }
+
+    if (validFiles.length === 0) {
+      return;
+    }
+
+    setIsUploadingEditSources(true);
+    try {
+      const newAttachments: MessageAttachment[] = [];
+      for (const file of validFiles) {
+        try {
+          const uploadResult = await uploadDocuments([file]);
+          const result = uploadResult.file_results[0];
+          const isIngested = result?.status === 'ingested' || result?.status === 'cached';
+          newAttachments.push({
+            id: crypto.randomUUID(),
+            kind: 'file',
+            label: file.name,
+            source: result?.source || file.name,
+            status: isIngested ? 'ingested' : 'failed',
+            error: isIngested ? undefined : (result?.error || 'Failed to process file'),
+          });
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Failed to upload file';
+          newAttachments.push({
+            id: crypto.randomUUID(),
+            kind: 'file',
+            label: file.name,
+            source: file.name,
+            status: 'failed',
+            error: message,
+          });
+        }
+      }
+
+      setEditingAttachments((prev) => {
+        const merged = new Map(prev.map((item) => [item.source, item]));
+        for (const attachment of newAttachments) {
+          merged.set(attachment.source, attachment);
+        }
+        return Array.from(merged.values());
+      });
+      setIsEditSourcesOpen(true);
+    } finally {
+      setIsUploadingEditSources(false);
+    }
   };
 
   const handleSaveEditing = () => {
@@ -145,7 +246,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
       return;
     }
 
-    onUpdateUserMessage(editingMessageId, trimmed);
+    onUpdateUserMessage(editingMessageId, trimmed, editingAttachments);
     handleCancelEditing();
   };
 
@@ -237,6 +338,67 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     code: renderMarkdownCode,
   }), [renderMarkdownCode]);
 
+  const renderUserAttachmentPanel = (
+    attachments: MessageAttachment[],
+    isOpen: boolean,
+    onToggle: () => void,
+    align: 'left' | 'right' = 'left',
+    options?: {
+      removable?: boolean;
+      onRemove?: (attachmentId: string) => void;
+    },
+  ) => (
+    <div className={`assistant-sources-wrap user-sources-wrap sources-align-${align}`}>
+      <button
+        type="button"
+        className="sources-pill"
+        onClick={onToggle}
+        title="Show sources"
+        aria-label="Show sources"
+      >
+        {attachments.length} {attachments.length === 1 ? 'Source' : 'Sources'}
+      </button>
+      {isOpen && (
+        <div className={`sources-list-panel user-sources-panel sources-panel-align-${align}`}>
+          {attachments.map((attachment, idx) => {
+            const isUrl = attachment.kind === 'url' && /^https?:\/\//i.test(attachment.source);
+            const statusClass = attachment.status === 'failed' ? 'is-failed' : 'is-ingested';
+            return (
+              <div key={attachment.id} className={`sources-list-item user-source-item source-item-align-${align}`}>
+                <span className="sources-list-index-badge">{idx + 1}</span>
+                {isUrl ? (
+                  <a
+                    className={`user-attachment-pill ${statusClass}`}
+                    href={attachment.source}
+                    target={EXTERNAL_LINK_TARGET}
+                    rel={EXTERNAL_LINK_REL}
+                  >
+                    {attachment.label}
+                  </a>
+                ) : (
+                  <span className={`user-attachment-pill ${statusClass}`}>
+                    {attachment.label}
+                  </span>
+                )}
+                {options?.removable && options.onRemove && (
+                  <button
+                    type="button"
+                    className="chat-action-btn icon-only user-source-remove"
+                    onClick={() => options.onRemove?.(attachment.id)}
+                    title="Remove source"
+                    aria-label="Remove source"
+                  >
+                    x
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <section className="chat-area">
       {isResolvingActiveChat && <ChatLoadingSkeleton />}
@@ -289,50 +451,50 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                           textareaRef={editTextareaRef}
                           className="inline-edit-composer"
                           mode="edit"
+                          allowAttachmentsInEdit
+                          pendingAttachments={editingAttachments.map((item) => ({
+                            id: item.id,
+                            kind: item.kind,
+                            label: item.label,
+                            status: item.status === 'ingested'
+                              ? 'ready'
+                              : item.status === 'pending'
+                                ? 'queued'
+                                : 'failed',
+                            error: item.error,
+                          }))}
+                          isAttaching={isUploadingEditSources}
+                          onAttachFiles={(files) => {
+                            void handleAttachEditFiles(files);
+                          }}
+                          onRemoveAttachment={handleRemoveEditAttachment}
                         />
+                        {editingAttachments.length > 0 && renderUserAttachmentPanel(
+                          editingAttachments,
+                          isEditSourcesOpen,
+                          () => setIsEditSourcesOpen((prev) => !prev),
+                          'left',
+                          {
+                            removable: true,
+                            onRemove: handleRemoveEditAttachment,
+                          }
+                        )}
                       </div>
                     ) : (
                       <>
                         <div className="bubble">{message.content}</div>
-                        {message.attachments && message.attachments.length > 0 && (
-                          <div className="user-attachments-row">
-                            {message.attachments.slice(0, 6).map((attachment) => {
-                              const isUrl = attachment.kind === 'url' && /^https?:\/\//i.test(attachment.source);
-                              const statusClass = attachment.status === 'failed' ? 'is-failed' : 'is-ingested';
-
-                              if (isUrl) {
-                                return (
-                                  <a
-                                    key={attachment.id}
-                                    className={`user-attachment-pill ${statusClass}`}
-                                    href={attachment.source}
-                                    target={EXTERNAL_LINK_TARGET}
-                                    rel={EXTERNAL_LINK_REL}
-                                  >
-                                    {attachment.label}
-                                  </a>
-                                );
-                              }
-
-                              return (
-                                <span key={attachment.id} className={`user-attachment-pill ${statusClass}`}>
-                                  {attachment.label}
-                                </span>
-                              );
-                            })}
-                            {message.attachments.length > 6 && (
-                              <span className="user-attachment-pill">
-                                +{message.attachments.length - 6} more
-                              </span>
-                            )}
-                          </div>
+                        {message.attachments && message.attachments.length > 0 && renderUserAttachmentPanel(
+                          message.attachments,
+                          openUserSourcesMessageId === message.id,
+                          () => setOpenUserSourcesMessageId((prev) => (prev === message.id ? null : message.id)),
+                          'left',
                         )}
                         <div className="message-actions">
                           {message.id === lastUserMessageId && (
                             <button
                               type="button"
                               className="chat-action-btn icon-only"
-                              onClick={() => handleStartEditing(message.id, message.content)}
+                              onClick={() => handleStartEditing(message.id, message.content, message.attachments)}
                               title="Edit"
                               aria-label="Edit"
                             >
@@ -485,7 +647,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
       <Toastr
         open={toastrOpen}
         message={toastrMessage}
-        type="success"
+        type={toastrType}
         position="top-right"
         onClose={() => setToastrOpen(false)}
       />

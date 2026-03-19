@@ -714,7 +714,12 @@ export function useChatEngine(
     }
   }
 
-  const handleUpdateUserMessage = (messageId: string, content: string, modelId?: string) => {
+  const handleUpdateUserMessage = (
+    messageId: string,
+    content: string,
+    attachments?: MessageAttachment[],
+    modelId?: string,
+  ) => {
     if (!activeChatId || !activeChat) {
       return
     }
@@ -734,10 +739,59 @@ export function useChatEngine(
         (message, idx) => idx > userIndex && message.role === 'assistant'
       )
 
+      const baseExistingAttachments = activeChat.messages[userIndex]?.attachments ?? []
+      const attachmentOverrides = attachments ?? baseExistingAttachments
+
       await ensureChatModel(activeChatId, modelId)
 
       const pendingAssistantId = assistantTarget?.id ?? crypto.randomUUID()
       const pendingAssistantCreatedAt = assistantTarget?.created_at ?? new Date().toISOString()
+
+      const urlSourcesFromEdit = extractUrlsFromText(trimmedContent)
+      const knownAttachmentSources = new Set(attachmentOverrides.map((item) => item.source))
+      const urlsToIngest = urlSourcesFromEdit.filter((source) => !knownAttachmentSources.has(source))
+
+      const resolvedAutoUrlAttachments: MessageAttachment[] = []
+      if (urlsToIngest.length > 0) {
+        try {
+          const urlResult = await loadDocuments({ sources: urlsToIngest })
+          const readySources = new Set([...urlResult.loaded_sources, ...urlResult.cached_sources])
+          for (const source of urlsToIngest) {
+            const isReady = readySources.has(source)
+            resolvedAutoUrlAttachments.push({
+              id: crypto.randomUUID(),
+              kind: 'url',
+              label: source,
+              source,
+              status: isReady ? 'ingested' : 'failed',
+              error: isReady ? undefined : 'Failed to load URL',
+            })
+          }
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Failed to load URL'
+          for (const source of urlsToIngest) {
+            resolvedAutoUrlAttachments.push({
+              id: crypto.randomUUID(),
+              kind: 'url',
+              label: source,
+              source,
+              status: 'failed',
+              error: message,
+            })
+          }
+        }
+      }
+
+      const mergedAttachmentsMap = new Map<string, MessageAttachment>()
+      for (const item of attachmentOverrides) {
+        mergedAttachmentsMap.set(item.source, item)
+      }
+      for (const item of resolvedAutoUrlAttachments) {
+        if (!mergedAttachmentsMap.has(item.source)) {
+          mergedAttachmentsMap.set(item.source, item)
+        }
+      }
+      const mergedAttachments = Array.from(mergedAttachmentsMap.values())
 
       const baseMessages = activeChat.messages
         .filter((message, idx) => idx <= userIndex || message.id === pendingAssistantId)
@@ -746,6 +800,7 @@ export function useChatEngine(
             return {
               ...message,
               content: trimmedContent,
+              attachments: mergedAttachments.length > 0 ? mergedAttachments : undefined,
             }
           }
 

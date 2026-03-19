@@ -58,7 +58,7 @@ The core hook that owns **all chat data and operations**. Extracted from App.tsx
 | `clearPendingAttachments` | `() => void` | Clear queue after successful user-message persist. |
 | `clearAttachmentFeedback` | `() => void` | Dismiss attachment success/error toast. |
 | `handleSend` | `(modelId?) => Promise<void>` | Full send flow: create chat → optimistic UI → stream → persist → title. |
-| `handleUpdateUserMessage` | `(messageId, content, modelId?) => void` | Edit user message and re-stream assistant response. |
+| `handleUpdateUserMessage` | `(messageId, content, attachments?, modelId?) => void` | Edit user message, persist optional attachment changes, and re-stream assistant response. |
 | `handleRegenerateAssistantMessage` | `(assistantMessageId, modelId?) => void` | Re-stream an existing assistant response. |
 | `handleChangeActiveChatModel` | `(modelId) => void` | Update active chat's model (optimistic + persist). |
 
@@ -70,6 +70,7 @@ The core hook that owns **all chat data and operations**. Extracted from App.tsx
 - `streamAssistantText(question, onPartial, chatId?, modelId?, onModelResolved?, contextMessages?)` — streaming engine with fallback and explicit context payload
 - `extractUrlsFromText(input)` — detects HTTP/HTTPS links in the user prompt so pasted URLs are auto-ingested on send.
 - `ingestPendingAttachments(extraUrlSources?)` — ingests queued/template URLs plus auto-detected prompt URLs via `/documents/load`, ingests files via `/documents/upload`, updates per-chip progress (`queued` → `uploading` / `ingesting` → `ready` / `failed`), and returns message-level attachment metadata with status.
+- During message edit, newly introduced URLs are also auto-ingested and merged into that message's attachment list.
 - `handleAttachFiles()` performs frontend validation first (allowed extension + max size) before any upload request is sent.
 
 ### Multi-Turn Model Switching Notes

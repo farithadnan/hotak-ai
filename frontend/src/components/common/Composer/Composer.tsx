@@ -15,6 +15,7 @@ type ComposerProps = {
   onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void
   onSend: () => void
   onCancel?: () => void
+  allowAttachmentsInEdit?: boolean
   textareaRef: React.RefObject<HTMLTextAreaElement | null>
   className?: string
   mode?: 'default' | 'edit'
@@ -42,6 +43,7 @@ export function Composer({
   onKeyDown,
   onSend,
   onCancel,
+  allowAttachmentsInEdit = false,
   textareaRef,
   className = '',
   mode = 'default',
@@ -58,6 +60,7 @@ export function Composer({
   const [isDragActive, setIsDragActive] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const isEditMode = mode === 'edit'
+  const showAttachmentActions = !isEditMode || allowAttachmentsInEdit
 
   const attachPopover = useFloatingPopover({
     isOpen: isAttachPopoverOpen,
@@ -94,14 +97,14 @@ export function Composer({
         <div
           className={`${style['composer-input-wrapper']} ${isDragActive ? style['composer-input-wrapper-drag-active'] : ''}`}
           onDragEnter={(event) => {
-            if (isEditMode) {
+            if (!showAttachmentActions) {
               return
             }
             event.preventDefault()
             setIsDragActive(true)
           }}
           onDragOver={(event) => {
-            if (isEditMode) {
+            if (!showAttachmentActions) {
               return
             }
             event.preventDefault()
@@ -137,7 +140,7 @@ export function Composer({
             aria-label="Chat input"
             rows={1}
           />
-          {!isEditMode && pendingAttachments.length > 0 && (
+          {showAttachmentActions && pendingAttachments.length > 0 && (
             <div className={style['pending-attachments']}>
               {visibleAttachments.map((attachment) => (
                 <button
@@ -160,11 +163,11 @@ export function Composer({
               )}
             </div>
           )}
-          {!isEditMode && isDragActive && (
+          {showAttachmentActions && isDragActive && (
             <div className={style['drag-overlay']}>Drop files to attach them</div>
           )}
           <div className={`${style['composer-actions']} ${isEditMode ? style['composer-actions-edit'] : ''}`}>
-            {!isEditMode && (
+            {showAttachmentActions && (
               <div className={style['composer-actions-left']}>
                 <div className={style['attach-wrapper']}>
                   <button 

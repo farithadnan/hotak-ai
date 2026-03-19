@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronDown, PanelRightClose, Search } from '../../../icons'
 import ChatWindow from '../ChatWindow/ChatWindow'
 import type { ChatThread, Model } from '../../../types'
+import type { MessageAttachment } from '../../../types/models'
 import { useClickOutside } from '../../../hooks/useClickOutside'
 import { DEFAULT_CHAT_MODEL_ID } from '../../../constants/chat'
 import { getAvailableModels } from '../../../services/models'
@@ -15,7 +16,7 @@ interface ChatPageProps {
   onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>, modelId?: string) => void
   onSend: (modelId?: string) => void
   onChangeActiveChatModel: (modelId: string) => void
-  onUpdateUserMessage: (messageId: string, content: string, modelId?: string) => void
+  onUpdateUserMessage: (messageId: string, content: string, attachments?: MessageAttachment[], modelId?: string) => void
   onRegenerateAssistantMessage: (messageId: string, modelId?: string) => void
   regeneratingAssistantMessageId: string | null
   textareaRef: React.RefObject<HTMLTextAreaElement | null>
@@ -224,7 +225,7 @@ function ChatPage({
         onInputChange={onInputChange}
         onKeyDown={(e) => onKeyDown(e, model)}
         onSend={() => onSend(model)}
-        onUpdateUserMessage={(messageId, content) => onUpdateUserMessage(messageId, content, model)}
+        onUpdateUserMessage={(messageId, content, attachments) => onUpdateUserMessage(messageId, content, attachments, model)}
         onRegenerateAssistantMessage={(messageId) => onRegenerateAssistantMessage(messageId, model)}
         regeneratingAssistantMessageId={regeneratingAssistantMessageId}
         textareaRef={textareaRef}

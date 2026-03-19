@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import ChatPage from '../components/page/ChatPage/ChatPage'
 import TemplateList from '../components/page/TemplateList/TemplateList'
 import type { ChatThread } from '../types'
+import type { MessageAttachment } from '../types/models'
 
 type AppRoutesProps = {
   activeChat: ChatThread | null
@@ -12,7 +13,7 @@ type AppRoutesProps = {
   onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>, modelId?: string) => void
   onSend: (modelId?: string) => void
   onChangeActiveChatModel: (modelId: string) => void
-  onUpdateUserMessage: (messageId: string, content: string, modelId?: string) => void
+  onUpdateUserMessage: (messageId: string, content: string, attachments?: MessageAttachment[], modelId?: string) => void
   onRegenerateAssistantMessage: (messageId: string, modelId?: string) => void
   regeneratingAssistantMessageId: string | null
   textareaRef: React.RefObject<HTMLTextAreaElement | null>

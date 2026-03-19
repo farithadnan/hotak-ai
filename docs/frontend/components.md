@@ -131,7 +131,7 @@ The message input bar at the bottom of the chat window.
 - Attach Templates now opens a searchable inline template picker and adds that template's sources into the queue.
 - Dragging files over the composer highlights a drop zone; dropping files queues them like the file picker.
 - Queued attachment chips use compact pills with status coloring and cap visible chips with a `+N more` summary; clicking a chip removes it when ingestion is not running.
-- **Edit mode:** Shows Cancel and Send text buttons, no left-side action buttons.
+- **Edit mode:** Uses the same composer attach control (plus menu) as default mode for upload consistency, while keeping Cancel/Send edit actions.
 - The attach popover uses `useFloatingPopover` for positioning.
 
 ---
@@ -284,7 +284,7 @@ The scrollable conversation view — renders all messages and the composer.
 | `onInputChange` | handler | Composer change handler. |
 | `onKeyDown` | handler | Composer key handler. |
 | `onSend` | `() => void` | Composer send handler. |
-| `onUpdateUserMessage` | `(messageId, content) => void` | Edit user message callback. |
+| `onUpdateUserMessage` | `(messageId, content, attachments?) => void` | Edit user message callback with optional attachment override. |
 | `onRegenerateAssistantMessage` | `(messageId) => void` | Regenerate callback. |
 | `regeneratingAssistantMessageId` | `string \| null` | Which message is regenerating. |
 | `textareaRef` | ref | Composer textarea ref. |
@@ -315,7 +315,9 @@ The scrollable conversation view — renders all messages and the composer.
 **User messages:**
 - Displayed as right-aligned bubbles
 - Show timestamp, edit button, copy button
-- When editing: shows a textarea with Cancel/Save buttons
+- Attachment lists use the same "count pill + expandable list" mechanism as assistant sources to avoid clutter when many sources are attached.
+- The user-sources panel supports alignment variants; user-message sources are rendered left-aligned under the bubble while assistant sources remain left-aligned in their own lane.
+- When editing: shows a textarea with Cancel/Save buttons plus source controls (upload via composer plus menu + remove per source)
 
 **Assistant messages:**
 - Displayed as left-aligned blocks with a Bot icon
