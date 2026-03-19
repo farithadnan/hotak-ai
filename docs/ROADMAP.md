@@ -1,6 +1,6 @@
 # Hotak AI - Development Roadmap (Active)
 
-## 🎯 Current Status: Phase 6.5 - Chat + Model UX Stabilization
+## 🎯 Current Status: Phase 6.6 - Multi-Turn Model Switching Baseline
 
 We are building a template-based knowledge management system ("Brains") allowing users to create reusable knowledge templates for chat sessions.
 
@@ -42,9 +42,16 @@ We are building a template-based knowledge management system ("Brains") allowing
 - [x] **Model Catalog API** - ✅ Done
   - [x] `GET /models` list endpoint.
   - [x] `GET /models/{model_id}` retrieve endpoint.
+- [x] **Multi-Turn Query Context Baseline** - ✅ Done
+  - [x] `QueryRequest` supports `chat_id` and optional `messages` payload.
+  - [x] Query/stream endpoints compose history for the selected model.
+  - [x] Duplicate last-user-turn guard in history assembly.
 - [ ] **Model Access UX Hardening** - 🎯 **NEXT STEP**
   - [ ] Filter inaccessible models from `GET /models`.
   - [ ] Remove telemetry warning noise in logs.
+- [ ] **Context Packing Hardening** - Planned (after UX hardening)
+  - [ ] Replace fixed message-count window with token-budget packing per model.
+  - [ ] Add optional rolling summary memory block for long chats.
 
 
 ---
@@ -62,6 +69,7 @@ We are building a template-based knowledge management system ("Brains") allowing
 - **Input Bar:** Rounded corners, left action cluster (+ for templates/files).
 - **Empty State:** Greeting + centered composer; send starts session.
 - **Model Visibility:** Active model badge appears next to assistant name per chat.
+- **Message Provenance:** Assistant bubble can display the model used for that specific reply.
 
 ---
 
@@ -71,6 +79,7 @@ We are building a template-based knowledge management system ("Brains") allowing
 - [ ] Docker Containerization
 - [ ] Authentication (API Keys/JWT)
 - [ ] Advanced Monitoring & Observability
+- [ ] Token-estimation quality tuning and summary refresh strategy tests
 
 ---
 

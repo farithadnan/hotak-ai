@@ -52,7 +52,7 @@ The core AI interaction layer.
 
 | Type | Fields | Purpose |
 |---|---|---|
-| `QueryRequest` | `question: string, model?: string, stream?: boolean` | Sent to `/query` or `/query/stream`. |
+| `QueryRequest` | `question: string, chat_id?: string, model?: string, messages?: { role, content }[], stream?: boolean` | Sent to `/query` or `/query/stream`. |
 | `QueryResponse` | `answer: string, citation_info: string, model?: string, warning?: string` | Returned by `/query` (non-streaming). |
 
 ### Functions
@@ -65,20 +65,22 @@ The core AI interaction layer.
 ### How `streamQuery` Works
 
 1. Uses `fetch()` (not Axios) because Axios doesn't support browser `ReadableStream`
-2. Sends `POST /query/stream` with `{ question, model, stream: true }`
+2. Sends `POST /query/stream` with `{ question, chat_id, model, messages, stream: true }`
 3. Reads the response body as a `ReadableStream` via `getReader()`
 4. Decodes each `Uint8Array` chunk to text with `TextDecoder`
 5. `yield`s each decoded chunk — the caller iterates with `for await...of`
 6. Handles connection errors by throwing, which `streamAssistantText` catches to fall back to `queryAgent`
 
-### Usage in App.tsx
+### Usage in `useChatEngine`
 
 ```ts
-for await (const chunk of streamQuery({ question, model: modelId })) {
+for await (const chunk of streamQuery({ question, chat_id, model: modelId, messages })) {
   streamedContent += chunk
   onPartial(streamedContent) // updates UI in real-time
 }
 ```
+
+`messages` is optional but preferred for edit/regenerate flows, because it reflects the latest in-memory state even before persistence completes.
 
 ---
 

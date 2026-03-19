@@ -87,9 +87,9 @@ This is the most important flow in the app. Here's what happens step-by-step whe
 4. A **user message** and an **empty pending assistant message** are added to local state immediately (optimistic UI)
 5. `chatRuntime[chatId].isResponding` is set to `true` → UI shows typing indicator
 6. The **user message is persisted** to the backend via `POST /chats/{id}/messages`
-7. **Streaming begins** via `POST /query/stream` → `streamAssistantText()` reads chunks via `ReadableStream`
+7. **Streaming begins** via `POST /query/stream` with `question`, `chat_id`, selected `model`, and context `messages` (when available) → `streamAssistantText()` reads chunks via `ReadableStream`
 8. Each chunk **updates the pending assistant's content** in real-time → user sees text appear
-9. When streaming finishes, the **pending assistant is replaced** with the finalized message (parsed for sources/citations)
+9. When streaming finishes, the **pending assistant is replaced** with the finalized message (parsed for sources/citations and stamped with the resolved model)
 10. The **assistant message is persisted** via `POST /chats/{id}/messages`
 11. `chatRuntime[chatId].isResponding` is set to `false` → typing indicator disappears
 12. If the chat title is "New Chat", a **title is auto-generated** via `POST /chats/{id}/generate-title`
@@ -103,11 +103,16 @@ This is the most important flow in the app. Here's what happens step-by-step whe
 When the backend receives `POST /query/stream`:
 
 1. The **RAG agent** is selected (default or model-specific, cached)
-2. The agent uses a **retrieval tool** that searches ChromaDB for the top-K most similar document chunks
-3. Retrieved context is injected into the **system prompt**
-4. The LLM generates a response with **citation markers** like `[1]`, `[2]`
-5. Response is **streamed** back chunk-by-chunk as `text/plain`
-6. If the requested model has permission/rate-limit issues, it **falls back** to the default model and emits a `[[MODEL_FALLBACK:...]]` token
+2. LLM history is assembled from frontend `messages` payload when provided, otherwise from persisted `chat_id` history
+3. Duplicate final user turn is filtered to avoid sending the same turn twice
+4. The agent uses a **retrieval tool** that searches ChromaDB for the top-K most similar document chunks
+5. Retrieved context is injected into the **system prompt**
+6. The LLM generates a response with **citation markers** like `[1]`, `[2]`
+7. Response is **streamed** back chunk-by-chunk as `text/plain`
+8. If the requested model has permission/rate-limit issues, it **falls back** to the default model and emits a `[[MODEL_FALLBACK:...]]` token
+
+Current limitation:
+- History sizing is currently message-count based (simple, predictable baseline). Token-budget packing and summary-memory compression are planned as a follow-up hardening step.
 
 ---
 
@@ -138,7 +143,7 @@ The app adds messages to the UI immediately before the backend confirms them. Th
 **Backend:**
 ```bash
 cd hotak-ai
-uvicorn server:app --reload
+uvicorn app.server:app --reload
 # Runs on http://localhost:8000
 ```
 

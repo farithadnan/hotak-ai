@@ -24,7 +24,7 @@ Back to [PROJECT.md](../PROJECT.md)
 
 ### `server.py` (root)
 
-A thin re-export: `from app.server import app`. Allows running via `uvicorn server:app --reload` from the project root.
+A thin re-export: `from app.server import app`. Allows running via `uvicorn app.server:app --reload` from the project root.
 
 ### `app/server.py`
 
@@ -115,21 +115,27 @@ All routes are assembled in `app/api/__init__.py` into a single `APIRouter`, the
 #### Query Flow (non-streaming `/query`)
 
 1. Select or create a model-specific RAG agent (cached in `app.state.rag_agents_by_model`)
-2. Invoke the agent with the `question`
-3. Agent uses the `retrieve_context` tool to search ChromaDB
-4. Agent generates response with citation markers
-5. `validate_and_format_response()` checks citations against retrieved docs
-6. Returns `{ answer, citation_info, model }`
+2. Build model input messages from `messages` payload (if provided) or persisted `chat_id` history
+3. Deduplicate the final user turn when it already matches `question`
+4. Invoke the agent with the assembled message history
+5. Agent uses the `retrieve_context` tool to search ChromaDB
+6. Agent generates response with citation markers
+7. `validate_and_format_response()` checks citations against retrieved docs
+8. Returns `{ answer, citation_info, model }`
 
 #### Streaming Flow (`/query/stream`)
 
 1. Same agent selection
-2. Uses `agent.astream()` or `agent.stream()` to get incremental tokens
-3. Each chunk is yielded as plain text
-4. Enforces `STREAM_MAX_CHARS` limit
-5. On model permission error: falls back to default model and emits `[[MODEL_FALLBACK:model_name]]`
-6. On stream failure: falls back to synchronous `invoke()`
-7. Handles rate limits (429) with retry-after info
+2. Same message-assembly path (`messages` payload first, then `chat_id` fallback)
+3. Uses `agent.astream()` or `agent.stream()` to get incremental tokens
+4. Each chunk is yielded as plain text
+5. Enforces `STREAM_MAX_CHARS` limit
+6. On model permission error: falls back to default model and emits `[[MODEL_FALLBACK:model_name]]`
+7. On stream failure: falls back to synchronous `invoke()`
+8. Handles rate limits (429) with retry-after info
+
+Current limitation:
+- History windowing is message-count based for now. Token-budget packing/summarization is planned as a future improvement.
 
 ### Documents — `app/api/documents.py`
 
@@ -304,7 +310,7 @@ Handles citation validation and formatting for RAG responses.
 
 | Model | Key Fields |
 |---|---|
-| `Message` | `id` (UUID), `role` (user/assistant/system), `content`, `sources?`, `created_at` |
+| `Message` | `id` (UUID), `role` (user/assistant/system), `content`, `model?`, `sources?`, `created_at` |
 | `Chat` | `id` (UUID), `title`, `template_id?`, `pinned`, `model?`, `messages: List[Message]`, timestamps |
 | `ChatCreate` | `title?` (default "New Chat"), `template_id?`, `pinned?`, `model?` |
 | `ChatUpdate` | All optional: `title?`, `template_id?`, `pinned?`, `model?`, `messages?` |
