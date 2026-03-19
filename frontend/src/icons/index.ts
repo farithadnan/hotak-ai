@@ -26,5 +26,7 @@ export {
   SquarePen,
   Trash2,
   Upload,
+  X,
   XCircle,
-} from 'lucide-react'
+  Globe,
+  } from 'lucide-react'

@@ -106,6 +106,11 @@ export function useChatEngine(
         content: message.content,
       }))
 
+  // Reset attachments when switching chats
+  useEffect(() => {
+    clearPendingAttachments()
+  }, [activeChatId])
+
   // Fetch chats on mount
   useEffect(() => {
     const loadChats = async () => {
@@ -233,15 +238,6 @@ export function useChatEngine(
     }
 
     setPendingTemplateId(template.id)
-
-    const sourceCount = template.source_count ?? template.sources?.length ?? 0
-    showAttachmentFeedback({
-      title: 'Template selected',
-      message: sourceCount > 0
-        ? `${template.name} will be used for this message. Add extra files or URLs if you want to extend it.`
-        : `${template.name} will be used for this message.`,
-      type: 'success',
-    })
   }
 
   const handleRemovePendingAttachment = (attachmentId: string) => {
