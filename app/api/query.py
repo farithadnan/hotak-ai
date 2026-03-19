@@ -7,6 +7,7 @@ from fastapi.responses import StreamingResponse
 from openai import PermissionDeniedError, RateLimitError
 from langchain.chat_models import init_chat_model
 
+from ..storage.chat_storage import get_chat
 from ..agents.rag_agent import create_rag_agent, validate_and_format_response
 from ..config.settings import (
     LLM_MAX_TOKENS,
@@ -54,10 +55,87 @@ async def health_check():
     return {"status": "healthy"}
 
 
+class QueryMessage(BaseModel):
+    """Minimal message shape accepted from the frontend for LLM context."""
+    role: str
+    content: str
+
+
 class QueryRequest(BaseModel):
     """Request model for query endpoint."""
     question: str
+    chat_id: str | None = None
     model: str | None = None
+    messages: list[QueryMessage] | None = None
+
+
+def _normalize_text(value: str) -> str:
+    return " ".join(value.strip().split())
+
+
+def _resolve_history_message_limit(model_name: str | None) -> int:
+    """
+    Resolve a conservative message-count window per model family.
+
+    This is an intentionally simple placeholder until full token-based packing
+    is implemented.
+    """
+    normalized = (model_name or "").lower()
+    if not normalized:
+        return 10
+    if "mini" in normalized or "nano" in normalized:
+        return 6
+    return 10
+
+
+def _get_messages_for_llm(
+    question: str,
+    chat_id: str | None = None,
+    messages: list[QueryMessage] | None = None,
+    history_limit: int = 10,
+) -> list[dict[str, str]]:
+    """
+    Fetch chat history and combine with current question for the LLM.
+    By default, limits history to the most recent messages.
+
+    If `messages` is provided by the frontend, that history is used directly.
+    """
+    history: list[dict[str, str]] = []
+
+    if messages:
+        for message in messages[-max(1, history_limit):]:
+            role = (message.role or "").strip()
+            content = (message.content or "").strip()
+            if role not in {"user", "assistant", "system"}:
+                continue
+            if not content:
+                continue
+            history.append({"role": role, "content": content})
+    elif chat_id:
+        chat = get_chat(chat_id)
+        if chat and chat.messages:
+            recent_messages = chat.messages[-max(1, history_limit):]
+            for m in recent_messages:
+                content = (m.content or "").strip()
+                if not content:
+                    continue
+                history.append({"role": m.role, "content": content})
+
+    # Avoid duplicating the latest user turn when it is already present in
+    # persisted/frontend-provided history.
+    should_append_question = True
+    if history:
+        last = history[-1]
+        if (
+            last.get("role") == "user"
+            and _normalize_text(last.get("content", "")) == _normalize_text(question)
+        ):
+            should_append_question = False
+
+    if should_append_question:
+        history.append({"role": "user", "content": question})
+
+    return history
 
 
 def _get_rag_agent_for_model(http_request: Request, requested_model: str | None):
@@ -92,19 +170,24 @@ async def query_endpoint(request: QueryRequest, http_request: Request):
         rag_agent, model_used = _get_rag_agent_for_model(http_request, request.model)
 
         warning_message = None
+        history_limit = _resolve_history_message_limit(model_used)
+        payload = {
+            "messages": _get_messages_for_llm(
+                request.question,
+                request.chat_id,
+                request.messages,
+                history_limit=history_limit,
+            )
+        }
 
         try:
-            response = rag_agent.invoke(
-                {"messages": [{"role": "user", "content": request.question}]}
-            )
+            response = rag_agent.invoke(payload)
         except PermissionDeniedError as e:
             if request.model and model_used != LLM_MODEL:
                 warning_message = _build_model_access_message(model_used)
                 logger.warning("Model access denied for %s. Falling back to %s", model_used, LLM_MODEL)
                 model_used = LLM_MODEL
-                response = http_request.app.state.rag_agent.invoke(
-                    {"messages": [{"role": "user", "content": request.question}]}
-                )
+                response = http_request.app.state.rag_agent.invoke(payload)
             else:
                 raise e
 
@@ -190,8 +273,16 @@ async def query_stream_endpoint(request: QueryRequest, http_request: Request):
             return ""
 
         async def event_generator():
-            payload = {"messages": [{"role": "user", "content": request.question}]}
-            rag_agent, _ = _get_rag_agent_for_model(http_request, request.model)
+            rag_agent, model_used = _get_rag_agent_for_model(http_request, request.model)
+            history_limit = _resolve_history_message_limit(model_used)
+            payload = {
+                "messages": _get_messages_for_llm(
+                    request.question,
+                    request.chat_id,
+                    request.messages,
+                    history_limit=history_limit,
+                )
+            }
             full_text = ""
             emitted_chars = 0
             max_stream_chars = max(500, STREAM_MAX_CHARS)

@@ -9,7 +9,12 @@ import api, { API_BASE_URL, getErrorMessage } from './api';
  */
 export interface QueryRequest {
   question: string;
+  chat_id?: string;
   model?: string;
+  messages?: Array<{
+    role: 'user' | 'assistant' | 'system';
+    content: string;
+  }>;
   stream?: boolean;
 }
 

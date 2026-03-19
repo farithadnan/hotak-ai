@@ -142,6 +142,7 @@ export interface Message {
   id: string;
   role: 'user' | 'assistant' | 'system';
   content: string;
+  model?: string;                      // Optional: model name for assistant messages
   sources?: string[];                  // Optional array of sources
   created_at: string;
 }

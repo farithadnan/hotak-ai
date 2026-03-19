@@ -17,6 +17,7 @@ class Message(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     role: str = Field(..., pattern="^(user|assistant|system)$", description="Role of the message sender")
     content: str = Field(..., description="The message text")
+    model: Optional[str] = Field(None, description="Model used to generate this message (assistant only)")
     sources: Optional[List[str]] = Field(default=None, description="Cited sources for assistant messages")
     created_at: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
 

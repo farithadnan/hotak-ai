@@ -9,6 +9,11 @@ export type ChatRuntimeState = {
   isGeneratingTitle: boolean
 }
 
+type LlmContextMessage = {
+  role: 'user' | 'assistant' | 'system'
+  content: string
+}
+
 const STREAM_MODEL_FALLBACK_PATTERN = /\[\[MODEL_FALLBACK:([^\]]+)\]\]\n?/g
 
 export function useChatEngine(
@@ -24,6 +29,14 @@ export function useChatEngine(
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const activeChat = chats.find((chat) => chat.id === activeChatId) || null
+
+  const buildLlmContext = (messages: ChatThread['messages']): LlmContextMessage[] =>
+    messages
+      .filter((message) => message.content.trim().length > 0)
+      .map((message) => ({
+        role: message.role,
+        content: message.content,
+      }))
 
   // Fetch chats on mount
   useEffect(() => {
@@ -93,11 +106,16 @@ export function useChatEngine(
   const streamAssistantText = async (
     question: string,
     onPartial: (partialText: string) => void,
+    chatId?: string,
     modelId?: string,
     onModelResolved?: (resolvedModelId: string) => void,
+    contextMessages?: LlmContextMessage[],
   ) => {
     let streamedContent = ''
     let reportedModel: string | undefined
+    const effectiveRequestedModel = modelId?.trim() || (chatId
+      ? chats.find((chat) => chat.id === chatId)?.model?.trim()
+      : undefined)
 
     const parseStreamContent = (raw: string) => {
       let fallbackModel: string | undefined
@@ -109,7 +127,12 @@ export function useChatEngine(
     }
 
     try {
-      for await (const chunk of streamQuery({ question, model: modelId })) {
+      for await (const chunk of streamQuery({
+        question,
+        chat_id: chatId,
+        model: modelId,
+        messages: contextMessages,
+      })) {
         streamedContent += chunk
         const parsed = parseStreamContent(streamedContent)
         if (parsed.fallbackModel && parsed.fallbackModel !== reportedModel) {
@@ -120,7 +143,12 @@ export function useChatEngine(
       }
     } catch (streamError) {
       console.warn('Stream failed, falling back to non-stream query:', streamError)
-      const fallback = await queryAgent({ question, model: modelId })
+      const fallback = await queryAgent({
+        question,
+        chat_id: chatId,
+        model: modelId,
+        messages: contextMessages,
+      })
       streamedContent = fallback.answer?.trim() || streamedContent
       if (fallback.model && fallback.model !== reportedModel) {
         reportedModel = fallback.model
@@ -130,7 +158,10 @@ export function useChatEngine(
     }
 
     const parsed = parseStreamContent(streamedContent)
-    return parsed.cleaned
+    return {
+      content: parsed.cleaned,
+      model: reportedModel || effectiveRequestedModel,
+    }
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>, modelId?: string) => {
@@ -204,32 +235,45 @@ export function useChatEngine(
       // 3. Persist user message
       await addMessage(chatId, userMessage)
 
-      // 4. Stream LLM response and update pending assistant in real-time
-      const streamedContent = await streamAssistantText(trimmedInput, (partialText) => {
-        setChats((prevChats) =>
-          prevChats.map((chat) => {
-            if (chat.id !== chatId) {
-              return chat
-            }
+      const currentChatMessages = chats.find((chat) => chat.id === chatId)?.messages ?? []
+      const requestContextMessages: LlmContextMessage[] = [
+        ...buildLlmContext(currentChatMessages),
+        { role: 'user', content: trimmedInput },
+      ]
 
-            return {
-              ...chat,
-              messages: chat.messages.map((message) =>
-                message.id === pendingAssistantId
-                  ? {
-                      ...message,
-                      content: partialText,
-                    }
-                  : message
-              ),
-            }
-          })
-        )
-      }, modelId, (resolvedModelId) => {
-        if (chatId) {
-          void ensureChatModel(chatId, resolvedModelId)
-        }
-      })
+      // 4. Stream LLM response and update pending assistant in real-time
+      const { content: streamedContent, model: finalModel } = await streamAssistantText(
+        trimmedInput,
+        (partialText) => {
+          setChats((prevChats) =>
+            prevChats.map((chat) => {
+              if (chat.id !== chatId) {
+                return chat
+              }
+
+              return {
+                ...chat,
+                messages: chat.messages.map((message) =>
+                  message.id === pendingAssistantId
+                    ? {
+                        ...message,
+                        content: partialText,
+                      }
+                    : message
+                ),
+              }
+            })
+          )
+        },
+        chatId,
+        modelId,
+        (resolvedModelId) => {
+          if (chatId) {
+            void ensureChatModel(chatId, resolvedModelId)
+          }
+        },
+        requestContextMessages,
+      )
 
       const parsedAssistant = parseAssistantResponse(streamedContent)
       const finalAssistantContent = parsedAssistant.content || "I'm sorry, I couldn't generate a response."
@@ -237,6 +281,7 @@ export function useChatEngine(
         id: crypto.randomUUID(),
         role: 'assistant',
         content: finalAssistantContent,
+        model: finalModel,
         sources: parsedAssistant.sources,
         created_at: new Date().toISOString(),
       }
@@ -380,29 +425,36 @@ export function useChatEngine(
       markRuntime(activeChatId, { isResponding: true })
 
       try {
-        const streamedContent = await streamAssistantText(trimmedContent, (partialText) => {
-          setChats((prevChats) =>
-            prevChats.map((chat) => {
-              if (chat.id !== activeChatId) {
-                return chat
-              }
+        const { content: streamedContent, model: finalModel } = await streamAssistantText(
+          trimmedContent,
+          (partialText) => {
+            setChats((prevChats) =>
+              prevChats.map((chat) => {
+                if (chat.id !== activeChatId) {
+                  return chat
+                }
 
-              return {
-                ...chat,
-                messages: chat.messages.map((message) =>
-                  message.id === pendingAssistantId
-                    ? {
-                        ...message,
-                        content: partialText,
-                      }
-                    : message
-                ),
-              }
-            })
-          )
-        }, modelId, (resolvedModelId) => {
-          void ensureChatModel(activeChatId, resolvedModelId)
-        })
+                return {
+                  ...chat,
+                  messages: chat.messages.map((message) =>
+                    message.id === pendingAssistantId
+                      ? {
+                          ...message,
+                          content: partialText,
+                        }
+                      : message
+                  ),
+                }
+              })
+            )
+          },
+          activeChatId,
+          modelId,
+          (resolvedModelId) => {
+            void ensureChatModel(activeChatId, resolvedModelId)
+          },
+          buildLlmContext(baseMessages),
+        )
 
         const parsedAssistant = parseAssistantResponse(streamedContent)
         const finalAssistantContent = parsedAssistant.content || "I'm sorry, I couldn't generate a response."
@@ -412,6 +464,7 @@ export function useChatEngine(
             ? {
                 ...message,
                 content: finalAssistantContent,
+                model: finalModel,
                 sources: parsedAssistant.sources,
               }
             : message
@@ -489,29 +542,36 @@ export function useChatEngine(
           'Please provide an alternative answer with different wording and structure from your previous response while keeping the same meaning.',
         ].join('\n')
 
-        const streamedContent = await streamAssistantText(regeneratePrompt, (partialText) => {
-          setChats((prevChats) =>
-            prevChats.map((chat) => {
-              if (chat.id !== activeChatId) {
-                return chat
-              }
+        const { content: streamedContent, model: finalModel } = await streamAssistantText(
+          regeneratePrompt,
+          (partialText) => {
+            setChats((prevChats) =>
+              prevChats.map((chat) => {
+                if (chat.id !== activeChatId) {
+                  return chat
+                }
 
-              return {
-                ...chat,
-                messages: chat.messages.map((message) =>
-                  message.id === assistantMessageId
-                    ? {
-                        ...message,
-                        content: partialText,
-                      }
-                    : message
-                ),
-              }
-            })
-          )
-        }, modelId, (resolvedModelId) => {
-          void ensureChatModel(activeChatId, resolvedModelId)
-        })
+                return {
+                  ...chat,
+                  messages: chat.messages.map((message) =>
+                    message.id === assistantMessageId
+                      ? {
+                          ...message,
+                          content: partialText,
+                        }
+                      : message
+                  ),
+                }
+              })
+            )
+          },
+          activeChatId,
+          modelId,
+          (resolvedModelId) => {
+            void ensureChatModel(activeChatId, resolvedModelId)
+          },
+          buildLlmContext(baseMessages),
+        )
 
         const parsedAssistant = parseAssistantResponse(streamedContent)
         const finalAssistantContent = parsedAssistant.content || "I'm sorry, I couldn't generate a response."
@@ -521,6 +581,7 @@ export function useChatEngine(
             ? {
                 ...message,
                 content: finalAssistantContent,
+                model: finalModel,
                 sources: parsedAssistant.sources,
               }
             : message

@@ -25,7 +25,7 @@ const isLikelyChatModel = (modelId: string) => {
   return !excludeTokens.some((token) => id.includes(token))
 }
 
-const prettifyModelName = (modelId: string) =>
+export const prettifyModelName = (modelId: string) =>
   modelId
     .replace(/-/g, ' ')
     .replace(/\b\w/g, (char) => char.toUpperCase())

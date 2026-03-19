@@ -5,6 +5,7 @@ import { Composer } from '../../common/Composer/Composer';
 import { Toastr } from '../../common/Toastr/Toastr';
 import { ChatLoadingSkeleton } from './ChatLoadingSkeleton';
 import { parseAssistantResponse } from '../../../utils/assistantResponse';
+import { prettifyModelName } from '../../../services/models';
 import type { ChatThread } from '../../../types';
 
 interface ChatWindowProps {
@@ -231,7 +232,11 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                         <Bot size={14} />
                       </span>
                       <span className="assistant-label">Hotak AI</span>
-                      {activeModelLabel && <span className="assistant-model-badge">[{activeModelLabel}]</span>}
+                      {(message.model || activeModelLabel) && (
+                        <span className="assistant-model-badge">
+                          [{message.model ? prettifyModelName(message.model) : activeModelLabel}]
+                        </span>
+                      )}
                     </div>
                     <div className="message-timestamp">{formatMessageTimestamp(message.created_at)}</div>
                     {message.content.trim() === '' ? (
