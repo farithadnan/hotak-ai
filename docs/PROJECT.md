@@ -105,14 +105,14 @@ This is the most important flow in the app. Here's what happens step-by-step whe
 
 When the backend receives `POST /query/stream`:
 
-1. The **RAG agent** is selected (default or model-specific, cached)
-2. LLM history is assembled from frontend `messages` payload when provided, otherwise from persisted `chat_id` history
-3. Duplicate final user turn is filtered to avoid sending the same turn twice
-4. Prior history is packed against a token budget, with oversized historical turns truncated before send
-5. The agent uses a **retrieval tool** that searches ChromaDB for the top-K most similar document chunks
-6. Retrieved context is injected into the **system prompt**
-7. The LLM generates a response with **citation markers** like `[1]`, `[2]`
-8. Response is **streamed** back chunk-by-chunk as `text/plain`
+1. **`AgentRuntimeConfig`** is resolved from the request — applying template overrides (model, temperature, system prompt, retrieval K, and source filter) when a `template_id` is set
+2. The **RAG agent** is selected from cache (or created) matching the resolved config
+3. LLM history is assembled from frontend `messages` payload when provided, otherwise from persisted `chat_id` history
+4. Duplicate final user turn is filtered to avoid sending the same turn twice
+5. Prior history is packed against a token budget, with oversized historical turns truncated before send
+6. The agent uses a **retrieval tool** that searches ChromaDB for the top-K most similar document chunks — scoped to `allowed_sources` when the template specifies documents
+7. The LLM generates a response with **citation markers** like `[1]`, `[2]` and a `Sources:` section with full file names / URLs
+8. Response is **streamed** back token-by-token using `stream_mode="messages"` — only `AIMessageChunk` tokens are forwarded (retrieved doc content from tool messages is filtered out)
 9. If streaming stalls or rate-limits briefly, the app retries/falls back before surfacing an error
 
 Current limitation:
@@ -132,7 +132,15 @@ Current limitation:
 Templates are pre-configured knowledge bases. Each template has:
 - A name and description
 - Document sources (files or URLs)
-- Settings (model, temperature, chunk size, retrieval K, system prompt)
+- Settings: `model`, `temperature`, `retrieval_k`, `system_prompt`, `chunk_size`, `chunk_overlap`
+
+When a chat has an attached template, the backend applies all of the template's active settings at query time:
+- The specified **model** and **temperature** are used for the LLM
+- The **system prompt** overrides the global default
+- The **retrieval_k** controls how many chunks are retrieved
+- The **sources** list scopes ChromaDB retrieval — only chunks from those documents are searched
+
+`chunk_size` and `chunk_overlap` are stored but currently deferred — they are intended for per-template re-ingestion support in the future.
 
 Templates are managed separately from chats via the `/templates` routes.
 

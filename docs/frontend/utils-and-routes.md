@@ -35,6 +35,7 @@ Takes the raw assistant response string and separates it into content and source
 3. **Removes inline citation markers** like `[1]`, `[2]` from the visible text
 4. **Parses source lines** from the sources section — handles both bullet (`- [1] ...`) and numbered (`1. ...`) formats
 5. **Filters** out `"None"` placeholder sources
+6. **Filters** out bare citation markers with no meaningful content (`[1]`, `]`, `1]`) — guards against edge cases where the model emits only the bracket portion of a citation number
 
 **Why is this needed?**
 The backend RAG agent returns responses with embedded citation markers and a `Sources:` section. The frontend needs to:

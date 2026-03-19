@@ -60,7 +60,17 @@ We are building a template-based knowledge management system ("Brains") allowing
   - [x] Web loader falls back to full-page parse when filtered parse is empty.
   - [x] Empty extracted sources are marked failed instead of crashing split/embed with 500.
 - [x] **Telemetry Noise Mitigation** - ✅ Done
-  - [x] Chroma client initialized with telemetry disabled in client settings.
+  - [x] Chroma client initialized via explicit `PersistentClient` with `anonymized_telemetry=False`.
+  - [x] `chromadb.telemetry.product.posthog` logger suppressed at ERROR level in `server.py` (workaround for posthog version-mismatch bug that fires even with telemetry disabled).
+- [x] **Template Source Filtering** - ✅ Done
+  - [x] Template `sources` list passed through `AgentRuntimeConfig.allowed_sources`.
+  - [x] `create_retrieval_tool` applies ChromaDB `{"source": {"$in": ...}}` filter when sources are set.
+  - [x] Agent cache key includes sorted sources to isolate per-template agents.
+  - [x] Falls back to searching all documents when template has no sources.
+- [x] **Streaming Mode Fix** - ✅ Done
+  - [x] Switched from `stream_mode="values"` (full-state snapshots) to `stream_mode="messages"` (true token streaming).
+  - [x] Added `isinstance(token, AIMessageChunk)` filter to exclude retrieved doc content from stream output.
+  - [x] Raised `LLM_MAX_TOKENS` default to 4096 and `STREAM_MAX_CHARS` to 32000.
 - [ ] **Model Access UX Hardening** - 🎯 **NEXT STEP**
   - [ ] Filter inaccessible models from `GET /models`.
   - [ ] Hide unsupported models directly in UI catalog response.

@@ -35,6 +35,8 @@ The main FastAPI application.
 | `app` | `FastAPI(title="Hotak AI Server", version="1.0.0")` |
 | CORS | Allows `http://localhost:5173` (Vite dev server), all methods/headers, with credentials |
 
+> **ChromaDB telemetry suppression:** On module load, `server.py` suppresses the `chromadb.telemetry.product.posthog` logger at `ERROR` level. This silences a recurring posthog version-mismatch warning that fires even when `ANONYMIZED_TELEMETRY=False` is set — it is cosmetic only and does not affect functionality.
+
 #### Startup Event
 
 On application boot (`@app.on_event("startup")`):
@@ -70,8 +72,8 @@ Centralized constants and environment-sourced secrets.
 | `LANGSMITH_PROJECT` | env or app name | LangSmith project name |
 | `LLM_MODEL` | `"gpt-4o-mini"` | Default chat model |
 | `LLM_TEMPERATURE` | `0.2` | Default temperature |
-| `LLM_MAX_TOKENS` | env or `512` | Max tokens per response |
-| `STREAM_MAX_CHARS` | env or `6000` | Max chars for streaming |
+| `LLM_MAX_TOKENS` | env or `4096` | Max tokens per response |
+| `STREAM_MAX_CHARS` | env or `32000` | Max chars for streaming |
 | `CHAT_HISTORY_MAX_TOKENS` | env or `2800` | Approximate token budget reserved for prior chat history |
 | `CHAT_HISTORY_MAX_MESSAGE_TOKENS` | env or `700` | Approximate max history tokens for one historical message before truncation |
 | `CHAT_HISTORY_MAX_MESSAGES` | env or `10` | Hard cap on how many prior messages are considered before packing |
@@ -87,10 +89,12 @@ Centralized constants and environment-sourced secrets.
 ### `app/config/prompts.py`
 
 Contains `SYSTEM_PROMPT` — the system instruction for the RAG agent. Instructs the LLM to:
-- Always use the `retrieve_context` tool first
-- Answer based on retrieved context
-- Cite sources as `[1]`, `[2]`, etc.
-- Include a `Sources:` section at the end
+- Always use the `retrieve_context` tool before answering any question
+- Answer based on retrieved context; say "I don't know" if context is insufficient
+- Cite sources inline as `[1]`, `[2]`, etc., using only sources that were actually used
+- Include a `Sources:` section at the end listing each cited source with its **full filename or URL** (e.g. `- [1] Clean Code (PDFDrive.com).pdf`)
+- If no sources were used, write `Sources: None`
+- Use fenced code blocks with language tags for code snippets
 
 ---
 
@@ -118,25 +122,41 @@ All routes are assembled in `app/api/__init__.py` into a single `APIRouter`, the
 | POST | `/query` | `QueryRequest` | `QueryResponse` | Synchronous RAG query with citation validation |
 | POST | `/query/stream` | `QueryRequest` | `StreamingResponse` | Streaming RAG query (text/plain SSE) |
 
+#### `AgentRuntimeConfig`
+
+Internal dataclass that bundles per-request agent configuration resolved from the request and (optionally) an attached template:
+
+| Field | Source |
+|---|---|
+| `model` | Request `model` field, or template `settings.model`, or global default |
+| `system_prompt` | Template `settings.system_prompt`, or global `SYSTEM_PROMPT` |
+| `retrieval_k` | Template `settings.retrieval_k`, or global `RETRIEVAL_K` |
+| `temperature` | Template `settings.temperature`, or global `LLM_TEMPERATURE` |
+| `allowed_sources` | Template `sources` list — filters retrieval to only those documents; `None` = search all |
+
+Agents are cached keyed by all config fields (including a sorted `allowed_sources` key). If all fields match the global defaults and no sources filter is active, the shared startup agent is reused directly.
+
 #### Query Flow (non-streaming `/query`)
 
-1. Select or create a model-specific RAG agent (cached in `app.state.rag_agents_by_model`)
-2. Build model input messages from `messages` payload (if provided) or persisted `chat_id` history
-3. Deduplicate the final user turn when it already matches `question`
-4. Pack history into a configurable token budget, truncating oversized older turns when necessary
-5. Invoke the agent with the assembled message history
-6. Agent uses the `retrieve_context` tool to search ChromaDB
-7. Agent generates response with citation markers
-8. `validate_and_format_response()` checks citations against retrieved docs
-9. Returns `{ answer, citation_info, model }`
+1. Resolve `AgentRuntimeConfig` from the request — applying template overrides when `template_id` is set
+2. Select or create a cached RAG agent matching the resolved config
+3. Build model input messages from `messages` payload (if provided) or persisted `chat_id` history
+4. Deduplicate the final user turn when it already matches `question`
+5. Pack history into a configurable token budget, truncating oversized older turns when necessary
+6. Invoke the agent with the assembled message history
+7. Agent uses the `retrieve_context` tool to search ChromaDB (scoped to `allowed_sources` if set)
+8. Agent generates response with citation markers
+9. `validate_and_format_response()` checks citations against retrieved docs
+10. Returns `{ answer, citation_info, model }`
 
 #### Streaming Flow (`/query/stream`)
 
 1. Same agent selection
 2. Same message-assembly path (`messages` payload first, then `chat_id` fallback)
-3. Uses `agent.astream()` or `agent.stream()` to get incremental tokens
-4. Each chunk is yielded as plain text
-5. Enforces `STREAM_MAX_CHARS` limit
+3. Calls `agent.astream(payload, stream_mode="messages")` — emits `(AIMessageChunk, metadata)` tuples token-by-token
+4. Only `AIMessageChunk` tokens are forwarded — `ToolMessage` chunks (the raw retrieved doc content) are filtered out
+5. Each text chunk is yielded as plain text
+6. Enforces `STREAM_MAX_CHARS` limit
 6. On model permission error: falls back to default model and emits `[[MODEL_FALLBACK:model_name]]`
 7. On transient rate limits: waits for the provider retry hint and attempts one delayed fallback invoke
 8. On stream failure: falls back to synchronous `invoke()`
@@ -183,19 +203,21 @@ Document ingestion safeguards:
 
 The core AI logic — creates the retrieval tool and assembles the LangChain agent.
 
-#### `create_retrieval_tool(vector_store) → tool`
+#### `create_retrieval_tool(vector_store, retrieval_k=None, allowed_sources=None) → tool`
 
 Returns a LangChain `@tool` named `retrieve_context`:
 - Takes a `query: str`
-- Searches ChromaDB with `similarity_search(query, k=RETRIEVAL_K)`
+- If `allowed_sources` is provided, filters ChromaDB with `{"source": {"$in": allowed_sources}}` — only chunks from those sources are searched
+- Otherwise searches all stored documents
+- Uses `retrieval_k` (falls back to the global `RETRIEVAL_K` setting) to control how many chunks are returned
 - Formats each result as `[index] source_label\nContent: ...`
 - Source labels are derived from file names, URLs, or paths (with page numbers if available)
 - Returns `(formatted_string, docs_list)`
 
-#### `create_rag_agent(llm, vector_store) → agent`
+#### `create_rag_agent(llm, vector_store, system_prompt=None, retrieval_k=None, allowed_sources=None) → agent`
 
-- Creates the retrieval tool
-- Creates a LangChain agent with the LLM, the tool, and the system prompt
+- Creates the retrieval tool (passing through `retrieval_k` and `allowed_sources`)
+- Creates a LangChain agent with the LLM, the tool, and the effective system prompt
 - Returns the configured agent
 
 #### `validate_and_format_response(answer, retrieved_docs) → (answer, citation_info)`
@@ -252,7 +274,7 @@ ChromaDB operations. Persisted to `app/data/chroma_db/`.
 
 | Function | Description |
 |---|---|
-| `initialize_vector_store(embeddings) → Chroma` | Creates ChromaDB instance with collection name and persistence |
+| `initialize_vector_store(embeddings) → Chroma` | Creates a `chromadb.PersistentClient` with `anonymized_telemetry=False`, then wraps it in a LangChain `Chroma` instance |
 | `is_document_cached(store, source) → bool` | Checks if a source URL/path already has embeddings |
 | `filter_uncached_sources(store, sources) → (cached, uncached)` | Partitions sources into cached vs. needs-loading |
 | `add_documents_to_store(store, docs) → ids` | Adds document chunks to the store |
@@ -337,3 +359,17 @@ Handles citation validation and formatting for RAG responses.
 | `Template` | `id` (UUID), `name`, `description`, `sources`, `settings: TemplateSettings`, timestamps |
 | `TemplateCreate` | `name` (required), `description?`, `sources?`, `settings?` |
 | `TemplateUpdate` | All optional |
+
+**Which template settings are active at query time:**
+
+| Setting | Used at query time? | Notes |
+|---|---|---|
+| `model` | ✅ Yes | Selects the LLM for that chat |
+| `temperature` | ✅ Yes | Applied when creating a per-template LLM instance |
+| `retrieval_k` | ✅ Yes | Controls how many chunks are retrieved from ChromaDB |
+| `system_prompt` | ✅ Yes | Overrides the global system prompt for that session |
+| `sources` | ✅ Yes | Filters ChromaDB retrieval to only those documents |
+| `chunk_size` | ❌ Not yet | Ingestion-only setting — not applied at query time |
+| `chunk_overlap` | ❌ Not yet | Ingestion-only setting — not applied at query time |
+
+> **Side note on `chunk_size` / `chunk_overlap`:** Leave them as-is in the model. They're not useless — just deferred. They're the right place to control ingestion granularity per-template if you ever build per-template document re-ingestion. Removing them now would break existing stored templates and doesn't gain anything.

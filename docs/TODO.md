@@ -14,7 +14,8 @@
 	- [x] Assistant messages persist `model` (message-level model tracking).
 10. [ ] **Backend:** Filter unavailable models from `/models` (prevent selecting inaccessible models).
 11. [x] **Backend:** Silence/patch telemetry warning (`CollectionQueryEvent capture()` mismatch) - ✅ Done.
-	- [x] Chroma client now initializes with telemetry disabled in client settings.
+	- [x] Chroma client now uses explicit `PersistentClient` with `anonymized_telemetry=False`.
+	- [x] `chromadb.telemetry.product.posthog` logger suppressed at ERROR level in `server.py` (posthog version bug fires warnings even when telemetry is disabled).
 12. [x] **Backend:** Harden web-document ingestion for empty parsed pages - ✅ Done.
 	- [x] Web loader now falls back to full-page parse when filtered extraction is empty.
 	- [x] Empty extracted documents are marked failed instead of crashing split/embed flow.
@@ -42,5 +43,13 @@
 22. [ ] **Frontend:** Add byte-level upload progress percentages for file attachments.
 23. [ ] **Templates:** Persist uploaded template files as real saved sources instead of browser-only file names.
 24. [ ] **Backend:** Optional rolling summary memory block for long conversations.
+25. [x] **Backend:** Fix streaming cut-off and PDF content leaking into stream - ✅ Done.
+	- [x] Switched to `stream_mode="messages"` for true token-by-token streaming.
+	- [x] Added `AIMessageChunk` filter to exclude tool message content (retrieved docs) from stream output.
+	- [x] Raised `LLM_MAX_TOKENS` default to 4096 and `STREAM_MAX_CHARS` to 32000 in settings and `.env.sample`.
+26. [x] **Backend:** Template source filtering — query retrieval scoped to template's documents - ✅ Done.
+	- [x] `AgentRuntimeConfig` extended with `allowed_sources: list[str] | None`.
+	- [x] `create_retrieval_tool` applies ChromaDB `filter={"source": {"$in": allowed_sources}}` when set.
+	- [x] Agent cache keyed by sorted sources; falls back to all-docs search when template has no sources.
 
-*Core chat + model workflow is working, including multi-turn model switching and budgeted history packing. Next: model accessibility UX, telemetry cleanup, and summary-memory hardening.*
+*Core chat + model workflow is working, including multi-turn model switching and budgeted history packing. Next: model accessibility UX and summary-memory hardening.*
