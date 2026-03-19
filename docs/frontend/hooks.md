@@ -63,6 +63,7 @@ The core hook that owns **all chat data and operations**. Extracted from App.tsx
 - On send/edit/regenerate, the hook can pass in-memory `messages` context to `/query` and `/query/stream` to avoid stale persistence races.
 - Assistant messages are persisted with `message.model` so each reply records which model produced it.
 - The backend still keeps `chat.model` as the active default model for next turns.
+- If streaming stalls, `streamQuery` aborts after a timeout and the hook falls back to non-stream `/query` automatically.
 
 ### Effects
 

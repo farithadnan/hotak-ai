@@ -253,6 +253,12 @@ Same 16 props from `AppRoutes` — `activeChat`, `isLoadingChats`, `hasActiveCha
 
 The scrollable conversation view — renders all messages and the composer.
 
+#### Chat Rendering Notes
+
+- Assistant replies are rendered through a markdown renderer (`react-markdown` + `remark-gfm`), so lists, emphasis, code blocks, and links display as formatted content instead of raw markdown characters.
+- Sources are deduplicated before display, so repeated citations collapse to one visible item.
+- HTTP/HTTPS sources render as clickable links that open in a new browser tab.
+
 #### Props
 
 | Prop | Type | Description |

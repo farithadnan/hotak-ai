@@ -15,7 +15,12 @@
 10. [ ] **Backend:** Filter unavailable models from `/models` (prevent selecting inaccessible models).
 11. [ ] **Backend:** Silence/patch telemetry warning (`CollectionQueryEvent capture()` mismatch).
 12. [ ] **Frontend:** Show model in sidebar chat rows (optional UX enhancement).
-13. [ ] **Backend/Frontend:** Token-budget context packing per model (replace fixed message-count window).
-14. [ ] **Backend:** Optional rolling summary memory block for long conversations.
+13. [x] **Backend/Frontend:** Token-budget context packing + stream timeout safeguards - ✅ Done.
+	- [x] Backend packs prior chat history against configurable token budgets.
+	- [x] Frontend stream timeout aborts stalled chunk reads and falls back to `/query`.
+14. [x] **Frontend:** Assistant markdown rendering + deduped clickable sources - ✅ Done.
+	- [x] Assistant text renders markdown lists/links/code instead of raw markdown punctuation.
+	- [x] Duplicate sources are collapsed and HTTP sources open in a new tab.
+15. [ ] **Backend:** Optional rolling summary memory block for long conversations.
 
-*Core chat + model workflow is working, including multi-turn model switching. Next: model accessibility UX, telemetry cleanup, and token-budget/summarization hardening.*
+*Core chat + model workflow is working, including multi-turn model switching and budgeted history packing. Next: model accessibility UX, telemetry cleanup, and summary-memory hardening.*

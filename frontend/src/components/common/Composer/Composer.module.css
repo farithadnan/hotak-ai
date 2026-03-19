@@ -3,7 +3,7 @@
   display: flex;
   align-items: flex-end;
   gap: 12px;
-  padding: 12px 110px 18px 110px;
+  padding: 12px var(--chat-horizontal-padding) 18px var(--chat-horizontal-padding);
   background: transparent;
   width: 100%;
   justify-content: center;

@@ -1,6 +1,6 @@
 # Hotak AI - Development Roadmap (Active)
 
-## 🎯 Current Status: Phase 6.6 - Multi-Turn Model Switching Baseline
+## 🎯 Current Status: Phase 6.7 - Chat Context Budgeting + Output Polish
 
 We are building a template-based knowledge management system ("Brains") allowing users to create reusable knowledge templates for chat sessions.
 
@@ -24,6 +24,8 @@ We are building a template-based knowledge management system ("Brains") allowing
 - [x] **Chat Components (Step 7-8)** - ✅ Done
   - [x] Chat shell for `ChatWindow.tsx` and `Composer.tsx`.
   - [x] Message display with source/citation rendering.
+  - [x] Markdown rendering for assistant replies.
+  - [x] Deduped clickable source links.
   - [x] Streaming responses with graceful fallback.
   - [x] Sidebar chat/session management (rename, pin, delete).
 - [x] **App Layout Polish (Step 9)** - ✅ Done
@@ -46,12 +48,16 @@ We are building a template-based knowledge management system ("Brains") allowing
   - [x] `QueryRequest` supports `chat_id` and optional `messages` payload.
   - [x] Query/stream endpoints compose history for the selected model.
   - [x] Duplicate last-user-turn guard in history assembly.
+- [x] **Context Packing Hardening** - ✅ Baseline Done
+  - [x] Replaced fixed message-count window with token-budget history packing.
+  - [x] Added per-message truncation guard for oversized historical turns.
+  - [x] Added one-shot delayed retry for transient stream 429s.
 - [ ] **Model Access UX Hardening** - 🎯 **NEXT STEP**
   - [ ] Filter inaccessible models from `GET /models`.
   - [ ] Remove telemetry warning noise in logs.
-- [ ] **Context Packing Hardening** - Planned (after UX hardening)
-  - [ ] Replace fixed message-count window with token-budget packing per model.
+- [ ] **Context Memory Hardening** - Planned (after UX hardening)
   - [ ] Add optional rolling summary memory block for long chats.
+  - [ ] Tune retrieval reduction based on remaining token budget.
 
 
 ---
@@ -70,6 +76,7 @@ We are building a template-based knowledge management system ("Brains") allowing
 - **Empty State:** Greeting + centered composer; send starts session.
 - **Model Visibility:** Active model badge appears next to assistant name per chat.
 - **Message Provenance:** Assistant bubble can display the model used for that specific reply.
+- **Source UX:** Source chips expand into deduped links that open external documents in a new tab.
 
 ---
 

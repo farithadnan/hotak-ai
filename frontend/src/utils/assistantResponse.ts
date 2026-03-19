@@ -3,6 +3,57 @@ export type ParsedAssistantResponse = {
   sources: string[]
 }
 
+const SOURCE_PUNCTUATION_SUFFIX = /[),.;:]+$/
+
+function normalizeSourceValue(source: string): string {
+  const trimmed = source.trim().replace(SOURCE_PUNCTUATION_SUFFIX, '')
+  if (!trimmed) {
+    return ''
+  }
+
+  if (/^https?:\/\//i.test(trimmed)) {
+    try {
+      const url = new URL(trimmed)
+      url.hash = ''
+      const normalizedUrl = url.toString().replace(/\/+$/, '')
+      return normalizedUrl.toLowerCase()
+    } catch {
+      return trimmed.toLowerCase()
+    }
+  }
+
+  return trimmed.replace(/\s+/g, ' ').toLowerCase()
+}
+
+export function dedupeSources(sources: string[]): string[] {
+  const seen = new Set<string>()
+  const uniqueSources: string[] = []
+
+  for (const source of sources) {
+    const normalized = normalizeSourceValue(source)
+    if (!normalized || seen.has(normalized)) {
+      continue
+    }
+    seen.add(normalized)
+    uniqueSources.push(source.trim().replace(SOURCE_PUNCTUATION_SUFFIX, ''))
+  }
+
+  return uniqueSources
+}
+
+export function getSourceHref(source: string): string | null {
+  const normalized = source.trim().replace(SOURCE_PUNCTUATION_SUFFIX, '')
+  if (!/^https?:\/\//i.test(normalized)) {
+    return null
+  }
+
+  try {
+    return new URL(normalized).toString()
+  } catch {
+    return null
+  }
+}
+
 /**
  * Parses a raw LLM response into structured content and sources.
  * 
@@ -69,6 +120,6 @@ export function parseAssistantResponse(raw: string): ParsedAssistantResponse {
 
   return {
     content: cleanedContent,
-    sources,
+    sources: dedupeSources(sources),
   }
 }

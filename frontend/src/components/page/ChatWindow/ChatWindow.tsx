@@ -1,11 +1,14 @@
 
 import React from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { Bot, Copy, LoaderCircle, RotateCcw, Pencil } from '../../../icons';
 import { Composer } from '../../common/Composer/Composer';
 import { Toastr } from '../../common/Toastr/Toastr';
 import { ChatLoadingSkeleton } from './ChatLoadingSkeleton';
-import { parseAssistantResponse } from '../../../utils/assistantResponse';
+import { dedupeSources, getSourceHref, parseAssistantResponse } from '../../../utils/assistantResponse';
 import { prettifyModelName } from '../../../services/models';
+import { EXTERNAL_LINK_REL, EXTERNAL_LINK_TARGET } from '../../../constants/chat';
 import type { ChatThread } from '../../../types';
 
 interface ChatWindowProps {
@@ -139,6 +142,19 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     }
   }, [chat?.messages.length]);
 
+  const markdownComponents = React.useMemo(() => ({
+    a: ({ href, children, ...props }: React.ComponentPropsWithoutRef<'a'>) => (
+      <a
+        {...props}
+        href={href}
+        target={EXTERNAL_LINK_TARGET}
+        rel={EXTERNAL_LINK_REL}
+      >
+        {children}
+      </a>
+    ),
+  }), []);
+
   return (
     <section className="chat-area">
       {isResolvingActiveChat && <ChatLoadingSkeleton />}
@@ -222,7 +238,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                     {(() => {
                       const parsed = parseAssistantResponse(message.content);
                       const displayContent = parsed.content || message.content;
-                      const sourceItems = message.sources && message.sources.length > 0 ? message.sources : parsed.sources;
+                      const rawSourceItems = message.sources && message.sources.length > 0 ? message.sources : parsed.sources;
+                      const sourceItems = dedupeSources(rawSourceItems);
                       const hasSources = sourceItems.length > 0;
 
                       return (
@@ -247,7 +264,11 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                       </div>
                     ) : (
                       <>
-                        <div className="assistant-text">{displayContent}</div>
+                        <div className="assistant-text">
+                          <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                            {displayContent}
+                          </ReactMarkdown>
+                        </div>
                         {hasSources && (
                           <div className="assistant-sources-wrap">
                             <button
@@ -264,7 +285,23 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                                 {sourceItems.map((source, idx) => (
                                   <div key={`${message.id}-source-${idx}`} className="sources-list-item">
                                     <span className="sources-list-index-badge">{idx + 1}</span>
-                                    <span className="sources-list-name">{source}</span>
+                                    {(() => {
+                                      const href = getSourceHref(source);
+                                      if (!href) {
+                                        return <span className="sources-list-name">{source}</span>;
+                                      }
+
+                                      return (
+                                        <a
+                                          className="sources-list-link"
+                                          href={href}
+                                          target={EXTERNAL_LINK_TARGET}
+                                          rel={EXTERNAL_LINK_REL}
+                                        >
+                                          {source}
+                                        </a>
+                                      );
+                                    })()}
                                   </div>
                                 ))}
                               </div>

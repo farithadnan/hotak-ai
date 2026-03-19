@@ -67,9 +67,10 @@ The core AI interaction layer.
 1. Uses `fetch()` (not Axios) because Axios doesn't support browser `ReadableStream`
 2. Sends `POST /query/stream` with `{ question, chat_id, model, messages, stream: true }`
 3. Reads the response body as a `ReadableStream` via `getReader()`
-4. Decodes each `Uint8Array` chunk to text with `TextDecoder`
-5. `yield`s each decoded chunk — the caller iterates with `for await...of`
-6. Handles connection errors by throwing, which `streamAssistantText` catches to fall back to `queryAgent`
+4. Guards each `reader.read()` with a timeout so stalled streams are aborted
+5. Decodes each `Uint8Array` chunk to text with `TextDecoder`
+6. `yield`s each decoded chunk — the caller iterates with `for await...of`
+7. Handles connection errors by throwing, which `streamAssistantText` catches to fall back to `queryAgent`
 
 ### Usage in `useChatEngine`
 
@@ -81,6 +82,11 @@ for await (const chunk of streamQuery({ question, chat_id, model: modelId, messa
 ```
 
 `messages` is optional but preferred for edit/regenerate flows, because it reflects the latest in-memory state even before persistence completes.
+
+### Frontend Constants Strategy
+
+- Runtime/network numbers that affect TypeScript behavior should live in small constants modules such as `constants/chat.ts`.
+- Repeated layout values in CSS should use CSS custom properties rather than duplicated pixel literals.
 
 ---
 

@@ -105,14 +105,15 @@ When the backend receives `POST /query/stream`:
 1. The **RAG agent** is selected (default or model-specific, cached)
 2. LLM history is assembled from frontend `messages` payload when provided, otherwise from persisted `chat_id` history
 3. Duplicate final user turn is filtered to avoid sending the same turn twice
-4. The agent uses a **retrieval tool** that searches ChromaDB for the top-K most similar document chunks
-5. Retrieved context is injected into the **system prompt**
-6. The LLM generates a response with **citation markers** like `[1]`, `[2]`
-7. Response is **streamed** back chunk-by-chunk as `text/plain`
-8. If the requested model has permission/rate-limit issues, it **falls back** to the default model and emits a `[[MODEL_FALLBACK:...]]` token
+4. Prior history is packed against a token budget, with oversized historical turns truncated before send
+5. The agent uses a **retrieval tool** that searches ChromaDB for the top-K most similar document chunks
+6. Retrieved context is injected into the **system prompt**
+7. The LLM generates a response with **citation markers** like `[1]`, `[2]`
+8. Response is **streamed** back chunk-by-chunk as `text/plain`
+9. If streaming stalls or rate-limits briefly, the app retries/falls back before surfacing an error
 
 Current limitation:
-- History sizing is currently message-count based (simple, predictable baseline). Token-budget packing and summary-memory compression are planned as a follow-up hardening step.
+- Summary-memory compression is still planned as a follow-up for very long conversations; current protection is token-budget packing + truncation.
 
 ---
 

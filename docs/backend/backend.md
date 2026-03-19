@@ -71,6 +71,9 @@ Centralized constants and environment-sourced secrets.
 | `LLM_TEMPERATURE` | `0.2` | Default temperature |
 | `LLM_MAX_TOKENS` | env or `512` | Max tokens per response |
 | `STREAM_MAX_CHARS` | env or `6000` | Max chars for streaming |
+| `CHAT_HISTORY_MAX_TOKENS` | env or `2800` | Approximate token budget reserved for prior chat history |
+| `CHAT_HISTORY_MAX_MESSAGE_TOKENS` | env or `700` | Approximate max history tokens for one historical message before truncation |
+| `CHAT_HISTORY_MAX_MESSAGES` | env or `10` | Hard cap on how many prior messages are considered before packing |
 | `EMBEDDING_MODEL` | `"text-embedding-3-small"` | Embedding model for vector store |
 | `COLLECTION_NAME` | `"hotak_ai_collection"` | ChromaDB collection name |
 | `PERSIST_DIRECTORY` | `data/chroma_db/` | ChromaDB persistence path |
@@ -117,11 +120,12 @@ All routes are assembled in `app/api/__init__.py` into a single `APIRouter`, the
 1. Select or create a model-specific RAG agent (cached in `app.state.rag_agents_by_model`)
 2. Build model input messages from `messages` payload (if provided) or persisted `chat_id` history
 3. Deduplicate the final user turn when it already matches `question`
-4. Invoke the agent with the assembled message history
-5. Agent uses the `retrieve_context` tool to search ChromaDB
-6. Agent generates response with citation markers
-7. `validate_and_format_response()` checks citations against retrieved docs
-8. Returns `{ answer, citation_info, model }`
+4. Pack history into a configurable token budget, truncating oversized older turns when necessary
+5. Invoke the agent with the assembled message history
+6. Agent uses the `retrieve_context` tool to search ChromaDB
+7. Agent generates response with citation markers
+8. `validate_and_format_response()` checks citations against retrieved docs
+9. Returns `{ answer, citation_info, model }`
 
 #### Streaming Flow (`/query/stream`)
 
@@ -131,11 +135,12 @@ All routes are assembled in `app/api/__init__.py` into a single `APIRouter`, the
 4. Each chunk is yielded as plain text
 5. Enforces `STREAM_MAX_CHARS` limit
 6. On model permission error: falls back to default model and emits `[[MODEL_FALLBACK:model_name]]`
-7. On stream failure: falls back to synchronous `invoke()`
-8. Handles rate limits (429) with retry-after info
+7. On transient rate limits: waits for the provider retry hint and attempts one delayed fallback invoke
+8. On stream failure: falls back to synchronous `invoke()`
+9. Handles rate limits (429) with retry-after info
 
 Current limitation:
-- History windowing is message-count based for now. Token-budget packing/summarization is planned as a future improvement.
+- Summary-memory compression is still future work; current protection is token-budget packing and truncation.
 
 ### Documents — `app/api/documents.py`
 

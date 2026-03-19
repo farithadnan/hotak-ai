@@ -1,4 +1,5 @@
 import api, { API_BASE_URL, getErrorMessage } from './api';
+import { CHAT_STREAM_CHUNK_TIMEOUT_MS } from '../constants/chat';
 
 // Contract: /query -> { answer, citation_info }
 // Contract: /query/stream -> text/plain stream (chunked)
@@ -26,9 +27,6 @@ export interface QueryResponse {
 }
 
 export type QueryStreamChunk = string;
-
-// If no stream chunk arrives within this window, abort and let caller fallback.
-const STREAM_CHUNK_TIMEOUT_MS = 20000;
 
 
 /**
@@ -80,8 +78,8 @@ export const streamQuery = async function* (
           new Promise<never>((_, reject) => {
             timer = setTimeout(() => {
               controller.abort();
-              reject(new Error(`Stream chunk timeout after ${STREAM_CHUNK_TIMEOUT_MS}ms`));
-            }, STREAM_CHUNK_TIMEOUT_MS);
+              reject(new Error(`Stream chunk timeout after ${CHAT_STREAM_CHUNK_TIMEOUT_MS}ms`));
+            }, CHAT_STREAM_CHUNK_TIMEOUT_MS);
           }),
         ]);
       } finally {
