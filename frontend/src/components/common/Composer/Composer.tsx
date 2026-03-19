@@ -25,9 +25,15 @@ type ComposerProps = {
     status?: 'queued' | 'uploading' | 'ingesting' | 'ready' | 'failed'
     error?: string
   }>
+  availableTemplates?: Array<{
+    id: string
+    name: string
+    sourceCount: number
+  }>
   isAttaching?: boolean
   onAttachUrl?: (url: string) => void
   onAttachFiles?: (files: File[]) => void
+  onAttachTemplate?: (templateId: string) => void
   onRemoveAttachment?: (attachmentId: string) => void
 }
 
@@ -41,14 +47,19 @@ export function Composer({
   className = '',
   mode = 'default',
   pendingAttachments = [],
+  availableTemplates = [],
   isAttaching = false,
   onAttachUrl,
   onAttachFiles,
+  onAttachTemplate,
   onRemoveAttachment,
 }: ComposerProps) {
   const [isAttachPopoverOpen, setIsAttachPopoverOpen] = useState(false)
   const [isUrlPanelOpen, setIsUrlPanelOpen] = useState(false)
+  const [isTemplatePanelOpen, setIsTemplatePanelOpen] = useState(false)
   const [urlInputValue, setUrlInputValue] = useState('')
+  const [templateSearchValue, setTemplateSearchValue] = useState('')
+  const [isDragActive, setIsDragActive] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const isEditMode = mode === 'edit'
 
@@ -70,13 +81,54 @@ export function Composer({
     onAttachUrl?.(nextUrl)
     setUrlInputValue('')
     setIsUrlPanelOpen(false)
+    setIsTemplatePanelOpen(false)
     setIsAttachPopoverOpen(false)
+  }
+
+  const filteredTemplates = availableTemplates.filter((template) => {
+    const query = templateSearchValue.trim().toLowerCase()
+    if (!query) {
+      return true
+    }
+    return template.name.toLowerCase().includes(query)
+  })
+
+  const handleDropFiles = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault()
+    setIsDragActive(false)
+    const files = Array.from(event.dataTransfer.files || [])
+    if (files.length > 0) {
+      onAttachFiles?.(files)
+    }
   }
 
   return (
     <div className={`${style.composer} ${isEditMode ? style['composer-edit-mode'] : ''} ${className}`}>
       <div className={style['composer-inner']}>
-        <div className={style['composer-input-wrapper']}>
+        <div
+          className={`${style['composer-input-wrapper']} ${isDragActive ? style['composer-input-wrapper-drag-active'] : ''}`}
+          onDragEnter={(event) => {
+            if (isEditMode) {
+              return
+            }
+            event.preventDefault()
+            setIsDragActive(true)
+          }}
+          onDragOver={(event) => {
+            if (isEditMode) {
+              return
+            }
+            event.preventDefault()
+            event.dataTransfer.dropEffect = 'copy'
+            setIsDragActive(true)
+          }}
+          onDragLeave={(event) => {
+            if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+              setIsDragActive(false)
+            }
+          }}
+          onDrop={handleDropFiles}
+        >
           <input
             ref={fileInputRef}
             type="file"
@@ -130,6 +182,9 @@ export function Composer({
               ))}
             </div>
           )}
+          {!isEditMode && isDragActive && (
+            <div className={style['drag-overlay']}>Drop files to attach them</div>
+          )}
           <div className={`${style['composer-actions']} ${isEditMode ? style['composer-actions-edit'] : ''}`}>
             {!isEditMode && (
               <div className={style['composer-actions-left']}>
@@ -160,6 +215,7 @@ export function Composer({
                         type="button"
                         onClick={() => {
                           setIsUrlPanelOpen(false)
+                          setIsTemplatePanelOpen(false)
                           setIsAttachPopoverOpen(false)
                           fileInputRef.current?.click()
                         }}
@@ -171,6 +227,7 @@ export function Composer({
                         className={style['attach-menu-item']}
                         type="button"
                         onClick={() => {
+                          setIsTemplatePanelOpen(false)
                           setIsUrlPanelOpen((prev) => !prev)
                         }}
                       >
@@ -203,10 +260,50 @@ export function Composer({
                           </button>
                         </div>
                       )}
-                      <button className={style['attach-menu-item']} type="button">
+                      <button
+                        className={style['attach-menu-item']}
+                        type="button"
+                        onClick={() => {
+                          setIsUrlPanelOpen(false)
+                          setIsTemplatePanelOpen((prev) => !prev)
+                        }}
+                      >
                         <FileText size={18} />
                         <span>Attach Templates</span>
                       </button>
+                      {isTemplatePanelOpen && (
+                        <div className={style['attach-template-panel']}>
+                          <input
+                            className={style['attach-template-search']}
+                            type="text"
+                            value={templateSearchValue}
+                            onChange={(event) => setTemplateSearchValue(event.target.value)}
+                            placeholder="Search templates"
+                          />
+                          <div className={style['attach-template-list']}>
+                            {filteredTemplates.length === 0 ? (
+                              <div className={style['attach-template-empty']}>No templates found</div>
+                            ) : (
+                              filteredTemplates.map((template) => (
+                                <button
+                                  key={template.id}
+                                  type="button"
+                                  className={style['attach-template-item']}
+                                  onClick={() => {
+                                    onAttachTemplate?.(template.id)
+                                    setTemplateSearchValue('')
+                                    setIsTemplatePanelOpen(false)
+                                    setIsAttachPopoverOpen(false)
+                                  }}
+                                >
+                                  <span className={style['attach-template-name']}>{template.name}</span>
+                                  <span className={style['attach-template-count']}>{template.sourceCount} sources</span>
+                                </button>
+                              ))
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

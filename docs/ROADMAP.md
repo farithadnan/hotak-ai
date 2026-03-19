@@ -56,9 +56,14 @@ We are building a template-based knowledge management system ("Brains") allowing
 - [x] **Attachment API Baseline** - ✅ Done
   - [x] Added `/documents/upload` multipart endpoint for file ingestion.
   - [x] Persisted message-level attachment metadata (`url`/`file`, status, source).
+- [x] **Ingestion Reliability Hardening** - ✅ Done
+  - [x] Web loader falls back to full-page parse when filtered parse is empty.
+  - [x] Empty extracted sources are marked failed instead of crashing split/embed with 500.
+- [x] **Telemetry Noise Mitigation** - ✅ Done
+  - [x] Chroma client initialized with telemetry disabled in client settings.
 - [ ] **Model Access UX Hardening** - 🎯 **NEXT STEP**
   - [ ] Filter inaccessible models from `GET /models`.
-  - [ ] Remove telemetry warning noise in logs.
+  - [ ] Hide unsupported models directly in UI catalog response.
 - [ ] **Context Memory Hardening** - Planned (after UX hardening)
   - [ ] Add optional rolling summary memory block for long chats.
   - [ ] Tune retrieval reduction based on remaining token budget.
@@ -66,8 +71,11 @@ We are building a template-based knowledge management system ("Brains") allowing
   - [x] Replace prompt-based URL entry with an inline composer URL field.
   - [x] Add per-attachment progress indicators during ingestion.
   - [x] Add toast feedback for attach success/partial failure/failure.
-  - [ ] Add pre-upload validation feedback for file size/type before network call.
-  - [ ] Add drag-and-drop attachment support.
+  - [x] Add pre-upload validation feedback for file size/type before network call.
+  - [x] Add drag-and-drop attachment support.
+  - [x] Replace placeholder template action with real template source selection.
+  - [ ] Add byte-level upload progress percentages.
+  - [ ] Persist template-uploaded local files as reusable saved sources for template attach parity.
 
 
 ---

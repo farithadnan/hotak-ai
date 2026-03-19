@@ -97,7 +97,17 @@ def load_documents(sources: List[str]) -> Tuple[List[Document], List[str]]:
     for source in sources:
         try:
             docs = load_document(source)
-            all_docs.extend(docs)
+            non_empty_docs = [
+                doc for doc in docs
+                if doc.page_content and doc.page_content.strip()
+            ]
+
+            if not non_empty_docs:
+                failed_sources.append(source)
+                logger.warning("Skipping source with empty extracted content: %s", source)
+                continue
+
+            all_docs.extend(non_empty_docs)
         except Exception as e:
             failed_sources.append(source)
             logger.error(f"Skipping source due to error: {source}. Error: {e}")

@@ -41,10 +41,11 @@ On application boot (`@app.on_event("startup")`):
 
 1. Fixes Windows console encoding to UTF-8
 2. Loads all settings from `app.config.settings`
-3. Sets environment variables: `OPENAI_API_KEY`, `LANGSMITH_*`, `ANONYMIZED_TELEMETRY`
-4. Calls `initialize_models()` → creates the LLM and embeddings → stored on `app.state`
-5. Calls `initialize_vector_store(embeddings)` → creates the ChromaDB instance → stored on `app.state`
-6. Calls `create_rag_agent(llm, vector_store)` → creates the LangChain agent → stored on `app.state`
+3. Ensures early env defaults are set for `ANONYMIZED_TELEMETRY=False` and `USER_AGENT=Hotak-AI/1.0`
+4. Sets runtime environment variables: `OPENAI_API_KEY`, `LANGSMITH_*`
+5. Calls `initialize_models()` → creates the LLM and embeddings → stored on `app.state`
+6. Calls `initialize_vector_store(embeddings)` → creates the ChromaDB instance → stored on `app.state`
+7. Calls `create_rag_agent(llm, vector_store)` → creates the LangChain agent → stored on `app.state`
 
 All routes access these via `request.app.state`.
 
@@ -151,6 +152,11 @@ Current limitation:
 | POST | `/documents/load` | `{ sources: string[] }` | `{ loaded, skipped, cached_sources, loaded_sources, failed_sources }` | Load documents into the vector store. Skips already-cached sources. |
 | POST | `/documents/upload` | `multipart/form-data` (`files[]`) | `{ loaded, skipped, uploaded_sources, cached_sources, loaded_sources, failed_sources, failed_files, file_results }` | Upload local files, persist to `data/uploads`, ingest uncached sources, and return per-file status. |
 | GET | `/documents` | — | `{ total_sources, sources: [{ source, chunks }] }` | List all documents with chunk counts |
+
+Document ingestion safeguards:
+- Web loader first attempts filtered extraction, then automatically falls back to full-page extraction when filtered content is empty.
+- Sources that load but produce empty content are marked as failed sources and skipped.
+- Split failures for a load batch are returned as failed sources instead of crashing the endpoint with a 500 in this scenario.
 
 ### Models — `app/api/models.py`
 

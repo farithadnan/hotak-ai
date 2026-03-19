@@ -154,6 +154,8 @@ Manages knowledge templates.
 | `updateTemplate` | `(id: string, data: TemplateUpdate) => Promise<Template>` | `PUT /templates/{id}` | Partial update of template fields. |
 | `deleteTemplate` | `(id: string) => Promise<void>` | `DELETE /templates/{id}` | Permanently deletes a template. |
 
+The chat composer now also uses `getTemplates()` to populate the inline template attach picker, so template sources can be queued as message attachments.
+
 ---
 
 ## `index.ts` — Barrel Export

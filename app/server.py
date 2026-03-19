@@ -2,6 +2,7 @@
 
 from pathlib import Path
 import sys
+import os
 
 # Support running from inside app/ with: uvicorn server:app --reload
 # by ensuring the project root is importable as a package root.
@@ -17,6 +18,10 @@ from app.api import router
 from app.utils.logger import setup_logger
 
 logger = setup_logger(__name__)
+
+# Set safe defaults as early as possible so downstream imports/tools see them.
+os.environ.setdefault("ANONYMIZED_TELEMETRY", "False")
+os.environ.setdefault("USER_AGENT", "Hotak-AI/1.0")
 
 app = FastAPI(
     title="Hotak AI Server",
@@ -36,8 +41,6 @@ app.add_middleware(
 async def startup_event():
     """Actions to perform on server startup."""
     try:
-        import os
-        
         # Fix Windows console encoding for emojis
         sys.stdout.reconfigure(encoding='utf-8')
 

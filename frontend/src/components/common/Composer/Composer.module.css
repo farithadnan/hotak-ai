@@ -38,6 +38,11 @@
   min-height: 110px;
 }
 
+.composer-input-wrapper-drag-active {
+  border-color: var(--color-accent-border);
+  background: rgba(255, 255, 255, 0.08);
+}
+
 .composer-input-wrapper:focus-within {
   border-color: var(--color-accent);
 }
@@ -174,6 +179,80 @@
 .attach-url-submit:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.attach-template-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 10px 6px;
+}
+
+.attach-template-search {
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--color-text);
+  padding: 8px 10px;
+  font: inherit;
+}
+
+.attach-template-search:focus {
+  outline: none;
+  border-color: var(--color-accent-border);
+}
+
+.attach-template-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.attach-template-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--color-text);
+  padding: 9px 10px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.attach-template-item:hover {
+  border-color: var(--color-accent-border);
+  background: var(--color-accent-soft);
+}
+
+.attach-template-name {
+  font-size: 0.84rem;
+}
+
+.attach-template-count,
+.attach-template-empty {
+  font-size: 0.72rem;
+  color: var(--color-muted);
+}
+
+.drag-overlay {
+  position: absolute;
+  inset: 10px;
+  border: 1px dashed var(--color-accent-border);
+  border-radius: 12px;
+  background: rgba(17, 24, 39, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text);
+  font-size: 0.88rem;
+  pointer-events: none;
+  z-index: 1;
 }
 
 .composer-actions {

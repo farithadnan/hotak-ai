@@ -141,6 +141,9 @@ Templates are managed separately from chats via the `/templates` routes.
 - A user attachment means "this source was attached and ingested for retrieval."
 - Assistant **Sources** only list documents that were actually retrieved/cited in that answer.
 - Therefore, an attachment may be visible in the user message but absent from assistant Sources if it was not used by retrieval for that specific reply.
+- The composer now supports inline URL entry, file picker, drag-and-drop, and attaching a template's stored sources.
+- Current progress feedback is phase-based (`Queued`, `Uploading`, `Indexing`, `Ready`, `Failed`), not byte-percentage upload progress.
+- Template attachment works best for templates whose sources are URLs or persisted file paths. Older templates that only store a browser file name (without an uploaded saved file) still need a follow-up migration/improved template upload flow.
 
 ### Optimistic UI
 

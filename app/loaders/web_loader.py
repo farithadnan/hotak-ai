@@ -19,23 +19,26 @@ def load_web_document(source_url: str) -> list:
     try:
         logger.info(f"Loading web document from: {source_url}")
 
-        # Only keep post title, headers, and content from the full HTML
-
-        # NEED TO MAKE THIS MORE GENERIC LATER
-        bs4_strainer = bs4.SoupStrainer(class_=("post-title", "post-header", "post-content"))
-        loader = WebBaseLoader(
-            web_paths=(source_url,),
-            bs_kwargs={"parse_only": bs4_strainer},
-        )
-
-        # Load the document from the web
+        # First pass: lightweight parse with common article classes.
+        bs4_strainer = bs4.SoupStrainer(class_=("post-title", "post-header", "post-content", "article-content", "entry-content"))
+        loader = WebBaseLoader(web_paths=(source_url,), bs_kwargs={"parse_only": bs4_strainer})
         docs = loader.load()
+
+        # Fallback: if filtered parse yields empty content, fetch full page body.
+        first_content = docs[0].page_content.strip() if docs else ""
+        if not first_content:
+            logger.info("Filtered web parse returned empty content. Falling back to full-page parse.")
+            fallback_loader = WebBaseLoader(web_paths=(source_url,))
+            docs = fallback_loader.load()
 
         # Validate we got exactly one document
         if len(docs) != 1:
             error_msg = f"Expected 1 document, got {len(docs)}"
             logger.error(error_msg)
             raise ValueError(error_msg)
+
+        if not docs[0].page_content or not docs[0].page_content.strip():
+            raise ValueError("Web document content is empty after parsing.")
 
         # IMPORTANT: Add source URL to metadata
         # This metadata is stored with each chunk in the vector store

@@ -33,6 +33,11 @@ interface ChatWindowProps {
     status?: 'queued' | 'uploading' | 'ingesting' | 'ready' | 'failed';
     error?: string;
   }>;
+  availableTemplates: Array<{
+    id: string;
+    name: string;
+    sourceCount: number;
+  }>;
   isAttachingSources: boolean;
   attachmentFeedback: {
     title?: string;
@@ -41,6 +46,7 @@ interface ChatWindowProps {
   } | null;
   onAttachUrl: (url: string) => void;
   onAttachFiles: (files: File[]) => void;
+  onAttachTemplate: (templateId: string) => void;
   onRemovePendingAttachment: (attachmentId: string) => void;
   onClearAttachmentFeedback: () => void;
   username?: string;
@@ -60,10 +66,12 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   regeneratingAssistantMessageId,
   textareaRef,
   pendingAttachments,
+  availableTemplates,
   isAttachingSources,
   attachmentFeedback,
   onAttachUrl,
   onAttachFiles,
+  onAttachTemplate,
   onRemovePendingAttachment,
   onClearAttachmentFeedback,
   username = 'User',
@@ -248,9 +256,11 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             textareaRef={textareaRef}
             className="empty-composer"
             pendingAttachments={pendingAttachments}
+            availableTemplates={availableTemplates}
             isAttaching={isAttachingSources}
             onAttachUrl={onAttachUrl}
             onAttachFiles={onAttachFiles}
+            onAttachTemplate={onAttachTemplate}
             onRemoveAttachment={onRemovePendingAttachment}
           />
         </div>
@@ -460,9 +470,11 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
               onSend={onSend}
               textareaRef={textareaRef}
               pendingAttachments={pendingAttachments}
+              availableTemplates={availableTemplates}
               isAttaching={isAttachingSources}
               onAttachUrl={onAttachUrl}
               onAttachFiles={onAttachFiles}
+              onAttachTemplate={onAttachTemplate}
               onRemoveAttachment={onRemovePendingAttachment}
             />
           </div>

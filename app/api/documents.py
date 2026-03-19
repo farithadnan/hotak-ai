@@ -103,8 +103,19 @@ async def load_documents_endpoint(request: DocumentLoadRequest, http_request: Re
                 "failed_sources": failed_sources
             }
 
-        all_splits = split_documents(docs)
-        add_documents_to_store(http_request.app.state.vector_store, all_splits)
+        try:
+            all_splits = split_documents(docs)
+            add_documents_to_store(http_request.app.state.vector_store, all_splits)
+        except ValueError as split_error:
+            logger.warning("Document splitting failed, marking uncached sources as failed: %s", split_error)
+            combined_failed = list(dict.fromkeys([*failed_sources, *loaded_sources]))
+            return {
+                "loaded": 0,
+                "skipped": len(cached_sources),
+                "cached_sources": cached_sources,
+                "loaded_sources": [],
+                "failed_sources": combined_failed
+            }
 
         logger.info("Documents loaded and embedded successfully.")
 

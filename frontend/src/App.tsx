@@ -93,10 +93,16 @@ function App() {
           regeneratingAssistantMessageId={engine.regeneratingAssistantMessageId}
           textareaRef={engine.textareaRef}
           pendingAttachments={engine.pendingAttachments}
+          availableTemplates={engine.availableTemplates.map((template) => ({
+            id: template.id,
+            name: template.name,
+            sourceCount: template.source_count ?? template.sources?.length ?? 0,
+          }))}
           isAttachingSources={engine.isAttachingSources}
           attachmentFeedback={engine.attachmentFeedback}
           onAttachUrl={engine.handleAttachUrl}
           onAttachFiles={engine.handleAttachFiles}
+          onAttachTemplate={engine.handleAttachTemplate}
           onRemovePendingAttachment={engine.handleRemovePendingAttachment}
           onClearAttachmentFeedback={engine.clearAttachmentFeedback}
           username={username}

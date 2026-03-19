@@ -26,6 +26,11 @@ interface ChatPageProps {
     status?: 'queued' | 'uploading' | 'ingesting' | 'ready' | 'failed'
     error?: string
   }>
+  availableTemplates: Array<{
+    id: string
+    name: string
+    sourceCount: number
+  }>
   isAttachingSources: boolean
   attachmentFeedback: {
     title?: string
@@ -34,6 +39,7 @@ interface ChatPageProps {
   } | null
   onAttachUrl: (url: string) => void
   onAttachFiles: (files: File[]) => void
+  onAttachTemplate: (templateId: string) => void
   onRemovePendingAttachment: (attachmentId: string) => void
   onClearAttachmentFeedback: () => void
   username: string
@@ -54,10 +60,12 @@ function ChatPage({
   regeneratingAssistantMessageId,
   textareaRef,
   pendingAttachments,
+  availableTemplates,
   isAttachingSources,
   attachmentFeedback,
   onAttachUrl,
   onAttachFiles,
+  onAttachTemplate,
   onRemovePendingAttachment,
   onClearAttachmentFeedback,
   username,
@@ -223,10 +231,12 @@ function ChatPage({
         regeneratingAssistantMessageId={regeneratingAssistantMessageId}
         textareaRef={textareaRef}
         pendingAttachments={pendingAttachments}
+        availableTemplates={availableTemplates}
         isAttachingSources={isAttachingSources}
         attachmentFeedback={attachmentFeedback}
         onAttachUrl={onAttachUrl}
         onAttachFiles={onAttachFiles}
+        onAttachTemplate={onAttachTemplate}
         onRemovePendingAttachment={onRemovePendingAttachment}
         onClearAttachmentFeedback={onClearAttachmentFeedback}
         username={username}

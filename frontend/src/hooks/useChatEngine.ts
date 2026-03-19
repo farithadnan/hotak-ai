@@ -2,10 +2,12 @@ import { useState, useRef, useEffect } from 'react'
 import { queryAgent, streamQuery } from '../services/query'
 import { getChats, createChat, addMessage, generateChatTitle, updateChat } from '../services/chats'
 import { loadDocuments, uploadDocuments } from '../services/documents'
+import { getTemplates } from '../services/templates'
+import { ALLOWED_ATTACHMENT_FILE_EXTENSIONS, MAX_ATTACHMENT_FILE_SIZE_BYTES } from '../constants/attachments'
 import { CHAT_TEXTAREA_MAX_SCROLL_HEIGHT } from '../constants/chat'
 import type { ChatThread } from '../types'
 import { parseAssistantResponse } from '../utils/assistantResponse'
-import type { MessageAttachment } from '../types/models'
+import type { MessageAttachment, Template } from '../types/models'
 
 export type ChatRuntimeState = {
   isResponding: boolean
@@ -47,10 +49,25 @@ export function useChatEngine(
   const [pendingAttachments, setPendingAttachments] = useState<PendingAttachment[]>([])
   const [isAttachingSources, setIsAttachingSources] = useState(false)
   const [attachmentFeedback, setAttachmentFeedback] = useState<AttachmentFeedback>(null)
+  const [availableTemplates, setAvailableTemplates] = useState<Template[]>([])
 
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const activeChat = chats.find((chat) => chat.id === activeChatId) || null
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) {
+      return `${bytes} B`
+    }
+    if (bytes < 1024 * 1024) {
+      return `${(bytes / 1024).toFixed(1)} KB`
+    }
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+  }
+
+  const inferAttachmentKind = (source: string): 'url' | 'file' => (
+    /^https?:\/\//i.test(source) ? 'url' : 'file'
+  )
 
   const normalizeUrl = (value: string): string | null => {
     try {
@@ -87,6 +104,18 @@ export function useChatEngine(
       }
     }
     void loadChats()
+  }, [])
+
+  useEffect(() => {
+    const loadTemplateCatalog = async () => {
+      try {
+        const templates = await getTemplates()
+        setAvailableTemplates(templates)
+      } catch (error) {
+        console.error('Failed to load templates for attachment picker:', error)
+      }
+    }
+    void loadTemplateCatalog()
   }, [])
 
   // Auto-resize textarea
@@ -162,8 +191,19 @@ export function useChatEngine(
     setPendingAttachments((prev) => {
       const dedupeKeys = new Set(prev.filter((item) => item.kind === 'file').map((item) => item.source))
       const additions: PendingAttachment[] = []
+      const validationErrors: string[] = []
 
       for (const file of files) {
+        const extension = file.name.slice(file.name.lastIndexOf('.')).toLowerCase()
+        if (!ALLOWED_ATTACHMENT_FILE_EXTENSIONS.includes(extension as (typeof ALLOWED_ATTACHMENT_FILE_EXTENSIONS)[number])) {
+          validationErrors.push(`${file.name}: unsupported file type ${extension || '(none)'}`)
+          continue
+        }
+        if (file.size > MAX_ATTACHMENT_FILE_SIZE_BYTES) {
+          validationErrors.push(`${file.name}: exceeds ${formatFileSize(MAX_ATTACHMENT_FILE_SIZE_BYTES)}`)
+          continue
+        }
+
         const sourceKey = `${file.name}:${file.size}:${file.lastModified}`
         if (dedupeKeys.has(sourceKey)) {
           continue
@@ -181,13 +221,75 @@ export function useChatEngine(
 
       if (additions.length === 0) {
         showAttachmentFeedback({
-          title: 'Already attached',
-          message: 'Selected files are already queued.',
+          title: validationErrors.length > 0 ? 'File validation failed' : 'Already attached',
+          message: validationErrors.length > 0
+            ? validationErrors.slice(0, 2).join(' | ')
+            : 'Selected files are already queued.',
+          type: validationErrors.length > 0 ? 'error' : 'info',
+        })
+      } else if (validationErrors.length > 0) {
+        showAttachmentFeedback({
+          title: 'Some files were skipped',
+          message: validationErrors.slice(0, 2).join(' | '),
           type: 'info',
         })
       }
 
       return [...prev, ...additions]
+    })
+  }
+
+  const handleAttachTemplate = (templateId: string) => {
+    const template = availableTemplates.find((item) => item.id === templateId)
+    if (!template) {
+      showAttachmentFeedback({
+        title: 'Template not found',
+        message: 'The selected template could not be loaded.',
+        type: 'error',
+      })
+      return
+    }
+
+    const sources = template.sources || []
+    if (sources.length === 0) {
+      showAttachmentFeedback({
+        title: 'Template is empty',
+        message: `${template.name} has no sources to attach.`,
+        type: 'info',
+      })
+      return
+    }
+
+    let addedCount = 0
+    setPendingAttachments((prev) => {
+      const existingSources = new Set(prev.map((item) => item.source))
+      const additions: PendingAttachment[] = []
+
+      for (const source of sources) {
+        const normalizedSource = source.trim()
+        if (!normalizedSource || existingSources.has(normalizedSource)) {
+          continue
+        }
+        existingSources.add(normalizedSource)
+        addedCount += 1
+        additions.push({
+          id: crypto.randomUUID(),
+          kind: inferAttachmentKind(normalizedSource),
+          label: normalizedSource,
+          source: normalizedSource,
+          status: 'queued',
+        })
+      }
+
+      return [...prev, ...additions]
+    })
+
+    showAttachmentFeedback({
+      title: addedCount > 0 ? 'Template attached' : 'Nothing added',
+      message: addedCount > 0
+        ? `${template.name}: added ${addedCount} source${addedCount === 1 ? '' : 's'}.`
+        : `${template.name} sources were already queued.`,
+      type: addedCount > 0 ? 'success' : 'info',
     })
   }
 
@@ -913,8 +1015,10 @@ export function useChatEngine(
     pendingAttachments,
     isAttachingSources,
     attachmentFeedback,
+    availableTemplates,
     handleAttachUrl,
     handleAttachFiles,
+    handleAttachTemplate,
     handleRemovePendingAttachment,
     clearPendingAttachments,
     clearAttachmentFeedback,
