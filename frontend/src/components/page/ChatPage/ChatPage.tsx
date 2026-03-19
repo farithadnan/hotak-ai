@@ -3,6 +3,7 @@ import { ChevronDown, PanelRightClose, Search } from '../../../icons'
 import ChatWindow from '../ChatWindow/ChatWindow'
 import type { ChatThread, Model } from '../../../types'
 import { useClickOutside } from '../../../hooks/useClickOutside'
+import { DEFAULT_CHAT_MODEL_ID } from '../../../constants/chat'
 import { getAvailableModels } from '../../../services/models'
 
 interface ChatPageProps {
@@ -38,15 +39,15 @@ function ChatPage({
   username,
   onToggleSidebar,
 }: ChatPageProps) {
-  const defaultModelId = 'gpt-4o-mini'
-  const [model, setModel] = useState('gpt-4o-mini')
+  const defaultModelId = DEFAULT_CHAT_MODEL_ID
+  const [model, setModel] = useState(DEFAULT_CHAT_MODEL_ID)
   const [isLoadingModels, setIsLoadingModels] = useState(false)
   const [isModelPopoverOpen, setIsModelPopoverOpen] = useState(false)
   const [modelSearch, setModelSearch] = useState('')
   const modelPopoverRef = useRef<HTMLDivElement>(null)
 
   const [availableModels, setAvailableModels] = useState<Model[]>([
-    { id: 'gpt-4o-mini', name: 'Gpt 4o Mini', category: 'OpenAI' },
+    { id: DEFAULT_CHAT_MODEL_ID, name: 'Gpt 4o Mini', category: 'OpenAI' },
   ])
 
   useEffect(() => {

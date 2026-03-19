@@ -2,6 +2,13 @@
   --chat-shell-max-width: 1200px;
   --chat-horizontal-padding: 110px;
   --chat-scroll-max-height-offset: 250px;
+  --chat-area-padding-desktop: 22px;
+  --chat-area-padding-tablet-y: 12px;
+  --chat-area-padding-tablet-x: 8px;
+  --chat-area-padding-mobile-y: 10px;
+  --chat-area-padding-mobile-x: 4px;
+  --chat-message-gap: 16px;
+  --chat-message-gap-compact: 12px;
   --chat-message-lane-offset-desktop: 24px;
   --chat-message-lane-offset-tablet: 14px;
   --chat-message-lane-offset-mobile: 8px;
@@ -1121,7 +1128,7 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 22px;
+  padding: var(--chat-area-padding-desktop);
   width: 100%;
   min-width: 0;
   overflow: visible;
@@ -1132,8 +1139,8 @@
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 0 110px 0 110px;
+  gap: var(--chat-message-gap);
+  padding: 0 var(--chat-horizontal-padding) 0 var(--chat-horizontal-padding);
   width: 100%;
   min-width: 0;
   align-self: stretch;
@@ -1420,7 +1427,7 @@
   max-width: 100%;
   align-self: flex-start;
   line-height: 1.6;
-  white-space: pre-wrap;
+  white-space: normal;
   text-wrap: pretty;
   word-break: break-word;
   overflow-wrap: break-word;
@@ -1442,9 +1449,23 @@
   margin: 0 0 0.85rem;
 }
 
+.assistant-text li > p {
+  display: inline;
+  margin: 0;
+}
+
+.assistant-text li > p + p {
+  display: block;
+  margin-top: 0.5rem;
+}
+
 .assistant-text ol,
 .assistant-text ul {
   padding-left: 1.35rem;
+}
+
+.assistant-text li {
+  margin: 0;
 }
 
 .assistant-text li + li {
@@ -1459,6 +1480,11 @@
 
 .assistant-text a:hover {
   color: #ffffff;
+}
+
+.assistant-text li > ul,
+.assistant-text li > ol {
+  margin-top: 0.45rem;
 }
 
 .assistant-text code {
@@ -1706,13 +1732,13 @@
   }
 
   .chat-area {
-    padding: 12px 8px;
+    padding: var(--chat-area-padding-tablet-y) var(--chat-area-padding-tablet-x);
   }
 
   .chat-scroll,
   .chat-scroll.chat-scroll-fixed {
-    padding: 0 8px;
-    gap: 12px;
+    padding: 0 var(--chat-area-padding-tablet-x);
+    gap: var(--chat-message-gap-compact);
     max-height: calc(100vh - 220px);
   }
 
@@ -1738,12 +1764,12 @@
   }
 
   .chat-area {
-    padding: 10px 4px;
+    padding: var(--chat-area-padding-mobile-y) var(--chat-area-padding-mobile-x);
   }
 
   .chat-scroll,
   .chat-scroll.chat-scroll-fixed {
-    padding: 0 4px;
+    padding: 0 var(--chat-area-padding-mobile-x);
   }
 
   .message-block,

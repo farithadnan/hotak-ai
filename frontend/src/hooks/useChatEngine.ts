@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { queryAgent, streamQuery } from '../services/query'
 import { getChats, createChat, addMessage, generateChatTitle, updateChat } from '../services/chats'
+import { CHAT_TEXTAREA_MAX_SCROLL_HEIGHT } from '../constants/chat'
 import type { ChatThread } from '../types'
 import { parseAssistantResponse } from '../utils/assistantResponse'
 
@@ -59,7 +60,7 @@ export function useChatEngine(
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto'
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`
-      textareaRef.current.style.overflowY = textareaRef.current.scrollHeight > 200 ? 'auto' : 'hidden'
+      textareaRef.current.style.overflowY = textareaRef.current.scrollHeight > CHAT_TEXTAREA_MAX_SCROLL_HEIGHT ? 'auto' : 'hidden'
     }
   }, [inputValue])
 

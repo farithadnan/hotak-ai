@@ -1,6 +1,12 @@
 import { useState, useRef, useMemo } from 'react'
 import { Archive, BookType, LoaderCircle, LogOut, MoreHorizontal, PanelRightClose, PanelRightOpen, Pencil, Pin, Settings, SquarePen, Trash2 } from '../../icons'
 import { useFloatingPopover } from '../../hooks/useFloatingPopover'
+import {
+  SIDEBAR_CHAT_ACTIONS_POPOVER_HEIGHT,
+  SIDEBAR_CHAT_ACTIONS_POPOVER_WIDTH,
+  SIDEBAR_PROFILE_POPOVER_HEIGHT,
+  SIDEBAR_PROFILE_POPOVER_WIDTH,
+} from '../../constants/chat'
 import { SidebarChatListSkeleton } from './SidebarChatListSkeleton'
 import { updateChat, deleteChat } from '../../services/chats'
 import type { ChatThread } from '../../types'
@@ -61,16 +67,16 @@ export function Sidebar({
     isOpen: isProfilePopoverOpen,
     onClose: () => setIsProfilePopoverOpen(false),
     placement: isSidebarCollapsed ? 'right-start' : 'top-start',
-    panelWidth: 240,
-    panelHeight: 200,
+    panelWidth: SIDEBAR_PROFILE_POPOVER_WIDTH,
+    panelHeight: SIDEBAR_PROFILE_POPOVER_HEIGHT,
   })
 
   const chatActionsPopover = useFloatingPopover({
     isOpen: Boolean(activeChatMenuId),
     onClose: () => setActiveChatMenuId(null),
     placement: 'right-start',
-    panelWidth: 152,
-    panelHeight: 176,
+    panelWidth: SIDEBAR_CHAT_ACTIONS_POPOVER_WIDTH,
+    panelHeight: SIDEBAR_CHAT_ACTIONS_POPOVER_HEIGHT,
   })
 
   const handleOpenChat = (chatId?: string) => {

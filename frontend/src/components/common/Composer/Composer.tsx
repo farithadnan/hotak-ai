@@ -1,6 +1,11 @@
 import { useState } from 'react'
 import { Briefcase, Mic, SendHorizontal, Plus, Upload, Link, FileText } from '../../../icons'
 import { useFloatingPopover } from '../../../hooks/useFloatingPopover'
+import {
+  COMPOSER_ATTACH_POPOVER_HEIGHT,
+  COMPOSER_ATTACH_POPOVER_OFFSET,
+  COMPOSER_ATTACH_POPOVER_WIDTH,
+} from '../../../constants/chat'
 
 import style from './Composer.module.css'
 
@@ -32,9 +37,9 @@ export function Composer({
     isOpen: isAttachPopoverOpen,
     onClose: () => setIsAttachPopoverOpen(false),
     placement: 'top-start',
-    panelWidth: 190,
-    panelHeight: 154,
-    offset: -20,
+    panelWidth: COMPOSER_ATTACH_POPOVER_WIDTH,
+    panelHeight: COMPOSER_ATTACH_POPOVER_HEIGHT,
+    offset: COMPOSER_ATTACH_POPOVER_OFFSET,
   })
 
   return (

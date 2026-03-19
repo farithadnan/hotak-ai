@@ -86,7 +86,9 @@ for await (const chunk of streamQuery({ question, chat_id, model: modelId, messa
 ### Frontend Constants Strategy
 
 - Runtime/network numbers that affect TypeScript behavior should live in small constants modules such as `constants/chat.ts`.
+- Shared UI runtime values that are not chat-specific should live in modules such as `constants/ui.ts`.
 - Repeated layout values in CSS should use CSS custom properties rather than duplicated pixel literals.
+- Current chat-related examples include stream timeout, default model ID, popover dimensions, textarea auto-resize thresholds, and shared chat-shell spacing.
 
 ---
 

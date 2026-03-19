@@ -137,6 +137,13 @@ Templates are managed separately from chats via the `/templates` routes.
 
 The app adds messages to the UI immediately before the backend confirms them. This makes the app feel instant. If something fails, error messages replace the pending content.
 
+### Frontend Configuration Split
+
+- **TypeScript runtime constants** (timeouts, default model IDs, popover dimensions) should live in frontend constants modules.
+- **Shared UI runtime constants** (toast duration, generic popover defaults, viewport gaps) should live in a generic frontend constants module.
+- **Layout/styling values** that repeat across chat screens should live in CSS custom properties.
+- **Backend runtime limits** (history token budgets, retrieval settings, output tokens) should stay in `app/config/settings.py`.
+
 ---
 
 ## Running the Project

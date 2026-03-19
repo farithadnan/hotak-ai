@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { DEFAULT_TOAST_DURATION_MS } from '../../../constants/ui'
 import styles from './Toastr.module.css'
 
 
@@ -16,7 +17,7 @@ export interface ToastrProps {
   onClose: () => void
 }
 
-export function Toastr({ open, message, title, type = 'info', duration = 3000, position = 'top-right', onClose }: ToastrProps) {
+export function Toastr({ open, message, title, type = 'info', duration = DEFAULT_TOAST_DURATION_MS, position = 'top-right', onClose }: ToastrProps) {
   useEffect(() => {
     if (!open) return
     const timer = setTimeout(onClose, duration)

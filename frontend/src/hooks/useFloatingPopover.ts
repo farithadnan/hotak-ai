@@ -1,5 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
+import {
+  DEFAULT_FLOATING_POPOVER_HEIGHT,
+  DEFAULT_FLOATING_POPOVER_OFFSET,
+  DEFAULT_FLOATING_POPOVER_WIDTH,
+  FLOATING_POPOVER_MIN_WIDTH,
+  FLOATING_POPOVER_VIEWPORT_GAP,
+} from '../constants/ui'
 
 type FloatingPlacement = 'top-start' | 'bottom-start' | 'left-start' | 'right-start'
 
@@ -21,9 +28,9 @@ export function useFloatingPopover({
   isOpen,
   onClose,
   placement = 'bottom-start',
-  panelWidth = 240,
-  panelHeight = 180,
-  offset = 8,
+  panelWidth = DEFAULT_FLOATING_POPOVER_WIDTH,
+  panelHeight = DEFAULT_FLOATING_POPOVER_HEIGHT,
+  offset = DEFAULT_FLOATING_POPOVER_OFFSET,
 }: UseFloatingPopoverOptions) {
   const popoverRef = useRef<HTMLDivElement>(null)
   const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null)
@@ -64,8 +71,8 @@ export function useFloatingPopover({
       const rect = anchorElement.getBoundingClientRect()
       const viewportWidth = window.innerWidth
       const viewportHeight = window.innerHeight
-      const gap = 8
-      const maxAllowedWidth = Math.max(120, viewportWidth - gap * 2)
+      const gap = FLOATING_POPOVER_VIEWPORT_GAP
+      const maxAllowedWidth = Math.max(FLOATING_POPOVER_MIN_WIDTH, viewportWidth - gap * 2)
       const nextWidth = Math.min(panelWidth, maxAllowedWidth)
 
       let nextTop = rect.bottom + offset
