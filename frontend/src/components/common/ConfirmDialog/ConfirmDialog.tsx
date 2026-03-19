@@ -21,6 +21,9 @@ export function ConfirmDialog({
   onCancel,
 }: ConfirmDialogProps) {
   if (!open) return null
+
+  const isDangerAction = /delete|remove/i.test(`${title} ${confirmText}`)
+
   return (
     <div className={style['confirm-dialog-backdrop']}>
       <div className={style['confirm-dialog']}>
@@ -28,7 +31,13 @@ export function ConfirmDialog({
         <div className={style['confirm-dialog-message']}>{message}</div>
         <div className={style['confirm-dialog-actions']}>
           <button className={style['confirm-dialog-cancel']} type="button" onClick={onCancel}>{cancelText}</button>
-          <button className={style['confirm-dialog-confirm']} type="button" onClick={onConfirm}>{confirmText}</button>
+          <button
+            className={`${style['confirm-dialog-confirm']} ${isDangerAction ? style['is-danger'] : ''}`}
+            type="button"
+            onClick={onConfirm}
+          >
+            {confirmText}
+          </button>
         </div>
       </div>
     </div>

@@ -3,50 +3,68 @@
   position: fixed;
   z-index: 2000;
   min-width: 220px;
-  padding: 1rem 1.5rem;
-  border-radius: 10px;
+  max-width: min(420px, 88vw);
+  padding: 0.56rem 0.78rem;
+  border-radius: 8px;
   font-weight: 500;
-  font-size: 1rem;
-  box-shadow: 0 2px 16px #0008;
-  background: var(--color-surface);
-  color: var(--color-text);
-  opacity: 0.98;
-  transition: all 0.2s;
+  font-size: 0.84rem;
+  line-height: 1.32;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.35);
+  background: #1f2430;
+  color: #f0f3fa;
+  opacity: 0.99;
+  transition: transform 0.16s ease, opacity 0.16s ease;
+  border-left: 4px solid transparent;
+  animation: toastIn 0.16s ease;
 }
 .toastr--top-right {
-  top: 32px;
-  right: 32px;
+  top: 16px;
+  right: 16px;
 }
 .toastr--bottom-right {
-  bottom: 32px;
-  right: 32px;
+  bottom: 16px;
+  right: 16px;
 }
 .toastr--top-left {
-  top: 32px;
-  left: 32px;
+  top: 16px;
+  left: 16px;
 }
 .toastr--bottom-left {
-  bottom: 32px;
-  left: 32px;
+  bottom: 16px;
+  left: 16px;
 }
 .toastr-title {
-  font-size: 1.08em;
+  font-size: 0.9rem;
   font-weight: 700;
-  margin-bottom: 0.3em;
+  margin-bottom: 0.12rem;
   display: block;
 }
 .toastr--success {
-  background: #2e3a2e;
-  color: #b9ffc4;
-  border: 1px solid #4caf50;
+  background: #203125;
+  color: #d8ffdf;
+  border: 1px solid rgba(81, 163, 81, 0.72);
+  border-left-color: #51a351;
 }
 .toastr--error {
-  background: #3a2323;
-  color: #ffb9b9;
-  border: 1px solid #f44336;
+  background: #372021;
+  color: #ffd9d8;
+  border: 1px solid rgba(189, 54, 47, 0.74);
+  border-left-color: #bd362f;
 }
 .toastr--info {
-  background: var(--color-surface);
-  color: var(--color-accent);
-  border: 1px solid var(--color-accent-border);
+  background: #1f2832;
+  color: #ddf1f7;
+  border: 1px solid rgba(47, 150, 180, 0.74);
+  border-left-color: #2f96b4;
+}
+
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 0.99;
+    transform: translateY(0);
+  }
 }

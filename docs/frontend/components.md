@@ -156,6 +156,10 @@ A modal overlay with a message and two buttons (Cancel / Confirm).
 
 Returns `null` when `!open`. Used in App.tsx for the "Delete Chat" confirmation.
 
+UI notes:
+- Uses a compact dialog footprint (tighter paddings/typography/actions) to reduce visual bulk.
+- Automatically applies stronger danger styling when action text/title indicates delete/remove.
+
 ---
 
 ### `Modal`
@@ -203,6 +207,10 @@ type ToastrPosition = 'top-right' | 'bottom-right' | 'top-left' | 'bottom-left'
 | `onClose` | `() => void` | — | Called on dismiss (auto or manual). |
 
 Uses `useEffect` + `setTimeout` to auto-dismiss after `duration` milliseconds.
+
+UI notes:
+- Toast styling is compact and denser than before (smaller paddings/font, tighter screen offsets).
+- Success/error/info variants now use stronger, ngx-toastr-inspired contrast palettes for better readability.
 
 ---
 
