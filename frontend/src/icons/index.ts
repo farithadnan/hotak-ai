@@ -1,6 +1,9 @@
 export {
   Archive,
+  AlertTriangle,
   Bot,
+    CheckCircle,
+    Info,
   BookType,
   Briefcase,
   ChevronDown,
@@ -23,4 +26,5 @@ export {
   SquarePen,
   Trash2,
   Upload,
+  XCircle,
 } from 'lucide-react'

@@ -191,7 +191,7 @@ A toast notification that auto-dismisses.
 #### Types
 
 ```ts
-type ToastrType = 'success' | 'error' | 'info'
+type ToastrType = 'success' | 'error' | 'info' | 'warning'
 type ToastrPosition = 'top-right' | 'bottom-right' | 'top-left' | 'bottom-left'
 ```
 
@@ -208,6 +208,10 @@ type ToastrPosition = 'top-right' | 'bottom-right' | 'top-left' | 'bottom-left'
 | `onClose` | `() => void` | — | Called on dismiss (auto or manual). |
 
 Uses `useEffect` + `setTimeout` to auto-dismiss after `duration` milliseconds.
+
+Runtime behavior:
+- Hovering a toast pauses auto-dismiss.
+- Leaving the toast resumes countdown with the remaining time.
 
 UI notes:
 - Toast styling is compact and denser than before (smaller paddings/font, tighter screen offsets).
