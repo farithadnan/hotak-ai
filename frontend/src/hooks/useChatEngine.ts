@@ -555,6 +555,7 @@ export function useChatEngine(
         role: 'user',
         content: trimmedInput,
         attachments: messageAttachments.length > 0 ? messageAttachments : undefined,
+        template_id: templateIdForSend ?? undefined,
         created_at: new Date().toISOString(),
       }
 

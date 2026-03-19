@@ -154,6 +154,7 @@ export interface Message {
   model?: string;                      // Optional: model name for assistant messages
   sources?: string[];                  // Optional array of sources
   attachments?: MessageAttachment[];   // Optional user attachments (URL/file)
+  template_id?: string;               // Optional: template used for this message
   created_at: string;
 }
 

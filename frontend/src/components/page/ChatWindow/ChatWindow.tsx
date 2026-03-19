@@ -153,10 +153,12 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  const handleStartEditing = (messageId: string, content: string, attachments?: MessageAttachment[]) => {
+  const handleStartEditing = (messageId: string, content: string, attachments?: MessageAttachment[], templateId?: string) => {
     setEditingMessageId(messageId);
     setEditingContent(content);
     setEditingAttachments(attachments ?? []);
+    const tpl = templateId ? availableTemplates.find((t) => t.id === templateId) ?? null : null;
+    setEditingTemplate(tpl ? { id: tpl.id, name: tpl.name, sourceCount: tpl.sourceCount } : null);
   };
 
   const handleCancelEditing = () => {
@@ -507,9 +509,25 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                       </div>
                     ) : (
                       <>
-                        {message.attachments && message.attachments.length > 0 && (
+                        {(message.template_id || (message.attachments && message.attachments.length > 0)) && (
                           <div className="user-file-cards-row">
-                            {message.attachments.map((attachment) => {
+                            {message.template_id && (() => {
+                              const tpl = availableTemplates.find((t) => t.id === message.template_id);
+                              return (
+                                <div key={message.template_id} className="user-file-card user-file-card-template">
+                                  <span className="user-file-card-icon" aria-hidden="true">
+                                    <FileText size={14} />
+                                  </span>
+                                  <span className="user-file-card-meta">
+                                    <span className="user-file-card-ext">TEMPLATE</span>
+                                    <span className="user-file-card-name" title={tpl?.name || message.template_id}>
+                                      {tpl?.name || message.template_id}
+                                    </span>
+                                  </span>
+                                </div>
+                              );
+                            })()}
+                            {message.attachments && message.attachments.map((attachment) => {
                               const isUrl = attachment.kind === 'url' && /^https?:\/\//i.test(attachment.source);
                               const statusClass = attachment.status === 'failed' ? 'is-failed' : 'is-ingested';
                               const ext = getAttachmentExtension(attachment);
@@ -555,7 +573,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                             <button
                               type="button"
                               className="chat-action-btn icon-only"
-                              onClick={() => handleStartEditing(message.id, message.content, message.attachments)}
+                              onClick={() => handleStartEditing(message.id, message.content, message.attachments, message.template_id)}
                               title="Edit"
                               aria-label="Edit"
                             >

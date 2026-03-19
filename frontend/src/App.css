@@ -1363,6 +1363,11 @@
   border-color: var(--color-accent-border);
 }
 
+.user-file-card-template {
+  border-color: rgba(98, 147, 235, 0.5);
+  background: rgba(98, 147, 235, 0.06);
+}
+
 .user-file-card.is-failed {
   border-color: #bb3a3a;
 }
