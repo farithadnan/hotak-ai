@@ -28,6 +28,7 @@ type AppRoutesProps = {
     id: string
     name: string
     sourceCount: number
+    sources?: string[]
   }>
   isAttachingSources: boolean
   attachmentFeedback: {

@@ -316,7 +316,7 @@ The scrollable conversation view — renders all messages and the composer.
 - Displayed as right-aligned bubbles
 - Show timestamp, edit button, copy button
 - Attachment lists use the same "count pill + expandable list" mechanism as assistant sources to avoid clutter when many sources are attached.
-- The user-sources panel supports alignment variants; user-message sources are rendered left-aligned under the bubble while assistant sources remain left-aligned in their own lane.
+- The user-sources panel supports alignment variants (`left`/`right`) via shared source-panel classes; user-message sources are rendered left-aligned under the bubble while assistant sources keep their own layout.
 - When editing: shows a textarea with Cancel/Save buttons plus source controls (upload via composer plus menu + remove per source)
 
 **Assistant messages:**

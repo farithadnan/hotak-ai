@@ -40,6 +40,7 @@ interface ChatWindowProps {
     id: string;
     name: string;
     sourceCount: number;
+    sources?: string[];
   }>;
   isAttachingSources: boolean;
   attachmentFeedback: {
@@ -80,7 +81,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   const [editingMessageId, setEditingMessageId] = React.useState<string | null>(null);
   const [editingContent, setEditingContent] = React.useState('');
   const [editingAttachments, setEditingAttachments] = React.useState<MessageAttachment[]>([]);
-  const [isEditSourcesOpen, setIsEditSourcesOpen] = React.useState(false);
   const [isUploadingEditSources, setIsUploadingEditSources] = React.useState(false);
   const [openUserSourcesMessageId, setOpenUserSourcesMessageId] = React.useState<string | null>(null);
   const [toastrOpen, setToastrOpen] = React.useState(false);
@@ -148,14 +148,12 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     setEditingMessageId(messageId);
     setEditingContent(content);
     setEditingAttachments(attachments ?? []);
-    setIsEditSourcesOpen((attachments?.length ?? 0) > 0);
   };
 
   const handleCancelEditing = () => {
     setEditingMessageId(null);
     setEditingContent('');
     setEditingAttachments([]);
-    setIsEditSourcesOpen(false);
   };
 
   const handleRemoveEditAttachment = (attachmentId: string) => {
@@ -230,10 +228,63 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         }
         return Array.from(merged.values());
       });
-      setIsEditSourcesOpen(true);
     } finally {
       setIsUploadingEditSources(false);
     }
+  };
+
+  const handleAttachEditTemplate = (templateId: string) => {
+    const template = availableTemplates.find((item) => item.id === templateId);
+    if (!template) {
+      setToastrOpen(false);
+      setToastrType('error');
+      setToastrMessage('Template not found');
+      requestAnimationFrame(() => setToastrOpen(true));
+      return;
+    }
+
+    const sources = (template.sources || []).map((item) => item.trim()).filter(Boolean);
+    if (sources.length === 0) {
+      setToastrOpen(false);
+      setToastrType('info');
+      setToastrMessage(`${template.name} has no sources to attach.`);
+      requestAnimationFrame(() => setToastrOpen(true));
+      return;
+    }
+
+    let addedCount = 0;
+    setEditingAttachments((prev) => {
+      const bySource = new Map(prev.map((item) => [item.source, item]));
+
+      for (const source of sources) {
+        if (bySource.has(source)) {
+          continue;
+        }
+
+        const isUrl = /^https?:\/\//i.test(source);
+        const fileName = source.split(/[\\/]/).pop() || source;
+
+        bySource.set(source, {
+          id: crypto.randomUUID(),
+          kind: isUrl ? 'url' : 'file',
+          label: isUrl ? source : fileName,
+          source,
+          status: isUrl ? 'pending' : 'ingested',
+        });
+        addedCount += 1;
+      }
+
+      return Array.from(bySource.values());
+    });
+
+    setToastrOpen(false);
+    setToastrType(addedCount > 0 ? 'success' : 'info');
+    setToastrMessage(
+      addedCount > 0
+        ? `${template.name}: added ${addedCount} source${addedCount === 1 ? '' : 's'}.`
+        : `${template.name} sources were already attached.`
+    );
+    requestAnimationFrame(() => setToastrOpen(true));
   };
 
   const handleSaveEditing = () => {
@@ -467,18 +518,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                           onAttachFiles={(files) => {
                             void handleAttachEditFiles(files);
                           }}
+                          availableTemplates={availableTemplates}
+                          onAttachTemplate={handleAttachEditTemplate}
                           onRemoveAttachment={handleRemoveEditAttachment}
                         />
-                        {editingAttachments.length > 0 && renderUserAttachmentPanel(
-                          editingAttachments,
-                          isEditSourcesOpen,
-                          () => setIsEditSourcesOpen((prev) => !prev),
-                          'left',
-                          {
-                            removable: true,
-                            onRemove: handleRemoveEditAttachment,
-                          }
-                        )}
                       </div>
                     ) : (
                       <>

@@ -751,17 +751,29 @@ export function useChatEngine(
       const knownAttachmentSources = new Set(attachmentOverrides.map((item) => item.source))
       const urlsToIngest = urlSourcesFromEdit.filter((source) => !knownAttachmentSources.has(source))
 
+      const explicitUrlAttachmentSources = attachmentOverrides
+        .filter((item) => item.kind === 'url' && item.status !== 'ingested')
+        .map((item) => normalizeUrl(item.source) ?? item.source)
+
+      const allUrlSourcesToIngest = Array.from(new Set([...urlsToIngest, ...explicitUrlAttachmentSources]))
+      const attachmentUrlBySource = new Map(
+        attachmentOverrides
+          .filter((item) => item.kind === 'url')
+          .map((item) => [item.source, item])
+      )
+
       const resolvedAutoUrlAttachments: MessageAttachment[] = []
-      if (urlsToIngest.length > 0) {
+      if (allUrlSourcesToIngest.length > 0) {
         try {
-          const urlResult = await loadDocuments({ sources: urlsToIngest })
+          const urlResult = await loadDocuments({ sources: allUrlSourcesToIngest })
           const readySources = new Set([...urlResult.loaded_sources, ...urlResult.cached_sources])
-          for (const source of urlsToIngest) {
+          for (const source of allUrlSourcesToIngest) {
             const isReady = readySources.has(source)
+            const existing = attachmentUrlBySource.get(source)
             resolvedAutoUrlAttachments.push({
-              id: crypto.randomUUID(),
+              id: existing?.id ?? crypto.randomUUID(),
               kind: 'url',
-              label: source,
+              label: existing?.label || source,
               source,
               status: isReady ? 'ingested' : 'failed',
               error: isReady ? undefined : 'Failed to load URL',
@@ -769,11 +781,12 @@ export function useChatEngine(
           }
         } catch (error) {
           const message = error instanceof Error ? error.message : 'Failed to load URL'
-          for (const source of urlsToIngest) {
+          for (const source of allUrlSourcesToIngest) {
+            const existing = attachmentUrlBySource.get(source)
             resolvedAutoUrlAttachments.push({
-              id: crypto.randomUUID(),
+              id: existing?.id ?? crypto.randomUUID(),
               kind: 'url',
-              label: source,
+              label: existing?.label || source,
               source,
               status: 'failed',
               error: message,
@@ -787,9 +800,7 @@ export function useChatEngine(
         mergedAttachmentsMap.set(item.source, item)
       }
       for (const item of resolvedAutoUrlAttachments) {
-        if (!mergedAttachmentsMap.has(item.source)) {
-          mergedAttachmentsMap.set(item.source, item)
-        }
+        mergedAttachmentsMap.set(item.source, item)
       }
       const mergedAttachments = Array.from(mergedAttachmentsMap.values())
 

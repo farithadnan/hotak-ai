@@ -31,6 +31,7 @@ interface ChatPageProps {
     id: string
     name: string
     sourceCount: number
+    sources?: string[]
   }>
   isAttachingSources: boolean
   attachmentFeedback: {

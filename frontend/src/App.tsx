@@ -97,6 +97,7 @@ function App() {
             id: template.id,
             name: template.name,
             sourceCount: template.source_count ?? template.sources?.length ?? 0,
+            sources: template.sources ?? [],
           }))}
           isAttachingSources={engine.isAttachingSources}
           attachmentFeedback={engine.attachmentFeedback}

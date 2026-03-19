@@ -1330,16 +1330,18 @@
 }
 
 .user-sources-wrap {
-  align-items: flex-end;
+  align-self: flex-end;
+  width: fit-content;
+  max-width: 100%;
 }
 
 .user-sources-panel {
-  align-items: flex-end;
+  width: fit-content;
+  max-width: 100%;
 }
 
 .user-source-item {
-  width: 100%;
-  justify-content: flex-end;
+  width: auto;
 }
 
 .sources-align-left {

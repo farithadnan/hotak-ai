@@ -73,13 +73,16 @@ export function useFloatingPopover({
       const viewportHeight = window.innerHeight
       const gap = FLOATING_POPOVER_VIEWPORT_GAP
       const maxAllowedWidth = Math.max(FLOATING_POPOVER_MIN_WIDTH, viewportWidth - gap * 2)
-      const nextWidth = Math.min(panelWidth, maxAllowedWidth)
+      const measuredWidth = popoverRef.current?.offsetWidth
+      const measuredHeight = popoverRef.current?.offsetHeight
+      const nextWidth = Math.min(Math.max(measuredWidth ?? panelWidth, FLOATING_POPOVER_MIN_WIDTH), maxAllowedWidth)
+      const resolvedPanelHeight = measuredHeight ?? panelHeight
 
       let nextTop = rect.bottom + offset
       let nextLeft = rect.left
 
       if (placement === 'top-start') {
-        nextTop = rect.top - panelHeight - offset
+        nextTop = rect.top - resolvedPanelHeight - offset
         nextLeft = rect.left
       }
 
@@ -99,7 +102,7 @@ export function useFloatingPopover({
       }
 
       nextLeft = Math.max(gap, Math.min(nextLeft, viewportWidth - nextWidth - gap))
-      nextTop = Math.max(gap, Math.min(nextTop, viewportHeight - panelHeight - gap))
+      nextTop = Math.max(gap, Math.min(nextTop, viewportHeight - resolvedPanelHeight - gap))
 
       setResolvedWidth(nextWidth)
       setPosition({ top: nextTop, left: nextLeft })
