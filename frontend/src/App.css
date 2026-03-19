@@ -1329,6 +1329,70 @@
   gap: 6px;
 }
 
+.user-file-cards-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.user-file-card {
+  min-width: 190px;
+  max-width: min(280px, 100%);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-text);
+  padding: 8px 10px;
+  text-decoration: none;
+}
+
+.user-file-card.is-ingested {
+  border-color: var(--color-accent-border);
+}
+
+.user-file-card.is-failed {
+  border-color: #bb3a3a;
+}
+
+.user-file-card-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  background: rgba(0, 0, 0, 0.2);
+  color: var(--color-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.user-file-card-meta {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.user-file-card-ext {
+  font-size: 0.66rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+.user-file-card-name {
+  font-size: 0.78rem;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .user-sources-wrap {
   align-self: flex-end;
   width: fit-content;

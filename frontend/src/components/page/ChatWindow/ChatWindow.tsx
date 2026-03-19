@@ -4,7 +4,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { Bot, Copy, LoaderCircle, RotateCcw, Pencil } from '../../../icons';
+import { Bot, Copy, LoaderCircle, RotateCcw, Pencil, FileText, Link as LinkIcon } from '../../../icons';
 import { Composer } from '../../common/Composer/Composer';
 import { Toastr } from '../../common/Toastr/Toastr';
 import { ChatLoadingSkeleton } from './ChatLoadingSkeleton';
@@ -82,7 +82,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   const [editingContent, setEditingContent] = React.useState('');
   const [editingAttachments, setEditingAttachments] = React.useState<MessageAttachment[]>([]);
   const [isUploadingEditSources, setIsUploadingEditSources] = React.useState(false);
-  const [openUserSourcesMessageId, setOpenUserSourcesMessageId] = React.useState<string | null>(null);
   const [toastrOpen, setToastrOpen] = React.useState(false);
   const [toastrMessage, setToastrMessage] = React.useState('Copied to clipboard');
   const [toastrType, setToastrType] = React.useState<'success' | 'error' | 'info'>('success');
@@ -389,66 +388,29 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     code: renderMarkdownCode,
   }), [renderMarkdownCode]);
 
-  const renderUserAttachmentPanel = (
-    attachments: MessageAttachment[],
-    isOpen: boolean,
-    onToggle: () => void,
-    align: 'left' | 'right' = 'left',
-    options?: {
-      removable?: boolean;
-      onRemove?: (attachmentId: string) => void;
-    },
-  ) => (
-    <div className={`assistant-sources-wrap user-sources-wrap sources-align-${align}`}>
-      <button
-        type="button"
-        className="sources-pill"
-        onClick={onToggle}
-        title="Show sources"
-        aria-label="Show sources"
-      >
-        {attachments.length} {attachments.length === 1 ? 'Source' : 'Sources'}
-      </button>
-      {isOpen && (
-        <div className={`sources-list-panel user-sources-panel sources-panel-align-${align}`}>
-          {attachments.map((attachment, idx) => {
-            const isUrl = attachment.kind === 'url' && /^https?:\/\//i.test(attachment.source);
-            const statusClass = attachment.status === 'failed' ? 'is-failed' : 'is-ingested';
-            return (
-              <div key={attachment.id} className={`sources-list-item user-source-item source-item-align-${align}`}>
-                <span className="sources-list-index-badge">{idx + 1}</span>
-                {isUrl ? (
-                  <a
-                    className={`user-attachment-pill ${statusClass}`}
-                    href={attachment.source}
-                    target={EXTERNAL_LINK_TARGET}
-                    rel={EXTERNAL_LINK_REL}
-                  >
-                    {attachment.label}
-                  </a>
-                ) : (
-                  <span className={`user-attachment-pill ${statusClass}`}>
-                    {attachment.label}
-                  </span>
-                )}
-                {options?.removable && options.onRemove && (
-                  <button
-                    type="button"
-                    className="chat-action-btn icon-only user-source-remove"
-                    onClick={() => options.onRemove?.(attachment.id)}
-                    title="Remove source"
-                    aria-label="Remove source"
-                  >
-                    x
-                  </button>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
+  const getAttachmentDisplayName = (attachment: MessageAttachment) => {
+    if (attachment.kind === 'url') {
+      try {
+        const parsed = new URL(attachment.source);
+        return parsed.hostname + (parsed.pathname !== '/' ? parsed.pathname : '');
+      } catch {
+        return attachment.label || attachment.source;
+      }
+    }
+    return attachment.label || attachment.source.split(/[\\/]/).pop() || attachment.source;
+  };
+
+  const getAttachmentExtension = (attachment: MessageAttachment) => {
+    if (attachment.kind === 'url') {
+      return 'URL';
+    }
+    const name = getAttachmentDisplayName(attachment);
+    const parts = name.split('.');
+    if (parts.length < 2) {
+      return 'FILE';
+    }
+    return parts[parts.length - 1].slice(0, 6).toUpperCase();
+  };
 
   return (
     <section className="chat-area">
@@ -525,13 +487,49 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                       </div>
                     ) : (
                       <>
-                        <div className="bubble">{message.content}</div>
-                        {message.attachments && message.attachments.length > 0 && renderUserAttachmentPanel(
-                          message.attachments,
-                          openUserSourcesMessageId === message.id,
-                          () => setOpenUserSourcesMessageId((prev) => (prev === message.id ? null : message.id)),
-                          'left',
+                        {message.attachments && message.attachments.length > 0 && (
+                          <div className="user-file-cards-row">
+                            {message.attachments.map((attachment) => {
+                              const isUrl = attachment.kind === 'url' && /^https?:\/\//i.test(attachment.source);
+                              const statusClass = attachment.status === 'failed' ? 'is-failed' : 'is-ingested';
+                              const ext = getAttachmentExtension(attachment);
+                              const displayName = getAttachmentDisplayName(attachment);
+
+                              const content = (
+                                <>
+                                  <span className="user-file-card-icon" aria-hidden="true">
+                                    {isUrl ? <LinkIcon size={14} /> : <FileText size={14} />}
+                                  </span>
+                                  <span className="user-file-card-meta">
+                                    <span className="user-file-card-ext">{ext}</span>
+                                    <span className="user-file-card-name" title={displayName}>{displayName}</span>
+                                  </span>
+                                </>
+                              );
+
+                              if (isUrl) {
+                                return (
+                                  <a
+                                    key={attachment.id}
+                                    className={`user-file-card ${statusClass}`}
+                                    href={attachment.source}
+                                    target={EXTERNAL_LINK_TARGET}
+                                    rel={EXTERNAL_LINK_REL}
+                                  >
+                                    {content}
+                                  </a>
+                                );
+                              }
+
+                              return (
+                                <div key={attachment.id} className={`user-file-card ${statusClass}`}>
+                                  {content}
+                                </div>
+                              );
+                            })}
+                          </div>
                         )}
+                        <div className="bubble">{message.content}</div>
                         <div className="message-actions">
                           {message.id === lastUserMessageId && (
                             <button
