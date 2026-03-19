@@ -1517,6 +1517,7 @@
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.04);
   overflow: hidden;
+  margin: 0 0 0.85rem;
 }
 
 .assistant-code-header {

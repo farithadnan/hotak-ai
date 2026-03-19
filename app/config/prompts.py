@@ -17,6 +17,7 @@ CODE FORMATTING:
 - When showing code, use fenced code blocks with a language tag.
 - Example: ```python ... ``` for Python code, ```javascript ... ``` for JS code.
 - Keep inline code snippets short and reserve fenced blocks for multi-line code.
+- For long answers, you may use `---` to separate major headings/subjects for readability.
 
 Use the following format:
 
