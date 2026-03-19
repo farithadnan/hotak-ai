@@ -90,6 +90,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   const [editingMessageId, setEditingMessageId] = React.useState<string | null>(null);
   const [editingContent, setEditingContent] = React.useState('');
   const [editingAttachments, setEditingAttachments] = React.useState<MessageAttachment[]>([]);
+  const [editingTemplate, setEditingTemplate] = React.useState<{ id: string; name: string; sourceCount: number } | null>(null);
   const [isUploadingEditSources, setIsUploadingEditSources] = React.useState(false);
   const [toastrOpen, setToastrOpen] = React.useState(false);
   const [toastrMessage, setToastrMessage] = React.useState('Copied to clipboard');
@@ -162,6 +163,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     setEditingMessageId(null);
     setEditingContent('');
     setEditingAttachments([]);
+    setEditingTemplate(null);
   };
 
   const handleRemoveEditAttachment = (attachmentId: string) => {
@@ -260,7 +262,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
       return;
     }
 
-    let addedCount = 0;
     setEditingAttachments((prev) => {
       const bySource = new Map(prev.map((item) => [item.source, item]));
 
@@ -279,20 +280,26 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
           source,
           status: isUrl ? 'pending' : 'ingested',
         });
-        addedCount += 1;
       }
 
       return Array.from(bySource.values());
     });
 
-    setToastrOpen(false);
-    setToastrType(addedCount > 0 ? 'success' : 'info');
-    setToastrMessage(
-      addedCount > 0
-        ? `${template.name}: added ${addedCount} source${addedCount === 1 ? '' : 's'}.`
-        : `${template.name} sources were already attached.`
-    );
-    requestAnimationFrame(() => setToastrOpen(true));
+    setEditingTemplate({
+      id: template.id,
+      name: template.name,
+      sourceCount: template.sourceCount,
+    });
+  };
+
+  const handleClearEditTemplate = () => {
+    if (!editingTemplate) return;
+    const template = availableTemplates.find((t) => t.id === editingTemplate.id);
+    if (template?.sources) {
+      const templateSources = new Set(template.sources.map((s) => s.trim()).filter(Boolean));
+      setEditingAttachments((prev) => prev.filter((a) => !templateSources.has(a.source)));
+    }
+    setEditingTemplate(null);
   };
 
   const handleSaveEditing = () => {
@@ -492,7 +499,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                             void handleAttachEditFiles(files);
                           }}
                           availableTemplates={availableTemplates}
+                          selectedTemplate={editingTemplate}
                           onAttachTemplate={handleAttachEditTemplate}
+                          onClearTemplate={handleClearEditTemplate}
                           onRemoveAttachment={handleRemoveEditAttachment}
                         />
                       </div>

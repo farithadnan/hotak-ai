@@ -149,15 +149,6 @@ export function Composer({
               e.currentTarget.value = ''
             }}
           />
-          <textarea
-            ref={textareaRef}
-            value={inputValue}
-            onChange={onInputChange}
-            onKeyDown={onKeyDown}
-            placeholder="Ask anything..."
-            aria-label="Chat input"
-            rows={1}
-          />
           {showAttachmentActions && (selectedTemplate || pendingAttachments.length > 0) && (
             <div className={style['pending-attachments']}>
               {selectedTemplate && (
@@ -197,6 +188,15 @@ export function Composer({
               )}
             </div>
           )}
+          <textarea
+            ref={textareaRef}
+            value={inputValue}
+            onChange={onInputChange}
+            onKeyDown={onKeyDown}
+            placeholder="Ask anything..."
+            aria-label="Chat input"
+            rows={1}
+          />
           {showAttachmentActions && isDragActive && (
             <div className={style['drag-overlay']}>Drop files to attach them</div>
           )}

@@ -75,8 +75,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin-top: 8px;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .attachment-chip {

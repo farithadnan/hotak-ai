@@ -106,9 +106,10 @@ export function useChatEngine(
         content: message.content,
       }))
 
-  // Reset attachments when switching chats
+  // Reset attachments and input when switching chats
   useEffect(() => {
     clearPendingAttachments()
+    setInputValue('')
   }, [activeChatId])
 
   // Fetch chats on mount
