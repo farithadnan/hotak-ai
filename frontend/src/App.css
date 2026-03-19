@@ -12,6 +12,15 @@
   --chat-message-lane-offset-desktop: 24px;
   --chat-message-lane-offset-tablet: 14px;
   --chat-message-lane-offset-mobile: 8px;
+
+  /* Shared semantic UI tokens (alerts/actions) */
+  --ui-danger-bg: #bd362f;
+  --ui-danger-hover: #9f2d28;
+  --ui-success-bg: #2d6a34;
+  --ui-success-accent: #51a351;
+  --ui-info-bg: #2f96b4;
+  --ui-info-accent: #2f96b4;
+  --ui-on-solid: #ffffff;
 }
 
 .chat-area {

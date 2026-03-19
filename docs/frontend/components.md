@@ -159,6 +159,7 @@ Returns `null` when `!open`. Used in App.tsx for the "Delete Chat" confirmation.
 UI notes:
 - Uses a compact dialog footprint (tighter paddings/typography/actions) to reduce visual bulk.
 - Automatically applies stronger danger styling when action text/title indicates delete/remove.
+- Confirm/action colors are sourced from shared semantic UI tokens in App.css to stay consistent with toastr variants.
 
 ---
 
@@ -211,6 +212,7 @@ Uses `useEffect` + `setTimeout` to auto-dismiss after `duration` milliseconds.
 UI notes:
 - Toast styling is compact and denser than before (smaller paddings/font, tighter screen offsets).
 - Success/error/info variants now use stronger, ngx-toastr-inspired contrast palettes for better readability.
+- Variant colors are driven by shared semantic UI tokens in App.css (danger/success/info) for cross-component consistency.
 
 ---
 

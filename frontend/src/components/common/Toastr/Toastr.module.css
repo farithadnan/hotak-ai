@@ -41,22 +41,22 @@
   display: block;
 }
 .toastr--success {
-  background: #2d6a34;
-  color: #ffffff;
-  border-color: #2d6a34;
-  border-left-color: #51a351;
+  background: var(--ui-success-bg);
+  color: var(--ui-on-solid);
+  border-color: var(--ui-success-bg);
+  border-left-color: var(--ui-success-accent);
 }
 .toastr--error {
-  background: #bd362f;
-  color: #ffffff;
-  border-color: #bd362f;
-  border-left-color: #bd362f;
+  background: var(--ui-danger-bg);
+  color: var(--ui-on-solid);
+  border-color: var(--ui-danger-bg);
+  border-left-color: var(--ui-danger-bg);
 }
 .toastr--info {
-  background: #2f96b4;
-  color: #ffffff;
-  border-color: #2f96b4;
-  border-left-color: #2f96b4;
+  background: var(--ui-info-bg);
+  color: var(--ui-on-solid);
+  border-color: var(--ui-info-bg);
+  border-left-color: var(--ui-info-accent);
 }
 
 @keyframes toastIn {

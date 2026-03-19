@@ -58,24 +58,23 @@
 }
 
 .confirm-dialog-confirm {
-  background: #2f96b4;
-  color: #ffffff;
-  border-color: #2f96b4;
+  background: var(--ui-info-bg);
+  color: var(--ui-on-solid);
+  border-color: var(--ui-info-bg);
 }
 
 .confirm-dialog-confirm:hover {
-  background: #267e97;
-  border-color: #267e97;
+  filter: brightness(0.92);
 }
 
 .confirm-dialog-confirm.is-danger {
-  background: #bd362f;
-  border-color: #bd362f;
+  background: var(--ui-danger-bg);
+  border-color: var(--ui-danger-bg);
 }
 
 .confirm-dialog-confirm.is-danger:hover {
-  background: #9f2d28;
-  border-color: #9f2d28;
+  background: var(--ui-danger-hover);
+  border-color: var(--ui-danger-hover);
 }
 
 @keyframes confirmDialogIn {
