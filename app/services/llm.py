@@ -27,7 +27,7 @@ def initialize_models():
         llm = init_chat_model(
             model=LLM_MODEL,
             temperature=LLM_TEMPERATURE,
-            max_tokens=LLM_MAX_TOKENS
+            max_tokens=LLM_MAX_TOKENS,
         )
 
         logger.info(f"Initializing embeddings: {EMBEDDING_MODEL}")
