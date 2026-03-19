@@ -37,6 +37,8 @@ type AttachmentFeedback = {
   type: 'success' | 'error' | 'info'
 } | null
 
+const URL_PATTERN = /https?:\/\/[^\s<>")]+/gi
+
 export function useChatEngine(
   activeChatId: string | null,
   openChat: (chatId?: string) => void,
@@ -80,6 +82,19 @@ export function useChatEngine(
     } catch {
       return null
     }
+  }
+
+  const extractUrlsFromText = (value: string): string[] => {
+    const candidates = value.match(URL_PATTERN) ?? []
+    const unique = new Set<string>()
+    for (const raw of candidates) {
+      const normalized = normalizeUrl(raw)
+      if (!normalized) {
+        continue
+      }
+      unique.add(normalized)
+    }
+    return Array.from(unique)
   }
 
   const buildLlmContext = (messages: ChatThread['messages']): LlmContextMessage[] =>
@@ -149,40 +164,6 @@ export function useChatEngine(
     )
   }
 
-  const handleAttachUrl = (rawUrl: string) => {
-    const normalizedUrl = normalizeUrl(rawUrl)
-    if (!normalizedUrl) {
-      showAttachmentFeedback({
-        title: 'Invalid URL',
-        message: 'Use a full http:// or https:// URL.',
-        type: 'error',
-      })
-      return
-    }
-
-    setPendingAttachments((prev) => {
-      if (prev.some((item) => item.kind === 'url' && item.source === normalizedUrl)) {
-        showAttachmentFeedback({
-          title: 'Already attached',
-          message: 'That URL is already queued.',
-          type: 'info',
-        })
-        return prev
-      }
-
-      return [
-        ...prev,
-        {
-          id: crypto.randomUUID(),
-          kind: 'url',
-          label: normalizedUrl,
-          source: normalizedUrl,
-          status: 'queued',
-        },
-      ]
-    })
-  }
-
   const handleAttachFiles = (files: File[]) => {
     if (files.length === 0) {
       return
@@ -220,18 +201,18 @@ export function useChatEngine(
       }
 
       if (additions.length === 0) {
-        showAttachmentFeedback({
-          title: validationErrors.length > 0 ? 'File validation failed' : 'Already attached',
-          message: validationErrors.length > 0
-            ? validationErrors.slice(0, 2).join(' | ')
-            : 'Selected files are already queued.',
-          type: validationErrors.length > 0 ? 'error' : 'info',
-        })
+          if (validationErrors.length > 0) {
+            showAttachmentFeedback({
+              title: 'File validation failed',
+              message: validationErrors.slice(0, 2).join(' | '),
+              type: 'error',
+            })
+          }
       } else if (validationErrors.length > 0) {
         showAttachmentFeedback({
           title: 'Some files were skipped',
           message: validationErrors.slice(0, 2).join(' | '),
-          type: 'info',
+          type: 'error',
         })
       }
 
@@ -260,36 +241,43 @@ export function useChatEngine(
       return
     }
 
-    let addedCount = 0
     setPendingAttachments((prev) => {
       const existingSources = new Set(prev.map((item) => item.source))
       const additions: PendingAttachment[] = []
 
-      for (const source of sources) {
-        const normalizedSource = source.trim()
-        if (!normalizedSource || existingSources.has(normalizedSource)) {
+      for (const rawSource of sources) {
+        const trimmedSource = rawSource.trim()
+        if (!trimmedSource) {
           continue
         }
+
+        const normalizedSource = normalizeUrl(trimmedSource) ?? trimmedSource
+        if (existingSources.has(normalizedSource)) {
+          continue
+        }
+
         existingSources.add(normalizedSource)
-        addedCount += 1
+
+        const kind = inferAttachmentKind(normalizedSource)
+        const fileName = normalizedSource.split(/[\\/]/).pop() || normalizedSource
+
         additions.push({
           id: crypto.randomUUID(),
-          kind: inferAttachmentKind(normalizedSource),
-          label: normalizedSource,
+          kind,
+          label: kind === 'url' ? normalizedSource : fileName,
           source: normalizedSource,
           status: 'queued',
         })
       }
 
-      return [...prev, ...additions]
-    })
+      showAttachmentFeedback({
+        message: additions.length > 0
+          ? `${template.name}: added ${additions.length} source${additions.length === 1 ? '' : 's'}.`
+          : `${template.name} sources were already queued.`,
+        type: additions.length > 0 ? 'success' : 'info',
+      })
 
-    showAttachmentFeedback({
-      title: addedCount > 0 ? 'Template attached' : 'Nothing added',
-      message: addedCount > 0
-        ? `${template.name}: added ${addedCount} source${addedCount === 1 ? '' : 's'}.`
-        : `${template.name} sources were already queued.`,
-      type: addedCount > 0 ? 'success' : 'info',
+      return [...prev, ...additions]
     })
   }
 
@@ -301,46 +289,81 @@ export function useChatEngine(
     setPendingAttachments([])
   }
 
-  const ingestPendingAttachments = async (): Promise<MessageAttachment[]> => {
-    if (pendingAttachments.length === 0) {
+  const ingestPendingAttachments = async (extraUrlSources: string[] = []): Promise<MessageAttachment[]> => {
+    const normalizedExtraUrls = extraUrlSources
+      .map((value) => normalizeUrl(value))
+      .filter((value): value is string => Boolean(value))
+
+    const existingSources = new Set(pendingAttachments.map((item) => item.source))
+    const syntheticUrlAttachments: PendingAttachment[] = normalizedExtraUrls
+      .filter((source) => !existingSources.has(source))
+      .map((source) => ({
+        id: crypto.randomUUID(),
+        kind: 'url',
+        label: source,
+        source,
+        status: 'queued',
+      }))
+
+    const allAttachments = [...pendingAttachments, ...syntheticUrlAttachments]
+    if (allAttachments.length === 0) {
       return []
     }
 
-    const urlAttachments = pendingAttachments.filter((item) => item.kind === 'url')
-    const fileAttachments = pendingAttachments.filter((item) => item.kind === 'file' && item.file)
+    const urlAttachments = allAttachments.filter((item) => item.kind === 'url')
+    const fileAttachments = allAttachments.filter((item) => item.kind === 'file' && item.file)
+    const persistedAttachmentIds = new Set(pendingAttachments.map((item) => item.id))
+
     const resolved: MessageAttachment[] = []
-    let successCount = 0
-    let failedCount = 0
 
     setIsAttachingSources(true)
     try {
       if (urlAttachments.length > 0) {
         for (const item of urlAttachments) {
-          updatePendingAttachment(item.id, { status: 'ingesting', error: undefined })
-          try {
-            const urlResult = await loadDocuments({ sources: [item.source] })
-            const isReady = urlResult.loaded_sources.includes(item.source) || urlResult.cached_sources.includes(item.source)
-            const status = isReady ? 'ingested' : 'failed'
-            updatePendingAttachment(item.id, {
-              status: isReady ? 'ready' : 'failed',
-              error: isReady ? undefined : 'Failed to load URL',
-            })
+          if (persistedAttachmentIds.has(item.id)) {
+            updatePendingAttachment(item.id, { status: 'ingesting', error: undefined })
+          }
+        }
+
+        try {
+          const urlResult = await loadDocuments({
+            sources: urlAttachments.map((item) => item.source),
+          })
+
+          const readySources = new Set([
+            ...urlResult.loaded_sources,
+            ...urlResult.cached_sources,
+          ])
+
+          for (const item of urlAttachments) {
+            const isReady = readySources.has(item.source)
+            const status: MessageAttachment['status'] = isReady ? 'ingested' : 'failed'
+            const error = isReady ? undefined : 'Failed to load URL'
+
+            if (persistedAttachmentIds.has(item.id)) {
+              updatePendingAttachment(item.id, {
+                status: isReady ? 'ready' : 'failed',
+                error,
+              })
+            }
+
             resolved.push({
               id: item.id,
               kind: 'url',
               label: item.label,
               source: item.source,
               status,
-              error: status === 'failed' ? 'Failed to load URL' : undefined,
+              error,
             })
-            if (isReady) {
-              successCount += 1
-            } else {
-              failedCount += 1
+          }
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Failed to load URL'
+
+          for (const item of urlAttachments) {
+            if (persistedAttachmentIds.has(item.id)) {
+              updatePendingAttachment(item.id, { status: 'failed', error: message })
             }
-          } catch (error) {
-            const message = error instanceof Error ? error.message : 'Failed to load URL'
-            updatePendingAttachment(item.id, { status: 'failed', error: message })
+
             resolved.push({
               id: item.id,
               kind: 'url',
@@ -349,7 +372,6 @@ export function useChatEngine(
               status: 'failed',
               error: message,
             })
-            failedCount += 1
           }
         }
       }
@@ -362,23 +384,21 @@ export function useChatEngine(
             const result = uploadResult.file_results[0]
             const isIngested = result?.status === 'ingested' || result?.status === 'cached'
             const status: MessageAttachment['status'] = isIngested ? 'ingested' : 'failed'
+            const error = isIngested ? undefined : (result?.error || 'Failed to process file')
+
             updatePendingAttachment(item.id, {
               status: isIngested ? 'ready' : 'failed',
-              error: isIngested ? undefined : (result?.error || 'Failed to process file'),
+              error,
             })
+
             resolved.push({
               id: item.id,
               kind: 'file',
               label: item.label,
               source: result?.source || item.label,
               status,
-              error: status === 'failed' ? (result?.error || 'Failed to process file') : undefined,
+              error,
             })
-            if (isIngested) {
-              successCount += 1
-            } else {
-              failedCount += 1
-            }
           } catch (error) {
             const message = error instanceof Error ? error.message : 'Failed to upload file'
             updatePendingAttachment(item.id, { status: 'failed', error: message })
@@ -390,34 +410,11 @@ export function useChatEngine(
               status: 'failed',
               error: message,
             })
-            failedCount += 1
           }
         }
       }
     } finally {
       setIsAttachingSources(false)
-    }
-
-    if (successCount > 0 || failedCount > 0) {
-      if (successCount > 0 && failedCount === 0) {
-        showAttachmentFeedback({
-          title: 'Attachments ready',
-          message: `${successCount} attachment${successCount === 1 ? '' : 's'} indexed successfully.`,
-          type: 'success',
-        })
-      } else if (successCount > 0 && failedCount > 0) {
-        showAttachmentFeedback({
-          title: 'Attachments partially ready',
-          message: `${successCount} ready, ${failedCount} failed. Review the failed chips in the message.`,
-          type: 'info',
-        })
-      } else {
-        showAttachmentFeedback({
-          title: 'Attachment ingest failed',
-          message: `${failedCount} attachment${failedCount === 1 ? '' : 's'} could not be prepared.`,
-          type: 'error',
-        })
-      }
     }
 
     return resolved
@@ -556,7 +553,8 @@ export function useChatEngine(
         await ensureChatModel(chatId, modelId)
       }
 
-      const messageAttachments = await ingestPendingAttachments()
+      const urlSourcesFromPrompt = extractUrlsFromText(trimmedInput)
+      const messageAttachments = await ingestPendingAttachments(urlSourcesFromPrompt)
 
       const pendingAssistantId = crypto.randomUUID()
 
@@ -1016,7 +1014,6 @@ export function useChatEngine(
     isAttachingSources,
     attachmentFeedback,
     availableTemplates,
-    handleAttachUrl,
     handleAttachFiles,
     handleAttachTemplate,
     handleRemovePendingAttachment,

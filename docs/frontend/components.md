@@ -114,7 +114,6 @@ The message input bar at the bottom of the chat window.
 | `pendingAttachments?` | `Array<{ id, kind, label }>` | Composer-level queued URL/file attachments (before send). |
 | `availableTemplates?` | `Array<{ id, name, sourceCount }>` | Template choices shown in the attach popover. |
 | `isAttaching?` | `boolean` | Disables send while attachment ingestion/upload is in progress. |
-| `onAttachUrl?` | `(url: string) => void` | Adds a URL attachment from composer UI. |
 | `onAttachFiles?` | `(files: File[]) => void` | Adds file attachments selected from local disk. |
 | `onAttachTemplate?` | `(templateId: string) => void` | Queues all sources from a selected template. |
 | `onRemoveAttachment?` | `(attachmentId: string) => void` | Removes one queued attachment from the composer. |
@@ -123,15 +122,15 @@ The message input bar at the bottom of the chat window.
 
 | State | Type | Description |
 |---|---|---|
-| `isAttachPopoverOpen` | `boolean` | Whether the attach menu (Upload Files / Attach URL / Attach Templates) is visible. |
+| `isAttachPopoverOpen` | `boolean` | Whether the attach menu (Upload Files / Attach Templates) is visible. |
 
 #### Behavior
 
-- **Default mode:** Shows a Plus button (opens attach popover with Upload Files, Attach URL, Attach Templates), Briefcase button (tools), Mic button, and a Send button (visible only when input is non-empty).
-- Attach URL now expands an inline URL input panel inside the popover instead of using a blocking browser prompt.
+- **Default mode:** Shows a Plus button (opens attach popover with Upload Files and Attach Templates), Briefcase button (tools), Mic button, and a Send button (visible only when input is non-empty).
+- URLs pasted directly into the composer text are detected during send in `useChatEngine` and ingested automatically.
 - Attach Templates now opens a searchable inline template picker and adds that template's sources into the queue.
 - Dragging files over the composer highlights a drop zone; dropping files queues them like the file picker.
-- Queued attachment chips show live states (`Queued`, `Uploading`, `Indexing`, `Ready`, `Failed`); clicking a chip removes it when ingestion is not running.
+- Queued attachment chips use compact pills with status coloring and cap visible chips with a `+N more` summary; clicking a chip removes it when ingestion is not running.
 - **Edit mode:** Shows Cancel and Send text buttons, no left-side action buttons.
 - The attach popover uses `useFloatingPopover` for positioning.
 
@@ -291,7 +290,6 @@ The scrollable conversation view — renders all messages and the composer.
 | `textareaRef` | ref | Composer textarea ref. |
 | `pendingAttachments` | `Array<{ id, kind, label }>` | Queued URL/file attachments shown in composer before send. |
 | `isAttachingSources` | `boolean` | Whether attachment ingestion is currently running. |
-| `onAttachUrl` | `(url) => void` | Queues URL attachment in chat engine. |
 | `onAttachFiles` | `(files) => void` | Queues local file attachments in chat engine. |
 | `onRemovePendingAttachment` | `(attachmentId) => void` | Removes one queued attachment. |
 | `username?` | `string` | Display name for user bubbles. |

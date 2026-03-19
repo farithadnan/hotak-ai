@@ -44,7 +44,6 @@ interface ChatWindowProps {
     message: string;
     type: 'success' | 'error' | 'info';
   } | null;
-  onAttachUrl: (url: string) => void;
   onAttachFiles: (files: File[]) => void;
   onAttachTemplate: (templateId: string) => void;
   onRemovePendingAttachment: (attachmentId: string) => void;
@@ -69,7 +68,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   availableTemplates,
   isAttachingSources,
   attachmentFeedback,
-  onAttachUrl,
   onAttachFiles,
   onAttachTemplate,
   onRemovePendingAttachment,
@@ -258,7 +256,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             pendingAttachments={pendingAttachments}
             availableTemplates={availableTemplates}
             isAttaching={isAttachingSources}
-            onAttachUrl={onAttachUrl}
             onAttachFiles={onAttachFiles}
             onAttachTemplate={onAttachTemplate}
             onRemoveAttachment={onRemovePendingAttachment}
@@ -299,7 +296,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                         <div className="bubble">{message.content}</div>
                         {message.attachments && message.attachments.length > 0 && (
                           <div className="user-attachments-row">
-                            {message.attachments.map((attachment) => {
+                            {message.attachments.slice(0, 6).map((attachment) => {
                               const isUrl = attachment.kind === 'url' && /^https?:\/\//i.test(attachment.source);
                               const statusClass = attachment.status === 'failed' ? 'is-failed' : 'is-ingested';
 
@@ -323,6 +320,11 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                                 </span>
                               );
                             })}
+                            {message.attachments.length > 6 && (
+                              <span className="user-attachment-pill">
+                                +{message.attachments.length - 6} more
+                              </span>
+                            )}
                           </div>
                         )}
                         <div className="message-actions">
@@ -472,7 +474,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
               pendingAttachments={pendingAttachments}
               availableTemplates={availableTemplates}
               isAttaching={isAttachingSources}
-              onAttachUrl={onAttachUrl}
               onAttachFiles={onAttachFiles}
               onAttachTemplate={onAttachTemplate}
               onRemoveAttachment={onRemovePendingAttachment}

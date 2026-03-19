@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { Briefcase, Mic, SendHorizontal, Plus, Upload, Link, FileText } from '../../../icons'
+import { Briefcase, Mic, SendHorizontal, Plus, Upload, FileText } from '../../../icons'
 import { useFloatingPopover } from '../../../hooks/useFloatingPopover'
 import {
   COMPOSER_ATTACH_POPOVER_HEIGHT,
@@ -31,7 +31,6 @@ type ComposerProps = {
     sourceCount: number
   }>
   isAttaching?: boolean
-  onAttachUrl?: (url: string) => void
   onAttachFiles?: (files: File[]) => void
   onAttachTemplate?: (templateId: string) => void
   onRemoveAttachment?: (attachmentId: string) => void
@@ -49,15 +48,12 @@ export function Composer({
   pendingAttachments = [],
   availableTemplates = [],
   isAttaching = false,
-  onAttachUrl,
   onAttachFiles,
   onAttachTemplate,
   onRemoveAttachment,
 }: ComposerProps) {
   const [isAttachPopoverOpen, setIsAttachPopoverOpen] = useState(false)
-  const [isUrlPanelOpen, setIsUrlPanelOpen] = useState(false)
   const [isTemplatePanelOpen, setIsTemplatePanelOpen] = useState(false)
-  const [urlInputValue, setUrlInputValue] = useState('')
   const [templateSearchValue, setTemplateSearchValue] = useState('')
   const [isDragActive, setIsDragActive] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -71,19 +67,6 @@ export function Composer({
     panelHeight: COMPOSER_ATTACH_POPOVER_HEIGHT,
     offset: COMPOSER_ATTACH_POPOVER_OFFSET,
   })
-
-  const handleAddUrl = () => {
-    const nextUrl = urlInputValue.trim()
-    if (!nextUrl) {
-      return
-    }
-
-    onAttachUrl?.(nextUrl)
-    setUrlInputValue('')
-    setIsUrlPanelOpen(false)
-    setIsTemplatePanelOpen(false)
-    setIsAttachPopoverOpen(false)
-  }
 
   const filteredTemplates = availableTemplates.filter((template) => {
     const query = templateSearchValue.trim().toLowerCase()
@@ -101,6 +84,9 @@ export function Composer({
       onAttachFiles?.(files)
     }
   }
+
+  const visibleAttachments = pendingAttachments.slice(0, 6)
+  const hiddenAttachmentCount = Math.max(0, pendingAttachments.length - visibleAttachments.length)
 
   return (
     <div className={`${style.composer} ${isEditMode ? style['composer-edit-mode'] : ''} ${className}`}>
@@ -153,7 +139,7 @@ export function Composer({
           />
           {!isEditMode && pendingAttachments.length > 0 && (
             <div className={style['pending-attachments']}>
-              {pendingAttachments.map((attachment) => (
+              {visibleAttachments.map((attachment) => (
                 <button
                   key={attachment.id}
                   type="button"
@@ -166,20 +152,12 @@ export function Composer({
                     {attachment.kind === 'url' ? 'URL' : 'FILE'}
                   </span>
                   <span className={style['attachment-chip-label']}>{attachment.label}</span>
-                  <span className={style['attachment-chip-status']}>
-                    {attachment.status === 'uploading'
-                      ? 'Uploading'
-                      : attachment.status === 'ingesting'
-                        ? 'Indexing'
-                        : attachment.status === 'ready'
-                          ? 'Ready'
-                          : attachment.status === 'failed'
-                            ? 'Failed'
-                            : 'Queued'}
-                  </span>
                   <span className={style['attachment-chip-remove']}>x</span>
                 </button>
               ))}
+              {hiddenAttachmentCount > 0 && (
+                <span className={style['attachment-chip-summary']}>+{hiddenAttachmentCount} more</span>
+              )}
             </div>
           )}
           {!isEditMode && isDragActive && (
@@ -214,7 +192,6 @@ export function Composer({
                         className={style['attach-menu-item']}
                         type="button"
                         onClick={() => {
-                          setIsUrlPanelOpen(false)
                           setIsTemplatePanelOpen(false)
                           setIsAttachPopoverOpen(false)
                           fileInputRef.current?.click()
@@ -227,44 +204,6 @@ export function Composer({
                         className={style['attach-menu-item']}
                         type="button"
                         onClick={() => {
-                          setIsTemplatePanelOpen(false)
-                          setIsUrlPanelOpen((prev) => !prev)
-                        }}
-                      >
-                        <Link size={18} />
-                        <span>Attach URL</span>
-                      </button>
-                      {isUrlPanelOpen && (
-                        <div className={style['attach-url-panel']}>
-                          <input
-                            className={style['attach-url-input']}
-                            type="url"
-                            value={urlInputValue}
-                            onChange={(e) => setUrlInputValue(e.target.value)}
-                            placeholder="https://example.com/article"
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                e.preventDefault()
-                                handleAddUrl()
-                              }
-                            }}
-                            autoFocus
-                          />
-                          <button
-                            className={style['attach-url-submit']}
-                            type="button"
-                            onClick={handleAddUrl}
-                            disabled={urlInputValue.trim().length === 0}
-                          >
-                            Add
-                          </button>
-                        </div>
-                      )}
-                      <button
-                        className={style['attach-menu-item']}
-                        type="button"
-                        onClick={() => {
-                          setIsUrlPanelOpen(false)
                           setIsTemplatePanelOpen((prev) => !prev)
                         }}
                       >

@@ -100,7 +100,6 @@ function App() {
           }))}
           isAttachingSources={engine.isAttachingSources}
           attachmentFeedback={engine.attachmentFeedback}
-          onAttachUrl={engine.handleAttachUrl}
           onAttachFiles={engine.handleAttachFiles}
           onAttachTemplate={engine.handleAttachTemplate}
           onRemovePendingAttachment={engine.handleRemovePendingAttachment}

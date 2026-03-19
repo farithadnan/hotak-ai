@@ -52,7 +52,6 @@ The core hook that owns **all chat data and operations**. Extracted from App.tsx
 | `setInputValue` | `Dispatch` | Direct setter (used by App for `handleNewChat`). |
 | `pendingAttachments` | `Array<{ id, kind, label }>` | Pending attachment chips shown in composer. |
 | `isAttachingSources` | `boolean` | Disables send while attachment ingestion runs. |
-| `handleAttachUrl` | `(url: string) => void` | Validate + queue URL attachment for next send. |
 | `handleAttachFiles` | `(files: File[]) => void` | Queue local file attachments for next send. |
 | `handleAttachTemplate` | `(templateId: string) => void` | Queue all sources from a selected template. |
 | `handleRemovePendingAttachment` | `(attachmentId: string) => void` | Remove one queued attachment. |
@@ -69,7 +68,8 @@ The core hook that owns **all chat data and operations**. Extracted from App.tsx
 - `ensureChatModel(chatId, modelId?)` — syncs chat model with optimistic update
 - `buildLlmContext(messages)` — converts local chat messages to a compact request payload for backend context handoff
 - `streamAssistantText(question, onPartial, chatId?, modelId?, onModelResolved?, contextMessages?)` — streaming engine with fallback and explicit context payload
-- `ingestPendingAttachments()` — ingests queued URLs via `/documents/load` and files via `/documents/upload`, updates per-chip progress (`queued` → `uploading` / `ingesting` → `ready` / `failed`), and returns message-level attachment metadata with status.
+- `extractUrlsFromText(input)` — detects HTTP/HTTPS links in the user prompt so pasted URLs are auto-ingested on send.
+- `ingestPendingAttachments(extraUrlSources?)` — ingests queued/template URLs plus auto-detected prompt URLs via `/documents/load`, ingests files via `/documents/upload`, updates per-chip progress (`queued` → `uploading` / `ingesting` → `ready` / `failed`), and returns message-level attachment metadata with status.
 - `handleAttachFiles()` performs frontend validation first (allowed extension + max size) before any upload request is sent.
 
 ### Multi-Turn Model Switching Notes

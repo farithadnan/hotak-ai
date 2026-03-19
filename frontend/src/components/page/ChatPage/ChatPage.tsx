@@ -37,7 +37,6 @@ interface ChatPageProps {
     message: string
     type: 'success' | 'error' | 'info'
   } | null
-  onAttachUrl: (url: string) => void
   onAttachFiles: (files: File[]) => void
   onAttachTemplate: (templateId: string) => void
   onRemovePendingAttachment: (attachmentId: string) => void
@@ -63,7 +62,6 @@ function ChatPage({
   availableTemplates,
   isAttachingSources,
   attachmentFeedback,
-  onAttachUrl,
   onAttachFiles,
   onAttachTemplate,
   onRemovePendingAttachment,
@@ -234,7 +232,6 @@ function ChatPage({
         availableTemplates={availableTemplates}
         isAttachingSources={isAttachingSources}
         attachmentFeedback={attachmentFeedback}
-        onAttachUrl={onAttachUrl}
         onAttachFiles={onAttachFiles}
         onAttachTemplate={onAttachTemplate}
         onRemovePendingAttachment={onRemovePendingAttachment}

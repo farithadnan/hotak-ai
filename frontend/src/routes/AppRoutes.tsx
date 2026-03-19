@@ -34,7 +34,6 @@ type AppRoutesProps = {
     message: string
     type: 'success' | 'error' | 'info'
   } | null
-  onAttachUrl: (url: string) => void
   onAttachFiles: (files: File[]) => void
   onAttachTemplate: (templateId: string) => void
   onRemovePendingAttachment: (attachmentId: string) => void
@@ -60,7 +59,6 @@ function AppRoutes({
   availableTemplates,
   isAttachingSources,
   attachmentFeedback,
-  onAttachUrl,
   onAttachFiles,
   onAttachTemplate,
   onRemovePendingAttachment,
@@ -85,7 +83,6 @@ function AppRoutes({
     availableTemplates,
     isAttachingSources,
     attachmentFeedback,
-    onAttachUrl,
     onAttachFiles,
     onAttachTemplate,
     onRemovePendingAttachment,
