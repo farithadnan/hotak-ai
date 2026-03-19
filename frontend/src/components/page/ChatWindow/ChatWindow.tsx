@@ -2,6 +2,8 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Bot, Copy, LoaderCircle, RotateCcw, Pencil } from '../../../icons';
 import { Composer } from '../../common/Composer/Composer';
 import { Toastr } from '../../common/Toastr/Toastr';
@@ -68,7 +70,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     });
   };
 
-  const copyToClipboard = async (content: string) => {
+  const copyToClipboard = React.useCallback(async (content: string) => {
     let isCopied = false;
 
     try {
@@ -91,7 +93,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
       setToastrMessage('Copied to clipboard');
       requestAnimationFrame(() => setToastrOpen(true));
     }
-  };
+  }, []);
 
   const handleStartEditing = (messageId: string, content: string) => {
     setEditingMessageId(messageId);
@@ -142,6 +144,54 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     }
   }, [chat?.messages.length]);
 
+  const renderMarkdownCode = React.useCallback((props: React.ComponentPropsWithoutRef<'code'> & { inline?: boolean }) => {
+    const { inline, className, children, ...rest } = props;
+    const rawCode = React.Children.toArray(children).join('').replace(/\n$/, '');
+    const languageMatch = /language-([a-zA-Z0-9_+-]+)/.exec(className || '');
+    const languageLabel = (languageMatch?.[1] || 'code').toLowerCase();
+    const isBlockCode = Boolean(languageMatch) || rawCode.includes('\n');
+
+    if (inline || !isBlockCode) {
+      return (
+        <code className={className} {...rest}>
+          {children}
+        </code>
+      );
+    }
+
+    return (
+      <div className="assistant-code-block">
+        <div className="assistant-code-header">
+          <span className="assistant-code-language">{languageLabel}</span>
+          <button
+            type="button"
+            className="assistant-code-copy"
+            onClick={() => void copyToClipboard(rawCode)}
+            title="Copy code"
+            aria-label="Copy code"
+          >
+            Copy
+          </button>
+        </div>
+        <SyntaxHighlighter
+          language={languageMatch?.[1] || 'text'}
+          style={vscDarkPlus}
+          customStyle={{
+            margin: 0,
+            border: 'none',
+            borderRadius: 0,
+            background: 'transparent',
+            padding: '0.85rem 0.95rem',
+            fontSize: '0.88rem',
+          }}
+          codeTagProps={{ className }}
+        >
+          {rawCode}
+        </SyntaxHighlighter>
+      </div>
+    );
+  }, [copyToClipboard]);
+
   const markdownComponents = React.useMemo(() => ({
     a: ({ href, children, ...props }: React.ComponentPropsWithoutRef<'a'>) => (
       <a
@@ -153,7 +203,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         {children}
       </a>
     ),
-  }), []);
+    pre: ({ children }: React.ComponentPropsWithoutRef<'pre'>) => <>{children}</>,
+    code: renderMarkdownCode,
+  }), [renderMarkdownCode]);
 
   return (
     <section className="chat-area">

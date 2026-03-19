@@ -13,6 +13,11 @@ CITATIONS:
 - Include a "Sources" section at the end listing ONLY the cited source numbers.
 - If no sources were used, write "Sources: None".
 
+CODE FORMATTING:
+- When showing code, use fenced code blocks with a language tag.
+- Example: ```python ... ``` for Python code, ```javascript ... ``` for JS code.
+- Keep inline code snippets short and reserve fenced blocks for multi-line code.
+
 Use the following format:
 
 Question: <question here>
