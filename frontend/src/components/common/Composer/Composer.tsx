@@ -64,12 +64,22 @@ export function Composer({
 
   const attachPopover = useFloatingPopover({
     isOpen: isAttachPopoverOpen,
-    onClose: () => setIsAttachPopoverOpen(false),
+    onClose: () => {
+      setIsAttachPopoverOpen(false)
+      setIsTemplatePanelOpen(false)
+      setTemplateSearchValue('')
+    },
     placement: 'top-start',
     panelWidth: COMPOSER_ATTACH_POPOVER_WIDTH,
     panelHeight: COMPOSER_ATTACH_POPOVER_HEIGHT,
     offset: COMPOSER_ATTACH_POPOVER_OFFSET,
   })
+
+  const closeAttachPopover = () => {
+    setIsAttachPopoverOpen(false)
+    setIsTemplatePanelOpen(false)
+    setTemplateSearchValue('')
+  }
 
   const filteredTemplates = availableTemplates.filter((template) => {
     const query = templateSearchValue.trim().toLowerCase()
@@ -176,7 +186,7 @@ export function Composer({
                     title="More"
                     onClick={(e) => {
                       if (isAttachPopoverOpen) {
-                        setIsAttachPopoverOpen(false)
+                        closeAttachPopover()
                         return
                       }
                       attachPopover.openFromElement(e.currentTarget)
@@ -191,30 +201,46 @@ export function Composer({
                       className={style['attach-popover']}
                       style={attachPopover.floatingStyle}
                     >
-                      <button
-                        className={style['attach-menu-item']}
-                        type="button"
-                        onClick={() => {
-                          setIsTemplatePanelOpen(false)
-                          setIsAttachPopoverOpen(false)
-                          fileInputRef.current?.click()
-                        }}
-                      >
-                        <Upload size={18} />
-                        <span>Upload Files</span>
-                      </button>
-                      <button
-                        className={style['attach-menu-item']}
-                        type="button"
-                        onClick={() => {
-                          setIsTemplatePanelOpen((prev) => !prev)
-                        }}
-                      >
-                        <FileText size={18} />
-                        <span>Attach Templates</span>
-                      </button>
+                      {!isTemplatePanelOpen && (
+                        <>
+                          <button
+                            className={style['attach-menu-item']}
+                            type="button"
+                            onClick={() => {
+                              closeAttachPopover()
+                              fileInputRef.current?.click()
+                            }}
+                          >
+                            <Upload size={18} />
+                            <span>Upload Files</span>
+                          </button>
+                          <button
+                            className={style['attach-menu-item']}
+                            type="button"
+                            onClick={() => {
+                              setIsTemplatePanelOpen(true)
+                            }}
+                          >
+                            <FileText size={18} />
+                            <span>Attach Templates</span>
+                          </button>
+                        </>
+                      )}
                       {isTemplatePanelOpen && (
                         <div className={style['attach-template-panel']}>
+                          <div className={style['attach-template-header']}>
+                            <button
+                              type="button"
+                              className={style['attach-template-back']}
+                              onClick={() => {
+                                setIsTemplatePanelOpen(false)
+                                setTemplateSearchValue('')
+                              }}
+                            >
+                              &lt; Back
+                            </button>
+                            <span className={style['attach-template-title']}>Attach Templates</span>
+                          </div>
                           <input
                             className={style['attach-template-search']}
                             type="text"
@@ -233,9 +259,7 @@ export function Composer({
                                   className={style['attach-template-item']}
                                   onClick={() => {
                                     onAttachTemplate?.(template.id)
-                                    setTemplateSearchValue('')
-                                    setIsTemplatePanelOpen(false)
-                                    setIsAttachPopoverOpen(false)
+                                    closeAttachPopover()
                                   }}
                                 >
                                   <span className={style['attach-template-name']}>{template.name}</span>

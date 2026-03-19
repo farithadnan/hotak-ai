@@ -128,7 +128,7 @@ The message input bar at the bottom of the chat window.
 
 - **Default mode:** Shows a Plus button (opens attach popover with Upload Files and Attach Templates), Briefcase button (tools), Mic button, and a Send button (visible only when input is non-empty).
 - URLs pasted directly into the composer text are detected during send in `useChatEngine` and ingested automatically.
-- Attach Templates now opens a searchable inline template picker and adds that template's sources into the queue.
+- Attach Templates now opens a dedicated template view inside the popover (with Back + search), then adds selected template sources into the queue.
 - Dragging files over the composer highlights a drop zone; dropping files queues them like the file picker.
 - Queued attachment chips use compact pills with status coloring and cap visible chips with a `+N more` summary; clicking a chip removes it when ingestion is not running.
 - **Edit mode:** Uses the same composer attach control (plus menu) as default mode for upload consistency, while keeping Cancel/Send edit actions.

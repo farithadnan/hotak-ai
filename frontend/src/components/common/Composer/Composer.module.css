@@ -150,6 +150,35 @@
   padding: 8px 10px 6px;
 }
 
+.attach-template-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.attach-template-title {
+  font-size: 0.78rem;
+  color: var(--color-muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.attach-template-back {
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-text);
+  padding: 4px 10px;
+  font-size: 0.74rem;
+  cursor: pointer;
+}
+
+.attach-template-back:hover {
+  border-color: var(--color-accent-border);
+  background: var(--color-accent-soft);
+}
+
 .attach-template-search {
   border: 1px solid var(--color-border);
   border-radius: 8px;
