@@ -27,6 +27,9 @@ export interface QueryResponse {
 
 export type QueryStreamChunk = string;
 
+// If no stream chunk arrives within this window, abort and let caller fallback.
+const STREAM_CHUNK_TIMEOUT_MS = 20000;
+
 
 /**
  * Query the RAG system (existing functionality)
@@ -51,12 +54,14 @@ export const streamQuery = async function* (
   request: QueryRequest
 ): AsyncGenerator<QueryStreamChunk> {
   try {
+    const controller = new AbortController();
     const response = await fetch(`${API_BASE_URL}/query/stream`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(request),
+      signal: controller.signal,
     });
 
     if (!response.ok || !response.body) {
@@ -66,8 +71,28 @@ export const streamQuery = async function* (
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
 
+    const readWithTimeout = async () => {
+      let timer: ReturnType<typeof setTimeout> | undefined;
+
+      try {
+        return await Promise.race([
+          reader.read(),
+          new Promise<never>((_, reject) => {
+            timer = setTimeout(() => {
+              controller.abort();
+              reject(new Error(`Stream chunk timeout after ${STREAM_CHUNK_TIMEOUT_MS}ms`));
+            }, STREAM_CHUNK_TIMEOUT_MS);
+          }),
+        ]);
+      } finally {
+        if (timer) {
+          clearTimeout(timer);
+        }
+      }
+    };
+
     while (true) {
-      const { value, done } = await reader.read();
+      const { value, done } = await readWithTimeout();
       if (done) {
         break;
       }

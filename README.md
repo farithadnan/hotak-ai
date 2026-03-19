@@ -32,6 +32,9 @@ npm run dev
 - `STREAM_MAX_CHARS` (default: `6000`): Maximum characters emitted by `/query/stream` per response.
 - `LLM_MAX_TOKENS` (default: `512`): Max completion tokens per model response.
 - `RETRIEVAL_K` (default: `5`): Number of chunks retrieved as context; lowering reduces token usage.
+- `CHAT_HISTORY_MAX_TOKENS` (default: `2800`): Approximate token budget reserved for prior chat history per request.
+- `CHAT_HISTORY_MAX_MESSAGE_TOKENS` (default: `700`): Approximate token cap for any single historical message before truncation.
+- `CHAT_HISTORY_MAX_MESSAGES` (default: `10`): Hard cap on how many prior messages are considered before packing.
 
 ---
 

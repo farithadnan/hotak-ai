@@ -1,5 +1,6 @@
 """Query-related API routes."""
 
+import asyncio
 import re
 from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException, Request
@@ -10,6 +11,9 @@ from langchain.chat_models import init_chat_model
 from ..storage.chat_storage import get_chat
 from ..agents.rag_agent import create_rag_agent, validate_and_format_response
 from ..config.settings import (
+    CHAT_HISTORY_MAX_MESSAGES,
+    CHAT_HISTORY_MAX_MESSAGE_TOKENS,
+    CHAT_HISTORY_MAX_TOKENS,
     LLM_MAX_TOKENS,
     LLM_MODEL,
     LLM_TEMPERATURE,
@@ -73,56 +77,82 @@ def _normalize_text(value: str) -> str:
     return " ".join(value.strip().split())
 
 
-def _resolve_history_message_limit(model_name: str | None) -> int:
-    """
-    Resolve a conservative message-count window per model family.
-
-    This is an intentionally simple placeholder until full token-based packing
-    is implemented.
-    """
-    normalized = (model_name or "").lower()
+def _estimate_text_tokens(text: str) -> int:
+    normalized = text.strip()
     if not normalized:
-        return 10
+        return 0
+    return max(1, (len(normalized) + 3) // 4)
+
+
+def _estimate_message_tokens(role: str, content: str) -> int:
+    return 6 + _estimate_text_tokens(role) + _estimate_text_tokens(content)
+
+
+def _truncate_content_to_token_budget(content: str, token_budget: int, suffix: str = "") -> str:
+    normalized = content.strip()
+    if not normalized or token_budget <= 0:
+        return ""
+
+    if _estimate_text_tokens(normalized) <= token_budget:
+        return normalized
+
+    suffix_text = suffix or ""
+    suffix_chars = len(suffix_text)
+    max_chars = max(80, token_budget * 4)
+    keep_chars = max(32, max_chars - suffix_chars)
+
+    if keep_chars >= len(normalized):
+        return normalized
+
+    return normalized[:keep_chars].rstrip() + suffix_text
+
+
+def _resolve_history_budget(model_name: str | None) -> dict[str, int]:
+    """Return conservative chat-history packing budgets for the selected model."""
+    normalized = (model_name or "").lower()
+    token_budget = CHAT_HISTORY_MAX_TOKENS
+    per_message_budget = CHAT_HISTORY_MAX_MESSAGE_TOKENS
+    max_messages = CHAT_HISTORY_MAX_MESSAGES
+
     if "mini" in normalized or "nano" in normalized:
-        return 6
-    return 10
+        token_budget = max(900, int(token_budget * 0.75))
+        per_message_budget = max(250, int(per_message_budget * 0.8))
+        max_messages = max(4, min(max_messages, 8))
+    elif "o1" in normalized or "o3" in normalized or "o4" in normalized:
+        token_budget = int(token_budget * 1.25)
+        per_message_budget = int(per_message_budget * 1.15)
+        max_messages = max_messages + 2
+
+    return {
+        "token_budget": token_budget,
+        "per_message_budget": per_message_budget,
+        "max_messages": max_messages,
+    }
 
 
-def _get_messages_for_llm(
+def _prepare_history_source_messages(
     question: str,
     chat_id: str | None = None,
     messages: list[QueryMessage] | None = None,
-    history_limit: int = 10,
 ) -> list[dict[str, str]]:
-    """
-    Fetch chat history and combine with current question for the LLM.
-    By default, limits history to the most recent messages.
-
-    If `messages` is provided by the frontend, that history is used directly.
-    """
     history: list[dict[str, str]] = []
 
     if messages:
-        for message in messages[-max(1, history_limit):]:
+        for message in messages:
             role = (message.role or "").strip()
             content = (message.content or "").strip()
-            if role not in {"user", "assistant", "system"}:
-                continue
-            if not content:
+            if role not in {"user", "assistant", "system"} or not content:
                 continue
             history.append({"role": role, "content": content})
     elif chat_id:
         chat = get_chat(chat_id)
         if chat and chat.messages:
-            recent_messages = chat.messages[-max(1, history_limit):]
-            for m in recent_messages:
-                content = (m.content or "").strip()
+            for message in chat.messages:
+                content = (message.content or "").strip()
                 if not content:
                     continue
-                history.append({"role": m.role, "content": content})
+                history.append({"role": message.role, "content": content})
 
-    # Avoid duplicating the latest user turn when it is already present in
-    # persisted/frontend-provided history.
     should_append_question = True
     if history:
         last = history[-1]
@@ -136,6 +166,80 @@ def _get_messages_for_llm(
         history.append({"role": "user", "content": question})
 
     return history
+
+
+def _get_messages_for_llm(
+    question: str,
+    chat_id: str | None = None,
+    messages: list[QueryMessage] | None = None,
+    model_name: str | None = None,
+) -> list[dict[str, str]]:
+    """
+    Build a packed history window for the LLM using a conservative token budget.
+    """
+    source_messages = _prepare_history_source_messages(question, chat_id, messages)
+    budget = _resolve_history_budget(model_name)
+    token_budget = max(250, budget["token_budget"])
+    per_message_budget = max(120, budget["per_message_budget"])
+    max_messages = max(1, budget["max_messages"])
+    truncation_suffix = "\n\n[Earlier content omitted for token budget.]"
+    question_normalized = _normalize_text(question)
+
+    packed_reversed: list[dict[str, str]] = []
+    tokens_used = 0
+
+    for message in reversed(source_messages):
+        if len(packed_reversed) >= max_messages:
+            break
+
+        role = message["role"]
+        content = message["content"]
+        is_current_question = role == "user" and _normalize_text(content) == question_normalized
+        current_message_budget = per_message_budget * 2 if is_current_question else per_message_budget
+
+        truncated_content = _truncate_content_to_token_budget(
+            content,
+            current_message_budget,
+            "" if is_current_question else truncation_suffix,
+        )
+
+        if not truncated_content:
+            continue
+
+        message_tokens = _estimate_message_tokens(role, truncated_content)
+        remaining_tokens = token_budget - tokens_used
+
+        if message_tokens > remaining_tokens:
+            truncated_content = _truncate_content_to_token_budget(
+                content,
+                max(remaining_tokens - 8, 0),
+                "" if is_current_question else truncation_suffix,
+            )
+            if not truncated_content:
+                if packed_reversed:
+                    continue
+                truncated_content = _truncate_content_to_token_budget(content, 80)
+
+            message_tokens = _estimate_message_tokens(role, truncated_content)
+            if packed_reversed and message_tokens > remaining_tokens:
+                continue
+
+        packed_reversed.append({"role": role, "content": truncated_content})
+        tokens_used += message_tokens
+
+        if tokens_used >= token_budget:
+            break
+
+    packed_messages = list(reversed(packed_reversed))
+    logger.info(
+        "Packed history for model=%s with %s/%s messages and ~%s/%s tokens",
+        model_name or LLM_MODEL,
+        len(packed_messages),
+        len(source_messages),
+        tokens_used,
+        token_budget,
+    )
+    return packed_messages
 
 
 def _get_rag_agent_for_model(http_request: Request, requested_model: str | None):
@@ -170,13 +274,12 @@ async def query_endpoint(request: QueryRequest, http_request: Request):
         rag_agent, model_used = _get_rag_agent_for_model(http_request, request.model)
 
         warning_message = None
-        history_limit = _resolve_history_message_limit(model_used)
         payload = {
             "messages": _get_messages_for_llm(
                 request.question,
                 request.chat_id,
                 request.messages,
-                history_limit=history_limit,
+                model_name=model_used,
             )
         }
 
@@ -274,13 +377,12 @@ async def query_stream_endpoint(request: QueryRequest, http_request: Request):
 
         async def event_generator():
             rag_agent, model_used = _get_rag_agent_for_model(http_request, request.model)
-            history_limit = _resolve_history_message_limit(model_used)
             payload = {
                 "messages": _get_messages_for_llm(
                     request.question,
                     request.chat_id,
                     request.messages,
-                    history_limit=history_limit,
+                    model_name=model_used,
                 )
             }
             full_text = ""
@@ -391,7 +493,26 @@ async def query_stream_endpoint(request: QueryRequest, http_request: Request):
                     yield _build_model_access_message(request.model)
             except RateLimitError as stream_error:
                 logger.warning("Rate limited during stream generation: %s", stream_error)
-                yield _build_rate_limit_message(stream_error)
+                retry_after = _extract_retry_after_seconds(stream_error)
+                if retry_after is not None:
+                    # One-shot retry for short-lived TPM spikes.
+                    retry_delay = max(0.5, min(retry_after, 8.0))
+                    logger.info("Retrying stream fallback invoke after %.2fs", retry_delay)
+                    try:
+                        await asyncio.sleep(retry_delay)
+                        fallback_response = rag_agent.invoke(payload)
+                        fallback_text = _extract_last_assistant_text_from_response(fallback_response)
+                        if fallback_text:
+                            yield fallback_text[:max_stream_chars]
+                            return
+                    except RateLimitError as retry_rate_error:
+                        logger.warning("Rate limited again during delayed fallback invoke: %s", retry_rate_error)
+                        yield _build_rate_limit_message(retry_rate_error)
+                    except Exception as retry_error:
+                        logger.exception("Delayed fallback invoke failed after rate limit: %s", retry_error)
+                        yield _build_rate_limit_message(stream_error)
+                else:
+                    yield _build_rate_limit_message(stream_error)
             except Exception as stream_error:
                 logger.exception("Streaming failed; falling back to non-stream invoke: %s", stream_error)
                 try:
