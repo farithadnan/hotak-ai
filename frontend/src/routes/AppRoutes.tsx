@@ -24,6 +24,11 @@ type AppRoutesProps = {
     status?: 'queued' | 'uploading' | 'ingesting' | 'ready' | 'failed'
     error?: string
   }>
+  selectedTemplate: {
+    id: string
+    name: string
+    sourceCount: number
+  } | null
   availableTemplates: Array<{
     id: string
     name: string
@@ -38,6 +43,7 @@ type AppRoutesProps = {
   } | null
   onAttachFiles: (files: File[]) => void
   onAttachTemplate: (templateId: string) => void
+  onClearPendingTemplate: () => void
   onRemovePendingAttachment: (attachmentId: string) => void
   onClearAttachmentFeedback: () => void
   username: string
@@ -58,11 +64,13 @@ function AppRoutes({
   regeneratingAssistantMessageId,
   textareaRef,
   pendingAttachments,
+  selectedTemplate,
   availableTemplates,
   isAttachingSources,
   attachmentFeedback,
   onAttachFiles,
   onAttachTemplate,
+  onClearPendingTemplate,
   onRemovePendingAttachment,
   onClearAttachmentFeedback,
   username,
@@ -82,11 +90,13 @@ function AppRoutes({
     regeneratingAssistantMessageId,
     textareaRef,
     pendingAttachments,
+    selectedTemplate,
     availableTemplates,
     isAttachingSources,
     attachmentFeedback,
     onAttachFiles,
     onAttachTemplate,
+    onClearPendingTemplate,
     onRemovePendingAttachment,
     onClearAttachmentFeedback,
     username,

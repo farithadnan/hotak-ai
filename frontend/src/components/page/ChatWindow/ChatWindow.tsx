@@ -7,6 +7,7 @@ import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Bot, Copy, LoaderCircle, RotateCcw, Pencil, FileText, Link as LinkIcon } from '../../../icons';
 import { Composer } from '../../common/Composer/Composer';
 import { Toastr } from '../../common/Toastr/Toastr';
+import type { ToastrType } from '../../common/Toastr/Toastr';
 import { ChatLoadingSkeleton } from './ChatLoadingSkeleton';
 import { dedupeSources, getSourceHref, parseAssistantResponse } from '../../../utils/assistantResponse';
 import { prettifyModelName } from '../../../services/models';
@@ -36,6 +37,11 @@ interface ChatWindowProps {
     status?: 'queued' | 'uploading' | 'ingesting' | 'ready' | 'failed';
     error?: string;
   }>;
+  selectedTemplate: {
+    id: string;
+    name: string;
+    sourceCount: number;
+  } | null;
   availableTemplates: Array<{
     id: string;
     name: string;
@@ -50,6 +56,7 @@ interface ChatWindowProps {
   } | null;
   onAttachFiles: (files: File[]) => void;
   onAttachTemplate: (templateId: string) => void;
+  onClearPendingTemplate: () => void;
   onRemovePendingAttachment: (attachmentId: string) => void;
   onClearAttachmentFeedback: () => void;
   username?: string;
@@ -69,11 +76,13 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   regeneratingAssistantMessageId,
   textareaRef,
   pendingAttachments,
+  selectedTemplate,
   availableTemplates,
   isAttachingSources,
   attachmentFeedback,
   onAttachFiles,
   onAttachTemplate,
+  onClearPendingTemplate,
   onRemovePendingAttachment,
   onClearAttachmentFeedback,
   username = 'User',
@@ -429,10 +438,12 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             textareaRef={textareaRef}
             className="empty-composer"
             pendingAttachments={pendingAttachments}
+            selectedTemplate={selectedTemplate}
             availableTemplates={availableTemplates}
             isAttaching={isAttachingSources}
             onAttachFiles={onAttachFiles}
             onAttachTemplate={onAttachTemplate}
+            onClearTemplate={onClearPendingTemplate}
             onRemoveAttachment={onRemovePendingAttachment}
           />
         </div>
@@ -675,10 +686,12 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
               onSend={onSend}
               textareaRef={textareaRef}
               pendingAttachments={pendingAttachments}
+              selectedTemplate={selectedTemplate}
               availableTemplates={availableTemplates}
               isAttaching={isAttachingSources}
               onAttachFiles={onAttachFiles}
               onAttachTemplate={onAttachTemplate}
+              onClearTemplate={onClearPendingTemplate}
               onRemoveAttachment={onRemovePendingAttachment}
             />
           </div>

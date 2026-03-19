@@ -232,56 +232,15 @@ export function useChatEngine(
       return
     }
 
-    const sources = template.sources || []
-    if (sources.length === 0) {
-      setPendingTemplateId(template.id)
-      showAttachmentFeedback({
-        title: 'Template settings applied',
-        message: `${template.name} will be used for this message.`,
-        type: 'info',
-      })
-      return
-    }
-
     setPendingTemplateId(template.id)
 
-    setPendingAttachments((prev) => {
-      const existingSources = new Set(prev.map((item) => item.source))
-      const additions: PendingAttachment[] = []
-
-      for (const rawSource of sources) {
-        const trimmedSource = rawSource.trim()
-        if (!trimmedSource) {
-          continue
-        }
-
-        const normalizedSource = normalizeUrl(trimmedSource) ?? trimmedSource
-        if (existingSources.has(normalizedSource)) {
-          continue
-        }
-
-        existingSources.add(normalizedSource)
-
-        const kind = inferAttachmentKind(normalizedSource)
-        const fileName = normalizedSource.split(/[\\/]/).pop() || normalizedSource
-
-        additions.push({
-          id: crypto.randomUUID(),
-          kind,
-          label: kind === 'url' ? normalizedSource : fileName,
-          source: normalizedSource,
-          status: 'queued',
-        })
-      }
-
-      showAttachmentFeedback({
-        message: additions.length > 0
-          ? `${template.name}: added ${additions.length} source${additions.length === 1 ? '' : 's'}.`
-          : `${template.name} sources were already queued.`,
-        type: additions.length > 0 ? 'success' : 'info',
-      })
-
-      return [...prev, ...additions]
+    const sourceCount = template.source_count ?? template.sources?.length ?? 0
+    showAttachmentFeedback({
+      title: 'Template selected',
+      message: sourceCount > 0
+        ? `${template.name} will be used for this message. Add extra files or URLs if you want to extend it.`
+        : `${template.name} will be used for this message.`,
+      type: 'success',
     })
   }
 
@@ -291,6 +250,10 @@ export function useChatEngine(
 
   const clearPendingAttachments = () => {
     setPendingAttachments([])
+    setPendingTemplateId(null)
+  }
+
+  const clearPendingTemplate = () => {
     setPendingTemplateId(null)
   }
 
@@ -1095,6 +1058,10 @@ export function useChatEngine(
     })()
   }
 
+  const pendingTemplate = pendingTemplateId
+    ? availableTemplates.find((template) => template.id === pendingTemplateId) ?? null
+    : null
+
   return {
     // State
     chats,
@@ -1113,11 +1080,13 @@ export function useChatEngine(
     pendingAttachments,
     isAttachingSources,
     attachmentFeedback,
+    pendingTemplate,
     availableTemplates,
     handleAttachFiles,
     handleAttachTemplate,
     handleRemovePendingAttachment,
     clearPendingAttachments,
+    clearPendingTemplate,
     clearAttachmentFeedback,
 
     // Chat operations

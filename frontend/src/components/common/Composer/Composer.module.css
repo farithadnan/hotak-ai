@@ -130,6 +130,21 @@
   font-size: 0.72rem;
 }
 
+.attachment-chip-summary-inline {
+  color: var(--color-muted);
+  font-size: 0.68rem;
+}
+
+.template-chip {
+  border-color: rgba(98, 147, 235, 0.6);
+  background: rgba(98, 147, 235, 0.14);
+}
+
+.template-chip:hover {
+  border-color: rgba(126, 170, 245, 0.76);
+  background: rgba(98, 147, 235, 0.2);
+}
+
 .attachment-chip-uploading,
 .attachment-chip-ingesting {
   border-color: var(--color-accent-border);

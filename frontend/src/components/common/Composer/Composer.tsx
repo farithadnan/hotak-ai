@@ -31,9 +31,15 @@ type ComposerProps = {
     name: string
     sourceCount: number
   }>
+  selectedTemplate?: {
+    id: string
+    name: string
+    sourceCount: number
+  } | null
   isAttaching?: boolean
   onAttachFiles?: (files: File[]) => void
   onAttachTemplate?: (templateId: string) => void
+  onClearTemplate?: () => void
   onRemoveAttachment?: (attachmentId: string) => void
 }
 
@@ -49,9 +55,11 @@ export function Composer({
   mode = 'default',
   pendingAttachments = [],
   availableTemplates = [],
+  selectedTemplate = null,
   isAttaching = false,
   onAttachFiles,
   onAttachTemplate,
+  onClearTemplate,
   onRemoveAttachment,
 }: ComposerProps) {
   const [isAttachPopoverOpen, setIsAttachPopoverOpen] = useState(false)
@@ -150,8 +158,24 @@ export function Composer({
             aria-label="Chat input"
             rows={1}
           />
-          {showAttachmentActions && pendingAttachments.length > 0 && (
+          {showAttachmentActions && (selectedTemplate || pendingAttachments.length > 0) && (
             <div className={style['pending-attachments']}>
+              {selectedTemplate && (
+                <button
+                  type="button"
+                  className={`${style['attachment-chip']} ${style['template-chip']}`}
+                  onClick={onClearTemplate}
+                  title={`Remove template ${selectedTemplate.name}`}
+                  disabled={isAttaching}
+                >
+                  <span className={style['attachment-chip-kind']}>TEMPLATE</span>
+                  <span className={style['attachment-chip-label']}>{selectedTemplate.name}</span>
+                  <span className={style['attachment-chip-summary-inline']}>
+                    {selectedTemplate.sourceCount} {selectedTemplate.sourceCount === 1 ? 'src' : 'srcs'}
+                  </span>
+                  <span className={style['attachment-chip-remove']}>x</span>
+                </button>
+              )}
               {visibleAttachments.map((attachment) => (
                 <button
                   key={attachment.id}

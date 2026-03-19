@@ -93,6 +93,13 @@ function App() {
           regeneratingAssistantMessageId={engine.regeneratingAssistantMessageId}
           textareaRef={engine.textareaRef}
           pendingAttachments={engine.pendingAttachments}
+          selectedTemplate={engine.pendingTemplate
+            ? {
+                id: engine.pendingTemplate.id,
+                name: engine.pendingTemplate.name,
+                sourceCount: engine.pendingTemplate.source_count ?? engine.pendingTemplate.sources?.length ?? 0,
+              }
+            : null}
           availableTemplates={engine.availableTemplates.map((template) => ({
             id: template.id,
             name: template.name,
@@ -103,6 +110,7 @@ function App() {
           attachmentFeedback={engine.attachmentFeedback}
           onAttachFiles={engine.handleAttachFiles}
           onAttachTemplate={engine.handleAttachTemplate}
+          onClearPendingTemplate={engine.clearPendingTemplate}
           onRemovePendingAttachment={engine.handleRemovePendingAttachment}
           onClearAttachmentFeedback={engine.clearAttachmentFeedback}
           username={username}
