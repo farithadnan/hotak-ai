@@ -7,6 +7,7 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from openai import PermissionDeniedError, RateLimitError
 from langchain.chat_models import init_chat_model
+from langchain_core.messages import AIMessageChunk
 
 from ..storage.chat_storage import get_chat
 from ..agents.rag_agent import create_rag_agent, validate_and_format_response
@@ -476,6 +477,59 @@ async def query_stream_endpoint(request: QueryRequest, http_request: Request):
                     return _extract_text(message)
             return ""
 
+        def _extract_chunk_text(token) -> str:
+            """Extract text from an AIMessageChunk (incremental token delta)."""
+            content = getattr(token, "content", "")
+            if isinstance(content, str):
+                return content
+            if isinstance(content, list):
+                parts = []
+                for item in content:
+                    if isinstance(item, dict) and item.get("type") == "text":
+                        parts.append(item.get("text", ""))
+                    elif isinstance(item, str):
+                        parts.append(item)
+                return "".join(parts)
+            return ""
+
+        async def _stream_agent(agent, payload, max_stream_chars):
+            """Yield incremental text tokens from an agent using stream_mode='messages'.
+            Only AIMessageChunk tokens are emitted — ToolMessages (retrieved docs) are skipped.
+            """
+            emitted_chars = 0
+            if hasattr(agent, "astream"):
+                async for token, _metadata in agent.astream(payload, stream_mode="messages"):
+                    if not isinstance(token, AIMessageChunk):
+                        continue
+                    text = _extract_chunk_text(token)
+                    if not text:
+                        continue
+                    remaining = max_stream_chars - emitted_chars
+                    if remaining <= 0:
+                        break
+                    if len(text) > remaining:
+                        text = text[:remaining]
+                    emitted_chars += len(text)
+                    yield text
+                    if emitted_chars >= max_stream_chars:
+                        break
+            else:
+                for token, _metadata in agent.stream(payload, stream_mode="messages"):
+                    if not isinstance(token, AIMessageChunk):
+                        continue
+                    text = _extract_chunk_text(token)
+                    if not text:
+                        continue
+                    remaining = max_stream_chars - emitted_chars
+                    if remaining <= 0:
+                        break
+                    if len(text) > remaining:
+                        text = text[:remaining]
+                    emitted_chars += len(text)
+                    yield text
+                    if emitted_chars >= max_stream_chars:
+                        break
+
         async def event_generator():
             runtime_config = _resolve_agent_runtime_config(http_request, request)
             rag_agent, model_used = _get_rag_agent_for_config(http_request, runtime_config)
@@ -488,67 +542,11 @@ async def query_stream_endpoint(request: QueryRequest, http_request: Request):
                     system_prompt=runtime_config.system_prompt,
                 )
             }
-            full_text = ""
-            emitted_chars = 0
             max_stream_chars = max(500, STREAM_MAX_CHARS)
 
-            def yield_delta(current_text: str):
-                nonlocal full_text, emitted_chars
-
-                if not current_text:
-                    return None
-                if current_text == full_text:
-                    return None
-
-                # Most providers stream cumulative text snapshots for the same response.
-                if current_text.startswith(full_text):
-                    delta = current_text[len(full_text):]
-                else:
-                    # Fallback when provider sends non-monotonic snapshots.
-                    delta = current_text
-
-                if not delta:
-                    return None
-
-                remaining = max_stream_chars - emitted_chars
-                if remaining <= 0:
-                    return None
-
-                if len(delta) > remaining:
-                    delta = delta[:remaining]
-
-                full_text = current_text
-                emitted_chars += len(delta)
-                return delta
-
             try:
-                # LangGraph/LangChain agents may expose async `astream` or sync `stream`.
-                if hasattr(rag_agent, "astream"):
-                    async for event in rag_agent.astream(payload, stream_mode="values"):
-                        last_message = event["messages"][-1]
-                        if not _is_assistant_message(last_message):
-                            continue
-
-                        content = _extract_text(last_message)
-                        delta = yield_delta(content)
-                        if delta is not None:
-                            yield delta
-
-                        if emitted_chars >= max_stream_chars:
-                            break
-                else:
-                    for event in rag_agent.stream(payload, stream_mode="values"):
-                        last_message = event["messages"][-1]
-                        if not _is_assistant_message(last_message):
-                            continue
-
-                        content = _extract_text(last_message)
-                        delta = yield_delta(content)
-                        if delta is not None:
-                            yield delta
-
-                        if emitted_chars >= max_stream_chars:
-                            break
+                async for text in _stream_agent(rag_agent, payload, max_stream_chars):
+                    yield text
             except PermissionDeniedError as stream_perm_error:
                 if model_used != LLM_MODEL:
                     logger.warning(
@@ -556,7 +554,6 @@ async def query_stream_endpoint(request: QueryRequest, http_request: Request):
                         model_used,
                         LLM_MODEL,
                     )
-                    # Emit metadata token for frontend to sync selected/persisted model.
                     yield f"{STREAM_MODEL_FALLBACK_PREFIX}{LLM_MODEL}]]\n"
                     notice = _build_model_access_message(model_used)
                     yield notice + "\n\nUsing default model instead.\n\n"
@@ -568,35 +565,8 @@ async def query_stream_endpoint(request: QueryRequest, http_request: Request):
                         temperature=runtime_config.temperature,
                     )
                     default_agent, _ = _get_rag_agent_for_config(http_request, fallback_config)
-                    full_text = ""
-                    emitted_chars = 0
-
-                    if hasattr(default_agent, "astream"):
-                        async for event in default_agent.astream(payload, stream_mode="values"):
-                            last_message = event["messages"][-1]
-                            if not _is_assistant_message(last_message):
-                                continue
-
-                            content = _extract_text(last_message)
-                            delta = yield_delta(content)
-                            if delta is not None:
-                                yield delta
-
-                            if emitted_chars >= max_stream_chars:
-                                break
-                    else:
-                        for event in default_agent.stream(payload, stream_mode="values"):
-                            last_message = event["messages"][-1]
-                            if not _is_assistant_message(last_message):
-                                continue
-
-                            content = _extract_text(last_message)
-                            delta = yield_delta(content)
-                            if delta is not None:
-                                yield delta
-
-                            if emitted_chars >= max_stream_chars:
-                                break
+                    async for text in _stream_agent(default_agent, payload, max_stream_chars):
+                        yield text
                 else:
                     logger.warning("Permission denied during stream: %s", stream_perm_error)
                     yield _build_model_access_message(model_used)

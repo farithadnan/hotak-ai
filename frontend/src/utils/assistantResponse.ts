@@ -115,6 +115,11 @@ export function parseAssistantResponse(raw: string): ParsedAssistantResponse {
         return false
       }
 
+      // Ignore bare citation markers with no meaningful content (e.g. "[1]", "]", "1]")
+      if (/^\[?\d*\]?$/.test(line)) {
+        return false
+      }
+
       return true
     })
 

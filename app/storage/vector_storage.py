@@ -2,9 +2,10 @@
 from ..utils.logger import setup_logger
 from langchain_chroma import Chroma
 from langchain_openai import OpenAIEmbeddings
+import chromadb
 from chromadb.config import Settings
 from ..config.settings import (
-    COLLECTION_NAME, 
+    COLLECTION_NAME,
     PERSIST_DIRECTORY
 )
 
@@ -13,22 +14,21 @@ logger = setup_logger(__name__)
 def initialize_vector_store(embeddings: OpenAIEmbeddings) -> Chroma:
     """
     Initialize and return the vector store.
-    
+
     Args:
         embeddings: The embeddings model to use for the vector store.
-    
+
     Returns:
         vector_store: Initialized vector store instance.
     """
+    chroma_client = chromadb.PersistentClient(
+        path=PERSIST_DIRECTORY,
+        settings=Settings(anonymized_telemetry=False),
+    )
     vector_store = Chroma(
+        client=chroma_client,
         collection_name=COLLECTION_NAME,
         embedding_function=embeddings,
-        persist_directory=PERSIST_DIRECTORY,
-        client_settings=Settings(
-            anonymized_telemetry=False,
-            is_persistent=True,
-            persist_directory=PERSIST_DIRECTORY,
-        ),
     )
     logger.info(f"Vector store initialized with collection: {COLLECTION_NAME}")
     return vector_store
