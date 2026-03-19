@@ -48,6 +48,11 @@
 	- [x] Added `AIMessageChunk` filter to exclude tool message content (retrieved docs) from stream output.
 	- [x] Raised `LLM_MAX_TOKENS` default to 4096 and `STREAM_MAX_CHARS` to 32000 in settings and `.env.sample`.
 26. [x] **Backend:** Template source filtering — query retrieval scoped to template's documents - ✅ Done.
+27. [x] **Backend/Frontend:** Chat archive feature - ✅ Done.
+	- [x] Added `archived: bool = False` field to `Chat` and `ChatUpdate` Pydantic models.
+	- [x] `GET /chats` now returns only non-archived chats; added `GET /chats/archived` endpoint.
+	- [x] Archive action added to sidebar chat context menu (Rename / Pin / **Archive** / Delete).
+	- [x] Archived Chats modal (via profile popover): search bar, per-item Unarchive + Delete, bulk Unarchive All + Delete All with confirm.
 	- [x] `AgentRuntimeConfig` extended with `allowed_sources: list[str] | None`.
 	- [x] `create_retrieval_tool` applies ChromaDB `filter={"source": {"$in": allowed_sources}}` when set.
 	- [x] Agent cache keyed by sorted sources; falls back to all-docs search when template has no sources.

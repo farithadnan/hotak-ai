@@ -73,6 +73,18 @@ export const addMessage = async (chatId: string, message: Message): Promise<Chat
 };
 
 /**
+ * Get all archived chat sessions
+ */
+export const getArchivedChats = async (): Promise<Chat[]> => {
+  try {
+    const response = await api.get<Chat[]>('/chats/archived');
+    return response.data;
+  } catch (error) {
+    throw new Error(`Failed to fetch archived chats: ${getErrorMessage(error as any)}`);
+  }
+};
+
+/**
  * Generate and persist title from chat content
  */
 export const generateChatTitle = async (chatId: string): Promise<Chat> => {

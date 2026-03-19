@@ -48,11 +48,12 @@ class ChatCreate(BaseModel):
 
 class Chat(BaseModel):
     """Complete chat session model."""
-    
+
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     title: str
     template_id: Optional[str] = None
     pinned: bool = False
+    archived: bool = False
     model: Optional[str] = None
     messages: List[Message] = Field(default_factory=list)
     created_at: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
@@ -61,9 +62,10 @@ class Chat(BaseModel):
 
 class ChatUpdate(BaseModel):
     """Data for updating a chat session (e.g., renaming)."""
-    
+
     title: Optional[str] = Field(None, max_length=100)
     template_id: Optional[str] = None
     pinned: Optional[bool] = None
+    archived: Optional[bool] = None
     model: Optional[str] = None
     messages: Optional[List[Message]] = None

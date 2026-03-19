@@ -84,6 +84,8 @@ We are building a template-based knowledge management system ("Brains") allowing
   - [x] Add pre-upload validation feedback for file size/type before network call.
   - [x] Add drag-and-drop attachment support.
   - [x] Replace placeholder template action with real template source selection.
+  - [x] Add Archive action to chat context menu (sidebar chat rows).
+  - [x] Archived Chats modal — searchable list with per-item Unarchive/Delete and bulk Unarchive All / Delete All.
   - [ ] Add byte-level upload progress percentages.
   - [ ] Persist template-uploaded local files as reusable saved sources for template attach parity.
 

@@ -7,6 +7,7 @@ from ..models.chat import Chat, ChatCreate, ChatUpdate, Message
 from ..storage.chat_storage import (
     create_chat,
     get_all_chats,
+    get_archived_chats,
     get_chat,
     update_chat,
     delete_chat,
@@ -36,6 +37,16 @@ async def list_chats_endpoint():
         return get_all_chats()
     except Exception as e:
         logger.error(f"Failed to list chats: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/chats/archived", response_model=List[Chat])
+async def list_archived_chats_endpoint():
+    """Get all archived chat sessions."""
+    try:
+        return get_archived_chats()
+    except Exception as e:
+        logger.error(f"Failed to list archived chats: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

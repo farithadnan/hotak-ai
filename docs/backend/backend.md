@@ -107,12 +107,15 @@ All routes are assembled in `app/api/__init__.py` into a single `APIRouter`, the
 | Method | Path | Body | Response | Description |
 |---|---|---|---|---|
 | POST | `/chats` | `ChatCreate` | `Chat` (201) | Create a new chat session |
-| GET | `/chats` | — | `List[Chat]` | Get all chat sessions |
+| GET | `/chats` | — | `List[Chat]` | Get all **non-archived** chat sessions |
+| GET | `/chats/archived` | — | `List[Chat]` | Get all archived chat sessions |
 | GET | `/chats/{chat_id}` | — | `Chat` | Get one chat (404 if not found) |
-| PUT | `/chats/{chat_id}` | `ChatUpdate` | `Chat` | Update chat metadata (title, model, pinned, messages) |
+| PUT | `/chats/{chat_id}` | `ChatUpdate` | `Chat` | Update chat metadata (title, model, pinned, archived, messages) |
 | DELETE | `/chats/{chat_id}` | — | `{"message": ...}` | Delete a chat |
 | POST | `/chats/{chat_id}/messages` | `Message` | `Chat` | Append a message to a chat |
 | POST | `/chats/{chat_id}/generate-title` | — | `Chat` | LLM generates a ≤6-word title from the first user message. Truncated to 64 chars. Falls back to "New Chat". |
+
+> **Route ordering note:** `/chats/archived` is registered before `/chats/{chat_id}` so FastAPI matches the literal path segment rather than treating "archived" as a chat ID.
 
 ### Query — `app/api/query.py`
 
@@ -249,11 +252,12 @@ JSON-file-backed CRUD. Data stored in `app/data/chats/chats.json`.
 | Function | Description |
 |---|---|
 | `create_chat(data: ChatCreate) → Chat` | Creates a new chat with a UUID |
-| `get_all_chats() → List[Chat]` | Returns all chats |
-| `get_chat(chat_id) → Chat \| None` | Find by ID |
-| `update_chat(chat_id, data: ChatUpdate) → Chat \| None` | Partial update, sets `updated_at` |
+| `get_all_chats() → List[Chat]` | Returns all **non-archived** chats |
+| `get_archived_chats() → List[Chat]` | Returns all archived chats |
+| `get_chat(chat_id) → Chat \| None` | Find by ID (includes archived) |
+| `update_chat(chat_id, data: ChatUpdate) → Chat \| None` | Partial update, sets `updated_at`; pass `archived=True` to archive, `archived=False` to restore |
 | `add_message_to_chat(chat_id, message) → Chat \| None` | Appends a message |
-| `delete_chat(chat_id) → bool` | Removes a chat |
+| `delete_chat(chat_id) → bool` | Permanently removes a chat |
 
 ### `app/storage/template_storage.py` — Template Persistence
 
@@ -347,9 +351,9 @@ Handles citation validation and formatting for RAG responses.
 | Model | Key Fields |
 |---|---|
 | `Message` | `id` (UUID), `role` (user/assistant/system), `content`, `model?`, `sources?`, `created_at` |
-| `Chat` | `id` (UUID), `title`, `template_id?`, `pinned`, `model?`, `messages: List[Message]`, timestamps |
+| `Chat` | `id` (UUID), `title`, `template_id?`, `pinned`, `archived` (default `false`), `model?`, `messages: List[Message]`, timestamps |
 | `ChatCreate` | `title?` (default "New Chat"), `template_id?`, `pinned?`, `model?` |
-| `ChatUpdate` | All optional: `title?`, `template_id?`, `pinned?`, `model?`, `messages?` |
+| `ChatUpdate` | All optional: `title?`, `template_id?`, `pinned?`, `archived?`, `model?`, `messages?` |
 
 ### `app/models/template.py`
 

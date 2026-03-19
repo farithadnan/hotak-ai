@@ -8,6 +8,7 @@ import {
   SIDEBAR_PROFILE_POPOVER_WIDTH,
 } from '../../constants/chat'
 import { SidebarChatListSkeleton } from './SidebarChatListSkeleton'
+import { ArchivedChatsModal } from '../common/ArchivedChatsModal/ArchivedChatsModal'
 import { updateChat, deleteChat } from '../../services/chats'
 import type { ChatThread } from '../../types'
 import type { ChatRuntimeState } from '../../hooks/useChatEngine'
@@ -45,6 +46,7 @@ export function Sidebar({
   const [renamingValue, setRenamingValue] = useState('')
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
   const [pendingDeleteChatId, setPendingDeleteChatId] = useState<string | null>(null)
+  const [isArchivedModalOpen, setIsArchivedModalOpen] = useState(false)
 
   const renameCommitLockRef = useRef(false)
 
@@ -195,6 +197,30 @@ export function Sidebar({
     }
   }
 
+  const handleArchiveChat = async (chatId: string) => {
+    setActiveChatMenuId(null)
+    try {
+      await updateChat(chatId, { archived: true })
+      setChats((prevChats) => prevChats.filter((chat) => chat.id !== chatId))
+      onShowToastr({ title: 'Archived', message: 'Chat archived.', type: 'success' })
+      if (activeChatId === chatId) {
+        onNewChat()
+      }
+    } catch (error) {
+      console.error('Failed to archive chat:', error)
+      onShowToastr({ title: 'Archive failed', message: 'Failed to archive chat. Please try again.', type: 'error' })
+    }
+  }
+
+  const handleOpenArchivedModal = () => {
+    setIsProfilePopoverOpen(false)
+    setIsArchivedModalOpen(true)
+  }
+
+  const handleUnarchiveFromModal = (chat: ChatThread) => {
+    setChats((prevChats) => [chat, ...prevChats])
+  }
+
   return {
     isDeleteConfirmOpen,
     pendingDeleteChatId,
@@ -337,6 +363,10 @@ export function Sidebar({
                   <Pin size={16} />
                   <span>{chats.find((chat) => chat.id === activeChatMenuId)?.pinned ? 'Unpin' : 'Pin'}</span>
                 </button>
+                <button className="chat-actions-item" type="button" onClick={() => void handleArchiveChat(activeChatMenuId)}>
+                  <Archive size={16} />
+                  <span>Archive</span>
+                </button>
                 <button className="chat-actions-item danger" type="button" onClick={() => handleRequestDeleteChat(activeChatMenuId)}>
                   <Trash2 size={16} />
                   <span>Delete</span>
@@ -380,7 +410,7 @@ export function Sidebar({
                     <Settings size={18} />
                     <span>Settings</span>
                   </button>
-                  <button className="profile-menu-item" type="button">
+                  <button className="profile-menu-item" type="button" onClick={handleOpenArchivedModal}>
                     <Archive size={18} />
                     <span>Archived Chats</span>
                   </button>
@@ -393,6 +423,13 @@ export function Sidebar({
             </div>
           </div>
         </aside>
+
+        <ArchivedChatsModal
+          open={isArchivedModalOpen}
+          onClose={() => setIsArchivedModalOpen(false)}
+          onUnarchive={handleUnarchiveFromModal}
+          onShowToastr={onShowToastr}
+        />
       </>
     ),
   }

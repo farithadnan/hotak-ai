@@ -12,12 +12,13 @@ Back to [PROJECT.md](../PROJECT.md)
 ```
 components/
 ├── common/
+│   ├── ArchivedChatsModal/ ← Archive management modal (search, unarchive, delete)
 │   ├── Composer/          ← Message input bar
 │   ├── ConfirmDialog/     ← Yes/No confirmation modal
 │   ├── Modal/             ← Generic modal wrapper
 │   └── Toastr/            ← Toast notifications
 ├── layout/
-│   ├── Sidebar.tsx        ← Full sidebar: chat list, rename, pin, delete, popovers
+│   ├── Sidebar.tsx        ← Full sidebar: chat list, rename, pin, archive, delete, popovers
 │   └── SidebarChatListSkeleton.tsx
 └── page/
     ├── ChatPage/          ← Chat view with model selector
@@ -62,6 +63,7 @@ The full sidebar component, extracted from App.tsx. Owns all sidebar-specific st
 | `renamingValue` | `string` | Current rename input text. |
 | `isDeleteConfirmOpen` | `boolean` | Whether the delete confirmation is shown. |
 | `pendingDeleteChatId` | `string \| null` | Chat ID pending deletion. |
+| `isArchivedModalOpen` | `boolean` | Whether the Archived Chats modal is open. |
 
 #### Returns
 
@@ -85,6 +87,9 @@ Unlike typical components, `Sidebar` returns an **object** (not JSX directly):
 - `handleStartRenameChat(chatId)` — enters rename mode
 - `handleSubmitRenameChat(chatId)` — commits rename via `PUT /chats/{id}` (with double-submit lock)
 - `handleTogglePinChat(chatId)` — toggles pin via `PUT /chats/{id}`
+- `handleArchiveChat(chatId)` — sets `archived: true` via `PUT /chats/{id}`, removes from sidebar list, shows toastr; navigates to new chat if the archived chat was active
+- `handleOpenArchivedModal()` — closes profile popover, opens Archived Chats modal
+- `handleUnarchiveFromModal(chat)` — prepends the restored chat back to the sidebar list
 - `handleRequestDeleteChat(chatId)` — opens delete confirmation
 - `handleCancelDeleteChat()` — closes delete confirmation
 - `handleConfirmDeleteChat()` — calls `DELETE /chats/{id}`, updates state, shows toastr
@@ -92,6 +97,32 @@ Unlike typical components, `Sidebar` returns an **object** (not JSX directly):
 ---
 
 ## Common Components
+
+### `ArchivedChatsModal`
+
+**File:** `components/common/ArchivedChatsModal/ArchivedChatsModal.tsx`
+
+A modal for managing archived chats. Opened from the profile popover → "Archived Chats". Reuses the generic `Modal` and `ConfirmDialog` components.
+
+#### Props
+
+| Prop | Type | Description |
+|---|---|---|
+| `open` | `boolean` | Whether the modal is visible. |
+| `onClose` | `() => void` | Close handler. |
+| `onUnarchive` | `(chat: Chat) => void` | Called with the restored chat after a successful unarchive — parent uses this to prepend the chat to the sidebar. |
+| `onShowToastr` | `(options) => void` | Toast notification callback. |
+
+#### Behavior
+
+- Fetches archived chats via `GET /chats/archived` every time it opens (clears stale state)
+- Search bar filters the list by chat title (client-side, case-insensitive)
+- **Per-item Unarchive** — calls `PUT /chats/{id}` with `{ archived: false }`, removes from list, calls `onUnarchive`
+- **Per-item Delete** — calls `DELETE /chats/{id}`, removes from list
+- **Unarchive All** — bulk-unarchives all archived chats (parallel requests), calls `onUnarchive` for each
+- **Delete All Archived** — shows a `ConfirmDialog` before permanently deleting all archived chats
+
+---
 
 ### `Composer`
 

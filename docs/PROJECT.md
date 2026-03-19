@@ -144,6 +144,15 @@ When a chat has an attached template, the backend applies all of the template's 
 
 Templates are managed separately from chats via the `/templates` routes.
 
+### Chat Archiving
+
+Chats can be archived rather than deleted. Archived chats:
+- Are hidden from the main sidebar chat list (`GET /chats` returns only non-archived)
+- Are accessible via the profile popover → "Archived Chats" → opens a searchable modal
+- Can be individually unarchived (restored to the sidebar) or permanently deleted
+- Support bulk "Unarchive All" and "Delete All Archived" actions with confirmation
+- Archive/unarchive is done via `PUT /chats/{id}` with `{ "archived": true/false }`
+
 ### Chat Attachments vs Assistant Sources
 
 - A user attachment means "this source was attached and ingested for retrieval."

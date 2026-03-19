@@ -68,8 +68,13 @@ def create_chat(chat_data: ChatCreate) -> Chat:
 
 
 def get_all_chats() -> List[Chat]:
-    """Get all chat sessions."""
-    return _load_chats_from_file()
+    """Get all non-archived chat sessions."""
+    return [c for c in _load_chats_from_file() if not c.archived]
+
+
+def get_archived_chats() -> List[Chat]:
+    """Get all archived chat sessions."""
+    return [c for c in _load_chats_from_file() if c.archived]
 
 
 def get_chat(chat_id: str) -> Optional[Chat]:
