@@ -12,7 +12,10 @@
 	- [x] `QueryRequest` now supports `chat_id` + optional `messages` context payload.
 	- [x] Backend dedupes duplicate last-user turn when composing LLM history.
 	- [x] Assistant messages persist `model` (message-level model tracking).
-10. [ ] **Backend:** Filter unavailable models from `/models` (prevent selecting inaccessible models).
+10. [x] **Backend:** Filter unavailable models from `/models` (prevent selecting inaccessible models) - ✅ Done.
+	- [x] `app/services/model_catalog.py` — probes each candidate chat model at startup with `max_tokens=1`.
+	- [x] `GET /models` now serves only accessible models from `app.state.accessible_models`.
+	- [x] Frontend `isLikelyChatModel` filter removed — backend is authoritative.
 11. [x] **Backend:** Silence/patch telemetry warning (`CollectionQueryEvent capture()` mismatch) - ✅ Done.
 	- [x] Chroma client now uses explicit `PersistentClient` with `anonymized_telemetry=False`.
 	- [x] `chromadb.telemetry.product.posthog` logger suppressed at ERROR level in `server.py` (posthog version bug fires warnings even when telemetry is disabled).
@@ -41,7 +44,11 @@
 21. [x] **Frontend:** Replace placeholder "Attach Templates" action with a real template picker - ✅ Done.
 	- [x] Template selection queues template sources as URL/file attachments.
 22. [ ] **Frontend:** Add byte-level upload progress percentages for file attachments.
-23. [ ] **Templates:** Persist uploaded template files as real saved sources instead of browser-only file names.
+23. [x] **Templates:** Persist uploaded template files as real saved sources instead of browser-only file names - ✅ Done.
+	- [x] TemplateBuilder now calls `POST /documents/upload` immediately when files are selected.
+	- [x] Template `sources` stores the full server path returned by the upload endpoint (used for ChromaDB source filtering).
+	- [x] File list displays just the filename (basename) but stores the full path.
+	- [x] Upload errors shown inline; submit button disabled while uploading.
 24. [ ] **Backend:** Optional rolling summary memory block for long conversations.
 25. [x] **Backend:** Fix streaming cut-off and PDF content leaking into stream - ✅ Done.
 	- [x] Switched to `stream_mode="messages"` for true token-by-token streaming.

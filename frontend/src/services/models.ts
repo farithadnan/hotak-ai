@@ -13,18 +13,6 @@ type OpenAIModelListResponse = {
   data: OpenAIModel[]
 }
 
-const isLikelyChatModel = (modelId: string) => {
-  const id = modelId.toLowerCase()
-  const includePrefixes = ['gpt-', 'o1', 'o3', 'o4', 'chatgpt-']
-  const excludeTokens = ['embedding', 'tts', 'transcribe', 'whisper', 'moderation', 'image', 'audio']
-
-  if (!includePrefixes.some((prefix) => id.startsWith(prefix))) {
-    return false
-  }
-
-  return !excludeTokens.some((token) => id.includes(token))
-}
-
 export const prettifyModelName = (modelId: string) =>
   modelId
     .replace(/-/g, ' ')
@@ -34,8 +22,8 @@ export const getAvailableModels = async (): Promise<Model[]> => {
   try {
     const response = await api.get<OpenAIModelListResponse>('/models')
 
+    // Backend already filters to accessible chat models only — just sort and shape.
     const models = response.data.data
-      .filter((model) => isLikelyChatModel(model.id))
       .sort((a, b) => b.created - a.created)
       .map((model) => ({
         id: model.id,

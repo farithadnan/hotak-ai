@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { createTemplate, updateTemplate } from '../../../services';
 import { getAvailableModels, prettifyModelName } from '../../../services/models';
+import { uploadDocuments } from '../../../services/documents';
 import type { Model } from '../../../types';
 import type { TemplateCreate } from '../../../types/models';
 import { DEFAULT_TEMPLATE_SETTINGS } from '../../../types/models';
@@ -22,6 +23,8 @@ function TemplateBuilder({ open, onClose, mode, initialData, onSuccess }: Templa
         initialData || { name: '', description: '', sources: [], settings: DEFAULT_TEMPLATE_SETTINGS }
     );
     const [isLoading, setIsLoading] = useState(false);
+    const [isUploadingFiles, setIsUploadingFiles] = useState(false);
+    const [uploadError, setUploadError] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<'basic' | 'settings'>('basic');
@@ -33,6 +36,7 @@ function TemplateBuilder({ open, onClose, mode, initialData, onSuccess }: Templa
             setFormData(initialData || { name: '', description: '', sources: [], settings: DEFAULT_TEMPLATE_SETTINGS });
             setError(null);
             setSuccess(null);
+            setUploadError(null);
             setActiveTab('basic');
             setUrlInput('');
 
@@ -47,6 +51,46 @@ function TemplateBuilder({ open, onClose, mode, initialData, onSuccess }: Templa
             })();
         }
     }, [open, initialData]);
+
+    /** Show just the filename part of a full server path or a bare filename. */
+    const displayName = (source: string) => {
+        const parts = source.replace(/\\/g, '/').split('/');
+        return parts[parts.length - 1] || source;
+    };
+
+    const handleFileUpload = async (files: File[]) => {
+        if (files.length === 0) return;
+        setIsUploadingFiles(true);
+        setUploadError(null);
+        try {
+            const result = await uploadDocuments(files);
+            const addedSources: string[] = [];
+            const failedNames: string[] = [];
+
+            for (const item of result.file_results) {
+                if (item.source && (item.status === 'ingested' || item.status === 'cached' || item.status === 'uploaded')) {
+                    addedSources.push(item.source);
+                } else {
+                    failedNames.push(item.file_name);
+                }
+            }
+
+            if (addedSources.length > 0) {
+                setFormData(prev => ({
+                    ...prev,
+                    sources: [...(prev.sources || []), ...addedSources],
+                }));
+            }
+
+            if (failedNames.length > 0) {
+                setUploadError(`Failed to upload: ${failedNames.join(', ')}`);
+            }
+        } catch (err: any) {
+            setUploadError(err.message || 'Failed to upload files');
+        } finally {
+            setIsUploadingFiles(false);
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -140,22 +184,25 @@ function TemplateBuilder({ open, onClose, mode, initialData, onSuccess }: Templa
                                     <legend className="form-legend">Document Sources</legend>
                                     <div className="sources-section sources-row">
                                         <div className="sources-upload">
-                                            <label className="form-label" htmlFor="template-files">Upload Files</label>
+                                            <label className="form-label" htmlFor="template-files">
+                                                Upload Files{isUploadingFiles && <span className="form-hint"> — uploading…</span>}
+                                            </label>
                                             <input
                                                 id="template-files"
                                                 className="form-input sources-input-box"
                                                 type="file"
                                                 multiple
+                                                accept=".pdf,.txt,.md,.docx"
+                                                disabled={isUploadingFiles}
                                                 onChange={e => {
                                                     const files = Array.from(e.target.files || []);
-                                                    const fileNames = files.map(f => f.name);
-                                                    setFormData(prev => ({
-                                                        ...prev,
-                                                        sources: [...(prev.sources || []), ...fileNames]
-                                                    }));
                                                     e.target.value = '';
+                                                    void handleFileUpload(files);
                                                 }}
                                             />
+                                            {uploadError && (
+                                                <span className="form-hint" style={{ color: 'var(--ui-danger-bg)' }}>{uploadError}</span>
+                                            )}
                                         </div>
                                         <div className="sources-urls">
                                             <label className="form-label" htmlFor="template-url-input">Add URL</label>
@@ -200,14 +247,14 @@ function TemplateBuilder({ open, onClose, mode, initialData, onSuccess }: Templa
                                             )}
                                         </div>
                                     </div>
-                                    {/* Show uploaded files */}
+                                    {/* Show uploaded files (all non-URL sources) */}
                                     {(formData.sources ?? []).filter(src => !src.startsWith('http')).length > 0 && (
                                         <div className="sources-files-list-wrap">
                                             <div className="sources-files-label">Files:</div>
                                             <ul className="sources-url-list">
                                                 {(formData.sources ?? []).filter(src => !src.startsWith('http')).map(file => (
                                                     <li className="sources-url-item" key={file}>
-                                                        <span className="sources-list-ellipsis">{file}</span>
+                                                        <span className="sources-list-ellipsis" title={file}>{displayName(file)}</span>
                                                         <button type="button" className="sources-url-remove" onClick={() => setFormData(prev => ({ ...prev, sources: (prev.sources ?? []).filter(s => s !== file) }))} title="Remove file">
                                                             <Trash2 size={16} />
                                                         </button>
@@ -354,9 +401,9 @@ function TemplateBuilder({ open, onClose, mode, initialData, onSuccess }: Templa
                     <button
                         className="form-submit"
                         type="submit"
-                        disabled={isLoading || !formData.name.trim()}
+                        disabled={isLoading || isUploadingFiles || !formData.name.trim()}
                     >
-                        {isLoading ? (mode === 'create' ? 'Creating...' : 'Updating...') : (mode === 'create' ? 'Create Template' : 'Update Template')}
+                        {isUploadingFiles ? 'Uploading files…' : isLoading ? (mode === 'create' ? 'Creating...' : 'Updating...') : (mode === 'create' ? 'Create Template' : 'Update Template')}
                     </button>
                 </form>
             </div>

@@ -71,9 +71,10 @@ We are building a template-based knowledge management system ("Brains") allowing
   - [x] Switched from `stream_mode="values"` (full-state snapshots) to `stream_mode="messages"` (true token streaming).
   - [x] Added `isinstance(token, AIMessageChunk)` filter to exclude retrieved doc content from stream output.
   - [x] Raised `LLM_MAX_TOKENS` default to 4096 and `STREAM_MAX_CHARS` to 32000.
-- [ ] **Model Access UX Hardening** - 🎯 **NEXT STEP**
-  - [ ] Filter inaccessible models from `GET /models`.
-  - [ ] Hide unsupported models directly in UI catalog response.
+- [x] **Model Access UX Hardening** - ✅ Done
+  - [x] `app/services/model_catalog.py` probes each chat model candidate at startup with a `max_tokens=1` request.
+  - [x] `GET /models` serves only confirmed-accessible models from `app.state.accessible_models`.
+  - [x] Frontend `isLikelyChatModel` client-side filter removed — backend is now authoritative.
 - [ ] **Context Memory Hardening** - Planned (after UX hardening)
   - [ ] Add optional rolling summary memory block for long chats.
   - [ ] Tune retrieval reduction based on remaining token budget.
@@ -87,7 +88,7 @@ We are building a template-based knowledge management system ("Brains") allowing
   - [x] Add Archive action to chat context menu (sidebar chat rows).
   - [x] Archived Chats modal — searchable list with per-item Unarchive/Delete and bulk Unarchive All / Delete All.
   - [ ] Add byte-level upload progress percentages.
-  - [ ] Persist template-uploaded local files as reusable saved sources for template attach parity.
+  - [x] Persist template-uploaded local files as reusable saved sources for template attach parity.
 
 
 ---

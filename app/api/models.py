@@ -1,65 +1,27 @@
 """Model catalog API routes."""
 
-from fastapi import APIRouter, HTTPException
-from openai import OpenAI
+from fastapi import APIRouter, HTTPException, Request
 
-from ..config.settings import OPENAI_API_KEY
 from ..utils.logger import setup_logger
 
 logger = setup_logger(__name__)
 router = APIRouter()
 
 
-def _get_openai_client() -> OpenAI:
-    if not OPENAI_API_KEY:
-        raise HTTPException(status_code=500, detail="OPENAI_API_KEY is not configured")
-    return OpenAI(api_key=OPENAI_API_KEY)
-
-
 @router.get("/models")
-async def list_models_endpoint():
-    """List available OpenAI models."""
-    try:
-        client = _get_openai_client()
-        models = client.models.list()
-
-        # Keep response contract simple for frontend and mirror OpenAI fields.
-        data = [
-            {
-                "id": model.id,
-                "created": model.created,
-                "object": model.object,
-                "owned_by": model.owned_by,
-            }
-            for model in models.data
-        ]
-
-        return {
-            "object": "list",
-            "data": data,
-        }
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error("Failed to list OpenAI models: %s", e)
-        raise HTTPException(status_code=500, detail=str(e))
+async def list_models_endpoint(request: Request):
+    """List accessible chat models (probed and cached at startup)."""
+    models = getattr(request.app.state, "accessible_models", None)
+    if models is None:
+        raise HTTPException(status_code=503, detail="Model catalog not yet initialized. Try again in a moment.")
+    return {"object": "list", "data": models}
 
 
 @router.get("/models/{model_id}")
-async def retrieve_model_endpoint(model_id: str):
-    """Retrieve a single OpenAI model."""
-    try:
-        client = _get_openai_client()
-        model = client.models.retrieve(model_id)
-
-        return {
-            "id": model.id,
-            "created": model.created,
-            "object": model.object,
-            "owned_by": model.owned_by,
-        }
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error("Failed to retrieve OpenAI model %s: %s", model_id, e)
-        raise HTTPException(status_code=500, detail=str(e))
+async def retrieve_model_endpoint(model_id: str, request: Request):
+    """Retrieve a single model by ID from the accessible catalog."""
+    models: list[dict] = getattr(request.app.state, "accessible_models", None) or []
+    model = next((m for m in models if m["id"] == model_id), None)
+    if not model:
+        raise HTTPException(status_code=404, detail=f"Model '{model_id}' not found or not accessible with the current API key.")
+    return model

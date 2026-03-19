@@ -67,6 +67,7 @@ async def startup_event():
             RETRIEVAL_K,
         )
         from app.services.llm import initialize_models
+        from app.services.model_catalog import build_accessible_chat_models
         from app.storage.vector_storage import initialize_vector_store
         from app.agents.rag_agent import create_rag_agent
 
@@ -81,14 +82,17 @@ async def startup_event():
         llm, embeddings = initialize_models()
 
         vector_store = initialize_vector_store(embeddings)
-        
+
         rag_agent = create_rag_agent(llm, vector_store)
-        
+
+        accessible_models = await build_accessible_chat_models(OPENAI_API_KEY)
+
         # Store in app.state
         app.state.llm = llm
         app.state.embeddings = embeddings
         app.state.vector_store = vector_store
         app.state.rag_agent = rag_agent
+        app.state.accessible_models = accessible_models
         
         logger.info("Hotak AI Server started successfully!")
 

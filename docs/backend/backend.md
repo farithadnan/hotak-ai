@@ -48,6 +48,7 @@ On application boot (`@app.on_event("startup")`):
 5. Calls `initialize_models()` → creates the LLM and embeddings → stored on `app.state`
 6. Calls `initialize_vector_store(embeddings)` → creates the ChromaDB instance → stored on `app.state`
 7. Calls `create_rag_agent(llm, vector_store)` → creates the LangChain agent → stored on `app.state`
+8. Calls `build_accessible_chat_models(OPENAI_API_KEY)` → probes each candidate chat model for access → stores accessible list on `app.state.accessible_models`
 
 All routes access these via `request.app.state`.
 
@@ -185,8 +186,10 @@ Document ingestion safeguards:
 
 | Method | Path | Response | Description |
 |---|---|---|---|
-| GET | `/models` | `{ object: "list", data: [...] }` | Proxy to OpenAI's model list API |
-| GET | `/models/{model_id}` | `{ id, created, object, owned_by }` | Retrieve a single model |
+| GET | `/models` | `{ object: "list", data: [...] }` | Returns accessible chat models from `app.state.accessible_models` (probed at startup) |
+| GET | `/models/{model_id}` | `{ id, created, object, owned_by }` | Retrieve a single model from the cached accessible list (404 if not accessible) |
+
+> Models are probed for access at startup via `build_accessible_chat_models()`. The endpoint returns 503 if the catalog has not yet been initialized, and 404 if a requested model ID is not accessible with the current API key.
 
 ### Templates — `app/api/templates.py`
 
@@ -240,6 +243,24 @@ Returns a LangChain `@tool` named `retrieve_context`:
 - Creates the LLM via `init_chat_model(model=LLM_MODEL, temperature=LLM_TEMPERATURE, max_tokens=LLM_MAX_TOKENS)`
 - Creates embeddings via `OpenAIEmbeddings(model=EMBEDDING_MODEL)`
 - Returns both as a tuple
+
+### `app/services/model_catalog.py`
+
+Discovers and verifies accessible OpenAI chat models at startup.
+
+#### `is_chat_model(model_id) → bool`
+
+Checks whether a model ID looks like a usable chat/completions model. Includes `gpt-`, `o1`, `o3`, `o4`, `chatgpt-` prefixes and excludes embedding, TTS, Whisper, moderation, and image models.
+
+#### `build_accessible_chat_models(api_key) → list[dict]` (async)
+
+1. Lists all models from OpenAI via the sync client
+2. Filters candidates with `is_chat_model()`
+3. Probes each candidate in parallel with a `max_tokens=1` chat completion (8 s timeout)
+4. Excludes models that return `PermissionDeniedError`, `NotFoundError`, or `AuthenticationError`
+5. Returns only the accessible models as `{ id, created, object, owned_by }` dicts
+
+Results are stored in `app.state.accessible_models` during startup. `GET /models` serves from this cache — the frontend never sees models the API key can't use.
 
 ---
 
