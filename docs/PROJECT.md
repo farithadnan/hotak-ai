@@ -154,3 +154,27 @@ npm run dev
 - `OPENAI_API_KEY` — required
 - `LANGSMITH_API_KEY` — optional (for tracing)
 - `LOG_LEVEL` — optional (default: `INFO`)
+
+---
+
+## 💡 Newcomer's Guide: Demystifying the "Magic"
+
+If you are new to RAG or Streaming, these two areas are the "engine room" of the project. Here is how to understand them quickly:
+
+### 1. The AI Brain (RAG & Vector Store)
+
+- **The Concept:** Think of this as a **"Search Engine + a Smart Reader."**
+    - **Vector Store (ChromaDB):** A library where every page is stored by its "meaning" (coordinates) rather than alphabetical order.
+    - **Retrieval:** We search for the 5 most relevant pages.
+    - **Generation:** We give those pages to the LLM and say, "Answer using *only* this text."
+- **Where to look:** `app/agents/rag_agent.py` → `retrieve_context`.
+- **How to see it:** Enable **LangSmith** in your `.env`. It provides a visual tree of every search and LLM prompt.
+
+### 2. The Garden Hose (Streaming Logic)
+
+- **The Concept:** Standard APIs are like **ordering a bucket of water** (you wait until it's full). Our API is a **garden hose** (water flows as soon as the tap is turned).
+    - **SSE (Server-Sent Events):** The protocol that keeps the "hose" open.
+    - **AsyncGenerators:** The JavaScript tool used to "pump" each drop of data to the UI.
+- **Where to look:** `frontend/src/services/query.ts` → `streamQuery`.
+- **How to see it:** Open **Browser DevTools > Network tab**. Send a message and click the `/query/stream` request. Watch the "EventStream" tab to see tokens arriving in real-time.
+
