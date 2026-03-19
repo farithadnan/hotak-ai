@@ -10,17 +10,24 @@ from ..utils.citation_extractor import ensure_citations, validate_citations
 
 logger = setup_logger(__name__)
 
-def create_retrieval_tool(vector_store: Chroma, retrieval_k: int | None = None):
+def create_retrieval_tool(
+    vector_store: Chroma,
+    retrieval_k: int | None = None,
+    allowed_sources: list[str] | None = None,
+):
     """
     Create a retrieval tool using the provided vector store.
-    
+
     Args:
         vector_store: The Chroma vector store instance
-        
+        retrieval_k: Number of documents to retrieve
+        allowed_sources: If provided, only retrieve from these source paths/URLs
+
     Returns:
         tool: A LangChain tool for retrieving context from the vector store
     """
     effective_retrieval_k = retrieval_k if retrieval_k is not None else RETRIEVAL_K
+    effective_sources = [s for s in allowed_sources if s] if allowed_sources else None
 
     @tool(response_format="content_and_artifact")
     def retrieve_context(query: str):
@@ -33,8 +40,13 @@ def create_retrieval_tool(vector_store: Chroma, retrieval_k: int | None = None):
             if k <= 0:
                 logger.warning(f"Invalid RETRIEVAL_K value: {effective_retrieval_k}. Defaulting to 5.")
                 k = 5
-        
-            retrieved_docs = vector_store.similarity_search(query, k=k)
+
+            if effective_sources:
+                retrieved_docs = vector_store.similarity_search(
+                    query, k=k, filter={"source": {"$in": effective_sources}}
+                )
+            else:
+                retrieved_docs = vector_store.similarity_search(query, k=k)
 
             if not retrieved_docs:
                 logger.warning("No documents retrieved from vector store.")
@@ -77,6 +89,7 @@ def create_rag_agent(
     vector_store: Chroma,
     system_prompt: str | None = None,
     retrieval_k: int | None = None,
+    allowed_sources: list[str] | None = None,
 ):
     """
     Create a RAG agent with retrieval capabilities.
@@ -95,7 +108,11 @@ def create_rag_agent(
         logger.info("Creating RAG agent...")
         
         # Create retrieval tool
-        retrieval_tool = create_retrieval_tool(vector_store, retrieval_k=retrieval_k)
+        retrieval_tool = create_retrieval_tool(
+            vector_store,
+            retrieval_k=retrieval_k,
+            allowed_sources=allowed_sources,
+        )
         tools = [retrieval_tool]
         effective_system_prompt = (system_prompt or SYSTEM_PROMPT).strip() or SYSTEM_PROMPT
         

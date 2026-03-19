@@ -82,6 +82,7 @@ class AgentRuntimeConfig(BaseModel):
     system_prompt: str | None = None
     retrieval_k: int | None = None
     temperature: float | None = None
+    allowed_sources: list[str] | None = None
 
 
 def _normalize_text(value: str) -> str:
@@ -255,6 +256,7 @@ def _get_messages_for_llm(
 
 def _resolve_agent_runtime_config(http_request: Request, request: QueryRequest) -> AgentRuntimeConfig:
     template_settings: TemplateSettings | None = None
+    allowed_sources: list[str] | None = None
 
     if request.template_id:
         try:
@@ -263,6 +265,8 @@ def _resolve_agent_runtime_config(http_request: Request, request: QueryRequest) 
             template = get_template(request.template_id)
             if template:
                 template_settings = template.settings
+                sources = [s for s in template.sources if s]
+                allowed_sources = sources if sources else None
             else:
                 logger.warning("Template not found for query runtime config: %s", request.template_id)
         except Exception as template_error:
@@ -284,6 +288,7 @@ def _resolve_agent_runtime_config(http_request: Request, request: QueryRequest) 
         system_prompt=system_prompt,
         retrieval_k=retrieval_k,
         temperature=temperature,
+        allowed_sources=allowed_sources,
     )
 
 
@@ -319,6 +324,7 @@ def _get_rag_agent_for_config(http_request: Request, runtime_config: AgentRuntim
         and not runtime_config.system_prompt
         and runtime_config.retrieval_k in {None, RETRIEVAL_K}
         and runtime_config.temperature in {None, LLM_TEMPERATURE}
+        and not runtime_config.allowed_sources
     )
 
     if using_defaults:
@@ -329,19 +335,22 @@ def _get_rag_agent_for_config(http_request: Request, runtime_config: AgentRuntim
         cache = {}
         http_request.app.state.rag_agents_by_model = cache
 
+    sources_key = "|".join(sorted(runtime_config.allowed_sources)) if runtime_config.allowed_sources else ""
     cache_key = "||".join([
         model_name,
         str(runtime_config.retrieval_k if runtime_config.retrieval_k is not None else RETRIEVAL_K),
         f"{runtime_config.temperature if runtime_config.temperature is not None else LLM_TEMPERATURE}",
         runtime_config.system_prompt or "",
+        sources_key,
     ])
 
     if cache_key not in cache:
         logger.info(
-            "Creating model-specific RAG agent for model=%s retrieval_k=%s temperature=%s",
+            "Creating RAG agent for model=%s retrieval_k=%s temperature=%s sources=%s",
             model_name,
             runtime_config.retrieval_k,
             runtime_config.temperature,
+            len(runtime_config.allowed_sources) if runtime_config.allowed_sources else "all",
         )
         model_llm = init_chat_model(
             model=model_name,
@@ -353,6 +362,7 @@ def _get_rag_agent_for_config(http_request: Request, runtime_config: AgentRuntim
             http_request.app.state.vector_store,
             system_prompt=runtime_config.system_prompt,
             retrieval_k=runtime_config.retrieval_k,
+            allowed_sources=runtime_config.allowed_sources,
         )
 
     return cache[cache_key], model_name

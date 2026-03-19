@@ -11,6 +11,8 @@ if __package__ in (None, ""):
     if str(project_root) not in sys.path:
         sys.path.insert(0, str(project_root))
 
+import logging
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -22,6 +24,11 @@ logger = setup_logger(__name__)
 # Set safe defaults as early as possible so downstream imports/tools see them.
 os.environ.setdefault("ANONYMIZED_TELEMETRY", "False")
 os.environ.setdefault("USER_AGENT", "Hotak-AI/1.0")
+
+# Suppress ChromaDB telemetry warnings caused by a posthog library version mismatch.
+# The telemetry is already disabled via ANONYMIZED_TELEMETRY=False and Settings, but
+# chromadb still tries to fire events, catches the posthog error, and logs it at WARNING.
+logging.getLogger("chromadb.telemetry.product.posthog").setLevel(logging.ERROR)
 
 app = FastAPI(
     title="Hotak AI Server",
