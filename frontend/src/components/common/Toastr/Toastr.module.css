@@ -2,19 +2,20 @@
 .toastr {
   position: fixed;
   z-index: 2000;
-  min-width: 220px;
+  min-width: 260px;
   max-width: min(420px, 88vw);
-  padding: 0.56rem 0.78rem;
-  border-radius: 8px;
+  padding: 0.72rem 0.92rem;
+  border-radius: 10px;
   font-weight: 500;
-  font-size: 0.84rem;
-  line-height: 1.32;
+  font-size: 0.92rem;
+  line-height: 1.36;
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.35);
-  background: #1f2430;
-  color: #f0f3fa;
+  background: #222a34;
+  color: #f4f7ff;
   opacity: 0.99;
   transition: transform 0.16s ease, opacity 0.16s ease;
-  border-left: 4px solid transparent;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-left: 5px solid transparent;
   animation: toastIn 0.16s ease;
 }
 .toastr--top-right {
@@ -34,27 +35,27 @@
   left: 16px;
 }
 .toastr-title {
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   font-weight: 700;
-  margin-bottom: 0.12rem;
+  margin-bottom: 0.2rem;
   display: block;
 }
 .toastr--success {
-  background: #203125;
-  color: #d8ffdf;
-  border: 1px solid rgba(81, 163, 81, 0.72);
+  background: #2d6a34;
+  color: #ffffff;
+  border-color: #2d6a34;
   border-left-color: #51a351;
 }
 .toastr--error {
-  background: #372021;
-  color: #ffd9d8;
-  border: 1px solid rgba(189, 54, 47, 0.74);
+  background: #bd362f;
+  color: #ffffff;
+  border-color: #bd362f;
   border-left-color: #bd362f;
 }
 .toastr--info {
-  background: #1f2832;
-  color: #ddf1f7;
-  border: 1px solid rgba(47, 150, 180, 0.74);
+  background: #2f96b4;
+  color: #ffffff;
+  border-color: #2f96b4;
   border-left-color: #2f96b4;
 }
 
