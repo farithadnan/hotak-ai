@@ -29,6 +29,25 @@ export interface DocumentListResponse {
   sources: DocumentSource[];
 }
 
+export interface DocumentUploadResponse {
+  loaded: number;
+  skipped: number;
+  uploaded_sources: string[];
+  cached_sources: string[];
+  loaded_sources: string[];
+  failed_sources: string[];
+  failed_files: Array<{
+    file_name: string;
+    error: string;
+  }>;
+  file_results: Array<{
+    file_name: string;
+    source: string | null;
+    status: 'uploaded' | 'ingested' | 'cached' | 'failed_upload' | 'failed_load';
+    error: string | null;
+  }>;
+}
+
 /**
  * Load documents into vector store (existing functionality)
  */
@@ -50,5 +69,25 @@ export const listDocuments = async (): Promise<DocumentListResponse> => {
     return response.data;
   } catch (error) {
     throw new Error(`Failed to list documents: ${getErrorMessage(error as any)}`);
+  }
+};
+
+/**
+ * Upload files and ingest them into vector store.
+ */
+export const uploadDocuments = async (files: File[]): Promise<DocumentUploadResponse> => {
+  try {
+    const formData = new FormData();
+    files.forEach((file) => formData.append('files', file));
+
+    const response = await api.post('/documents/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    return response.data;
+  } catch (error) {
+    throw new Error(`Failed to upload documents: ${getErrorMessage(error as any)}`);
   }
 };

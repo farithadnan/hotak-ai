@@ -19,6 +19,15 @@ interface ChatPageProps {
   onRegenerateAssistantMessage: (messageId: string, modelId?: string) => void
   regeneratingAssistantMessageId: string | null
   textareaRef: React.RefObject<HTMLTextAreaElement | null>
+  pendingAttachments: Array<{
+    id: string
+    kind: 'url' | 'file'
+    label: string
+  }>
+  isAttachingSources: boolean
+  onAttachUrl: (url: string) => void
+  onAttachFiles: (files: File[]) => void
+  onRemovePendingAttachment: (attachmentId: string) => void
   username: string
   onToggleSidebar: () => void
 }
@@ -36,6 +45,11 @@ function ChatPage({
   onRegenerateAssistantMessage,
   regeneratingAssistantMessageId,
   textareaRef,
+  pendingAttachments,
+  isAttachingSources,
+  onAttachUrl,
+  onAttachFiles,
+  onRemovePendingAttachment,
   username,
   onToggleSidebar,
 }: ChatPageProps) {
@@ -198,6 +212,11 @@ function ChatPage({
         onRegenerateAssistantMessage={(messageId) => onRegenerateAssistantMessage(messageId, model)}
         regeneratingAssistantMessageId={regeneratingAssistantMessageId}
         textareaRef={textareaRef}
+        pendingAttachments={pendingAttachments}
+        isAttachingSources={isAttachingSources}
+        onAttachUrl={onAttachUrl}
+        onAttachFiles={onAttachFiles}
+        onRemovePendingAttachment={onRemovePendingAttachment}
         username={username}
       />
     </>

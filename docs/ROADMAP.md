@@ -1,6 +1,6 @@
 # Hotak AI - Development Roadmap (Active)
 
-## 🎯 Current Status: Phase 6.7 - Chat Context Budgeting + Output Polish
+## 🎯 Current Status: Phase 6.8 - Chat Attachment Ingestion Baseline
 
 We are building a template-based knowledge management system ("Brains") allowing users to create reusable knowledge templates for chat sessions.
 
@@ -26,6 +26,7 @@ We are building a template-based knowledge management system ("Brains") allowing
   - [x] Message display with source/citation rendering.
   - [x] Markdown rendering for assistant replies.
   - [x] Deduped clickable source links.
+  - [x] URL/file attachment ingestion baseline with per-message attachment chips.
   - [x] Streaming responses with graceful fallback.
   - [x] Sidebar chat/session management (rename, pin, delete).
 - [x] **App Layout Polish (Step 9)** - ✅ Done
@@ -52,12 +53,19 @@ We are building a template-based knowledge management system ("Brains") allowing
   - [x] Replaced fixed message-count window with token-budget history packing.
   - [x] Added per-message truncation guard for oversized historical turns.
   - [x] Added one-shot delayed retry for transient stream 429s.
+- [x] **Attachment API Baseline** - ✅ Done
+  - [x] Added `/documents/upload` multipart endpoint for file ingestion.
+  - [x] Persisted message-level attachment metadata (`url`/`file`, status, source).
 - [ ] **Model Access UX Hardening** - 🎯 **NEXT STEP**
   - [ ] Filter inaccessible models from `GET /models`.
   - [ ] Remove telemetry warning noise in logs.
 - [ ] **Context Memory Hardening** - Planned (after UX hardening)
   - [ ] Add optional rolling summary memory block for long chats.
   - [ ] Tune retrieval reduction based on remaining token budget.
+- [ ] **Attachment UX Hardening** - Planned
+  - [ ] Replace prompt-based URL entry with an inline composer URL field.
+  - [ ] Add pre-upload validation feedback for file size/type.
+  - [ ] Add per-attachment progress indicators during ingestion.
 
 
 ---
@@ -77,6 +85,7 @@ We are building a template-based knowledge management system ("Brains") allowing
 - **Model Visibility:** Active model badge appears next to assistant name per chat.
 - **Message Provenance:** Assistant bubble can display the model used for that specific reply.
 - **Source UX:** Source chips expand into deduped links that open external documents in a new tab.
+- **User Attachment UX:** User bubbles show attached URL/file chips with ingestion status.
 
 ---
 

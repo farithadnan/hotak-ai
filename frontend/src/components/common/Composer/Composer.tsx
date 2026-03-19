@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Briefcase, Mic, SendHorizontal, Plus, Upload, Link, FileText } from '../../../icons'
 import { useFloatingPopover } from '../../../hooks/useFloatingPopover'
 import {
@@ -18,6 +18,15 @@ type ComposerProps = {
   textareaRef: React.RefObject<HTMLTextAreaElement | null>
   className?: string
   mode?: 'default' | 'edit'
+  pendingAttachments?: Array<{
+    id: string
+    kind: 'url' | 'file'
+    label: string
+  }>
+  isAttaching?: boolean
+  onAttachUrl?: (url: string) => void
+  onAttachFiles?: (files: File[]) => void
+  onRemoveAttachment?: (attachmentId: string) => void
 }
 
 export function Composer({
@@ -29,8 +38,14 @@ export function Composer({
   textareaRef,
   className = '',
   mode = 'default',
+  pendingAttachments = [],
+  isAttaching = false,
+  onAttachUrl,
+  onAttachFiles,
+  onRemoveAttachment,
 }: ComposerProps) {
   const [isAttachPopoverOpen, setIsAttachPopoverOpen] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const isEditMode = mode === 'edit'
 
   const attachPopover = useFloatingPopover({
@@ -46,6 +61,19 @@ export function Composer({
     <div className={`${style.composer} ${isEditMode ? style['composer-edit-mode'] : ''} ${className}`}>
       <div className={style['composer-inner']}>
         <div className={style['composer-input-wrapper']}>
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            className={style['hidden-file-input']}
+            onChange={(e) => {
+              const files = Array.from(e.target.files || [])
+              if (files.length > 0) {
+                onAttachFiles?.(files)
+              }
+              e.currentTarget.value = ''
+            }}
+          />
           <textarea
             ref={textareaRef}
             value={inputValue}
@@ -55,6 +83,25 @@ export function Composer({
             aria-label="Chat input"
             rows={1}
           />
+          {!isEditMode && pendingAttachments.length > 0 && (
+            <div className={style['pending-attachments']}>
+              {pendingAttachments.map((attachment) => (
+                <button
+                  key={attachment.id}
+                  type="button"
+                  className={style['attachment-chip']}
+                  onClick={() => onRemoveAttachment?.(attachment.id)}
+                  title={`Remove ${attachment.label}`}
+                >
+                  <span className={style['attachment-chip-kind']}>
+                    {attachment.kind === 'url' ? 'URL' : 'FILE'}
+                  </span>
+                  <span className={style['attachment-chip-label']}>{attachment.label}</span>
+                  <span className={style['attachment-chip-remove']}>x</span>
+                </button>
+              ))}
+            </div>
+          )}
           <div className={`${style['composer-actions']} ${isEditMode ? style['composer-actions-edit'] : ''}`}>
             {!isEditMode && (
               <div className={style['composer-actions-left']}>
@@ -80,11 +127,29 @@ export function Composer({
                       className={style['attach-popover']}
                       style={attachPopover.floatingStyle}
                     >
-                      <button className={style['attach-menu-item']} type="button">
+                      <button
+                        className={style['attach-menu-item']}
+                        type="button"
+                        onClick={() => {
+                          setIsAttachPopoverOpen(false)
+                          fileInputRef.current?.click()
+                        }}
+                      >
                         <Upload size={18} />
                         <span>Upload Files</span>
                       </button>
-                      <button className={style['attach-menu-item']} type="button">
+                      <button
+                        className={style['attach-menu-item']}
+                        type="button"
+                        onClick={() => {
+                          setIsAttachPopoverOpen(false)
+                          const value = window.prompt('Enter URL to attach')
+                          if (!value) {
+                            return
+                          }
+                          onAttachUrl?.(value)
+                        }}
+                      >
                         <Link size={18} />
                         <span>Attach URL</span>
                       </button>
@@ -132,6 +197,7 @@ export function Composer({
                       type="button"
                       title="Send Message"
                       onClick={onSend}
+                      disabled={isAttaching}
                     >
                       <SendHorizontal size={20} />
                     </button>

@@ -30,6 +30,8 @@ The core hook that owns **all chat data and operations**. Extracted from App.tsx
 | `inputValue` | `string` | Current text in the composer textarea. |
 | `regeneratingAssistantMessageId` | `string \| null` | ID of the assistant message being regenerated. |
 | `textareaRef` | `Ref<HTMLTextAreaElement>` | Ref for auto-resize of the composer. |
+| `pendingAttachments` | `Array<{ id, kind, label, source }>` | Composer-queued URL/file attachments for the next send. |
+| `isAttachingSources` | `boolean` | Whether URL/file ingestion is currently in progress. |
 
 ### Returns
 
@@ -46,6 +48,12 @@ The core hook that owns **all chat data and operations**. Extracted from App.tsx
 | `handleInputChange` | `(e) => void` | Updates `inputValue`. |
 | `handleKeyDown` | `(e, modelId?) => void` | Enter to send, Shift+Enter for newline. |
 | `setInputValue` | `Dispatch` | Direct setter (used by App for `handleNewChat`). |
+| `pendingAttachments` | `Array<{ id, kind, label }>` | Pending attachment chips shown in composer. |
+| `isAttachingSources` | `boolean` | Disables send while attachment ingestion runs. |
+| `handleAttachUrl` | `(url: string) => void` | Validate + queue URL attachment for next send. |
+| `handleAttachFiles` | `(files: File[]) => void` | Queue local file attachments for next send. |
+| `handleRemovePendingAttachment` | `(attachmentId: string) => void` | Remove one queued attachment. |
+| `clearPendingAttachments` | `() => void` | Clear queue after successful user-message persist. |
 | `handleSend` | `(modelId?) => Promise<void>` | Full send flow: create chat → optimistic UI → stream → persist → title. |
 | `handleUpdateUserMessage` | `(messageId, content, modelId?) => void` | Edit user message and re-stream assistant response. |
 | `handleRegenerateAssistantMessage` | `(assistantMessageId, modelId?) => void` | Re-stream an existing assistant response. |
@@ -57,6 +65,7 @@ The core hook that owns **all chat data and operations**. Extracted from App.tsx
 - `ensureChatModel(chatId, modelId?)` — syncs chat model with optimistic update
 - `buildLlmContext(messages)` — converts local chat messages to a compact request payload for backend context handoff
 - `streamAssistantText(question, onPartial, chatId?, modelId?, onModelResolved?, contextMessages?)` — streaming engine with fallback and explicit context payload
+- `ingestPendingAttachments()` — ingests queued URLs via `/documents/load` and files via `/documents/upload`, returning message-level attachment metadata with status.
 
 ### Multi-Turn Model Switching Notes
 

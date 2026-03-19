@@ -92,6 +92,11 @@ function App() {
           onRegenerateAssistantMessage={engine.handleRegenerateAssistantMessage}
           regeneratingAssistantMessageId={engine.regeneratingAssistantMessageId}
           textareaRef={engine.textareaRef}
+          pendingAttachments={engine.pendingAttachments}
+          isAttachingSources={engine.isAttachingSources}
+          onAttachUrl={engine.handleAttachUrl}
+          onAttachFiles={engine.handleAttachFiles}
+          onRemovePendingAttachment={engine.handleRemovePendingAttachment}
           username={username}
           onToggleSidebar={toggleSidebar}
         />

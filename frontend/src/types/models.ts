@@ -138,12 +138,22 @@ export interface Chat {
 /**
  * Message Interface
  */
+export interface MessageAttachment {
+  id: string;
+  kind: 'url' | 'file';
+  label: string;
+  source: string;
+  status?: 'pending' | 'ingested' | 'failed';
+  error?: string;
+}
+
 export interface Message {
   id: string;
   role: 'user' | 'assistant' | 'system';
   content: string;
   model?: string;                      // Optional: model name for assistant messages
   sources?: string[];                  // Optional array of sources
+  attachments?: MessageAttachment[];   // Optional user attachments (URL/file)
   created_at: string;
 }
 

@@ -1322,6 +1322,43 @@
   border-color: var(--color-accent-border);
 }
 
+.user-attachments-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.user-attachment-pill {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 4px 9px;
+  font-size: 0.72rem;
+  line-height: 1.2;
+  color: var(--color-muted);
+  background: rgba(255, 255, 255, 0.06);
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+a.user-attachment-pill {
+  text-decoration: underline;
+  text-underline-offset: 0.12em;
+}
+
+.user-attachment-pill.is-ingested {
+  border-color: var(--color-accent-border);
+  color: var(--color-text);
+}
+
+.user-attachment-pill.is-failed {
+  border-color: #bb3a3a;
+  color: #f4aaaa;
+}
+
 .message-actions {
   display: flex;
   gap: 6px;

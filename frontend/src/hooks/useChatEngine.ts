@@ -1,9 +1,11 @@
 import { useState, useRef, useEffect } from 'react'
 import { queryAgent, streamQuery } from '../services/query'
 import { getChats, createChat, addMessage, generateChatTitle, updateChat } from '../services/chats'
+import { loadDocuments, uploadDocuments } from '../services/documents'
 import { CHAT_TEXTAREA_MAX_SCROLL_HEIGHT } from '../constants/chat'
 import type { ChatThread } from '../types'
 import { parseAssistantResponse } from '../utils/assistantResponse'
+import type { MessageAttachment } from '../types/models'
 
 export type ChatRuntimeState = {
   isResponding: boolean
@@ -17,6 +19,14 @@ type LlmContextMessage = {
 
 const STREAM_MODEL_FALLBACK_PATTERN = /\[\[MODEL_FALLBACK:([^\]]+)\]\]\n?/g
 
+type PendingAttachment = {
+  id: string
+  kind: 'url' | 'file'
+  label: string
+  source: string
+  file?: File
+}
+
 export function useChatEngine(
   activeChatId: string | null,
   openChat: (chatId?: string) => void,
@@ -26,10 +36,25 @@ export function useChatEngine(
   const [isLoadingChats, setIsLoadingChats] = useState(true)
   const [chatRuntime, setChatRuntime] = useState<Record<string, ChatRuntimeState>>({})
   const [regeneratingAssistantMessageId, setRegeneratingAssistantMessageId] = useState<string | null>(null)
+  const [pendingAttachments, setPendingAttachments] = useState<PendingAttachment[]>([])
+  const [isAttachingSources, setIsAttachingSources] = useState(false)
 
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const activeChat = chats.find((chat) => chat.id === activeChatId) || null
+
+  const normalizeUrl = (value: string): string | null => {
+    try {
+      const parsed = new URL(value.trim())
+      if (!/^https?:$/i.test(parsed.protocol)) {
+        return null
+      }
+      parsed.hash = ''
+      return parsed.toString().replace(/\/+$/, '')
+    } catch {
+      return null
+    }
+  }
 
   const buildLlmContext = (messages: ChatThread['messages']): LlmContextMessage[] =>
     messages
@@ -66,6 +91,160 @@ export function useChatEngine(
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInputValue(e.target.value)
+  }
+
+  const handleAttachUrl = (rawUrl: string) => {
+    const normalizedUrl = normalizeUrl(rawUrl)
+    if (!normalizedUrl) {
+      return
+    }
+
+    setPendingAttachments((prev) => {
+      if (prev.some((item) => item.kind === 'url' && item.source === normalizedUrl)) {
+        return prev
+      }
+
+      return [
+        ...prev,
+        {
+          id: crypto.randomUUID(),
+          kind: 'url',
+          label: normalizedUrl,
+          source: normalizedUrl,
+        },
+      ]
+    })
+  }
+
+  const handleAttachFiles = (files: File[]) => {
+    if (files.length === 0) {
+      return
+    }
+
+    setPendingAttachments((prev) => {
+      const dedupeKeys = new Set(prev.filter((item) => item.kind === 'file').map((item) => item.source))
+      const additions: PendingAttachment[] = []
+
+      for (const file of files) {
+        const sourceKey = `${file.name}:${file.size}:${file.lastModified}`
+        if (dedupeKeys.has(sourceKey)) {
+          continue
+        }
+        dedupeKeys.add(sourceKey)
+        additions.push({
+          id: crypto.randomUUID(),
+          kind: 'file',
+          label: file.name,
+          source: sourceKey,
+          file,
+        })
+      }
+
+      return [...prev, ...additions]
+    })
+  }
+
+  const handleRemovePendingAttachment = (attachmentId: string) => {
+    setPendingAttachments((prev) => prev.filter((attachment) => attachment.id !== attachmentId))
+  }
+
+  const clearPendingAttachments = () => {
+    setPendingAttachments([])
+  }
+
+  const ingestPendingAttachments = async (): Promise<MessageAttachment[]> => {
+    if (pendingAttachments.length === 0) {
+      return []
+    }
+
+    const urlAttachments = pendingAttachments.filter((item) => item.kind === 'url')
+    const fileAttachments = pendingAttachments.filter((item) => item.kind === 'file' && item.file)
+    const resolved: MessageAttachment[] = []
+
+    setIsAttachingSources(true)
+    try {
+      if (urlAttachments.length > 0) {
+        try {
+          const urlSources = urlAttachments.map((item) => item.source)
+          const urlResult = await loadDocuments({ sources: urlSources })
+          const ok = new Set([...urlResult.loaded_sources, ...urlResult.cached_sources])
+          const failed = new Set(urlResult.failed_sources)
+
+          for (const item of urlAttachments) {
+            const status = ok.has(item.source) ? 'ingested' : (failed.has(item.source) ? 'failed' : 'failed')
+            resolved.push({
+              id: item.id,
+              kind: 'url',
+              label: item.label,
+              source: item.source,
+              status,
+              error: status === 'failed' ? 'Failed to load URL' : undefined,
+            })
+          }
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Failed to load URL'
+          for (const item of urlAttachments) {
+            resolved.push({
+              id: item.id,
+              kind: 'url',
+              label: item.label,
+              source: item.source,
+              status: 'failed',
+              error: message,
+            })
+          }
+        }
+      }
+
+      if (fileAttachments.length > 0) {
+        try {
+          const uploadResult = await uploadDocuments(fileAttachments.map((item) => item.file as File))
+          const fileResultsQueueByName = new Map<string, Array<(typeof uploadResult.file_results)[number]>>()
+          for (const result of uploadResult.file_results) {
+            const queue = fileResultsQueueByName.get(result.file_name) || []
+            queue.push(result)
+            fileResultsQueueByName.set(result.file_name, queue)
+          }
+
+          for (const item of fileAttachments) {
+            const queue = fileResultsQueueByName.get(item.label) || []
+            const result = queue.shift()
+            if (queue.length === 0) {
+              fileResultsQueueByName.delete(item.label)
+            } else {
+              fileResultsQueueByName.set(item.label, queue)
+            }
+
+            const isIngested = result?.status === 'ingested' || result?.status === 'cached'
+            const status: MessageAttachment['status'] = isIngested ? 'ingested' : 'failed'
+            resolved.push({
+              id: item.id,
+              kind: 'file',
+              label: item.label,
+              source: result?.source || item.label,
+              status,
+              error: status === 'failed' ? (result?.error || 'Failed to process file') : undefined,
+            })
+          }
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Failed to upload file'
+          for (const item of fileAttachments) {
+            resolved.push({
+              id: item.id,
+              kind: 'file',
+              label: item.label,
+              source: item.label,
+              status: 'failed',
+              error: message,
+            })
+          }
+        }
+      }
+    } finally {
+      setIsAttachingSources(false)
+    }
+
+    return resolved
   }
 
   const markRuntime = (chatId: string, patch: Partial<ChatRuntimeState>) => {
@@ -201,6 +380,8 @@ export function useChatEngine(
         await ensureChatModel(chatId, modelId)
       }
 
+      const messageAttachments = await ingestPendingAttachments()
+
       const pendingAssistantId = crypto.randomUUID()
 
       // 2. Add user + pending assistant locally for immediate UX
@@ -208,6 +389,7 @@ export function useChatEngine(
         id: crypto.randomUUID(),
         role: 'user',
         content: trimmedInput,
+        attachments: messageAttachments.length > 0 ? messageAttachments : undefined,
         created_at: new Date().toISOString(),
       }
 
@@ -235,6 +417,7 @@ export function useChatEngine(
 
       // 3. Persist user message
       await addMessage(chatId, userMessage)
+      clearPendingAttachments()
 
       const currentChatMessages = chats.find((chat) => chat.id === chatId)?.messages ?? []
       const requestContextMessages: LlmContextMessage[] = [
@@ -653,6 +836,12 @@ export function useChatEngine(
     handleInputChange,
     handleKeyDown,
     setInputValue,
+    pendingAttachments,
+    isAttachingSources,
+    handleAttachUrl,
+    handleAttachFiles,
+    handleRemovePendingAttachment,
+    clearPendingAttachments,
 
     // Chat operations
     handleSend,

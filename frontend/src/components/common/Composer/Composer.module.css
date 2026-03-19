@@ -62,6 +62,54 @@
   color: var(--color-muted);
 }
 
+.hidden-file-input {
+  display: none;
+}
+
+.pending-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+  margin-bottom: 6px;
+}
+
+.attachment-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-text);
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 0.74rem;
+  cursor: pointer;
+  max-width: 100%;
+}
+
+.attachment-chip:hover {
+  border-color: var(--color-accent-border);
+  background: var(--color-accent-soft);
+}
+
+.attachment-chip-kind {
+  color: var(--color-muted);
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+}
+
+.attachment-chip-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 220px;
+}
+
+.attachment-chip-remove {
+  color: var(--color-muted);
+}
+
 .composer-actions {
   position: absolute;
   bottom: 8px;

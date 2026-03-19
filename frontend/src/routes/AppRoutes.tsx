@@ -16,6 +16,15 @@ type AppRoutesProps = {
   onRegenerateAssistantMessage: (messageId: string, modelId?: string) => void
   regeneratingAssistantMessageId: string | null
   textareaRef: React.RefObject<HTMLTextAreaElement | null>
+  pendingAttachments: Array<{
+    id: string
+    kind: 'url' | 'file'
+    label: string
+  }>
+  isAttachingSources: boolean
+  onAttachUrl: (url: string) => void
+  onAttachFiles: (files: File[]) => void
+  onRemovePendingAttachment: (attachmentId: string) => void
   username: string
   onToggleSidebar: () => void
 }
@@ -33,6 +42,11 @@ function AppRoutes({
   onRegenerateAssistantMessage,
   regeneratingAssistantMessageId,
   textareaRef,
+  pendingAttachments,
+  isAttachingSources,
+  onAttachUrl,
+  onAttachFiles,
+  onRemovePendingAttachment,
   username,
   onToggleSidebar,
 }: AppRoutesProps) {
@@ -49,6 +63,11 @@ function AppRoutes({
     onRegenerateAssistantMessage,
     regeneratingAssistantMessageId,
     textareaRef,
+    pendingAttachments,
+    isAttachingSources,
+    onAttachUrl,
+    onAttachFiles,
+    onRemovePendingAttachment,
     username,
     onToggleSidebar,
   }

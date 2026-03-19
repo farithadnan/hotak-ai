@@ -33,7 +33,7 @@ Manages chat sessions and their messages.
 | `getChat` | `(id: string) => Promise<Chat>` | `GET /chats/{id}` | Fetches a single chat by ID. |
 | `updateChat` | `(id: string, data: ChatUpdate) => Promise<Chat>` | `PUT /chats/{id}` | Partial update — can change `title`, `model`, `pinned`, `messages`, or `template_id`. |
 | `deleteChat` | `(id: string) => Promise<void>` | `DELETE /chats/{id}` | Permanently deletes a chat and all its messages. |
-| `addMessage` | `(chatId: string, message: Message) => Promise<Chat>` | `POST /chats/{chatId}/messages` | Appends a single message (user or assistant) to a chat. |
+| `addMessage` | `(chatId: string, message: Message) => Promise<Chat>` | `POST /chats/{chatId}/messages` | Appends a single message (user or assistant) to a chat, including optional `attachments` metadata on user turns. |
 | `generateChatTitle` | `(chatId: string) => Promise<Chat>` | `POST /chats/{chatId}/generate-title` | Asks the LLM to generate a short title based on the first user message. Returns the updated chat. |
 
 ### Usage Flow (sending a message)
@@ -102,6 +102,7 @@ Manages the vector store's document sources.
 |---|---|
 | `DocumentLoadRequest` | `sources: string[], chunk_size?: number, chunk_overlap?: number` |
 | `DocumentLoadResponse` | `loaded: number, skipped: number, cached_sources: string[], loaded_sources: string[], failed_sources: string[]` |
+| `DocumentUploadResponse` | `loaded, skipped, uploaded_sources, cached_sources, loaded_sources, failed_sources, failed_files, file_results` |
 | `DocumentSource` | `source: string, chunks: number` |
 | `DocumentListResponse` | `total_sources: number, sources: DocumentSource[]` |
 
@@ -110,6 +111,7 @@ Manages the vector store's document sources.
 | Function | Signature | Endpoint | Description |
 |---|---|---|---|
 | `loadDocuments` | `(request: DocumentLoadRequest) => Promise<DocumentLoadResponse>` | `POST /documents/load` | Loads documents into the vector store. Skips already-cached sources. Returns counts of loaded/skipped/failed. |
+| `uploadDocuments` | `(files: File[]) => Promise<DocumentUploadResponse>` | `POST /documents/upload` | Uploads local files as multipart form data and ingests them into vector store. Returns per-file status. |
 | `listDocuments` | `() => Promise<DocumentListResponse>` | `GET /documents` | Lists all document sources currently in the vector store with their chunk counts. |
 
 ---

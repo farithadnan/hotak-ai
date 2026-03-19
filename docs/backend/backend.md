@@ -80,6 +80,8 @@ Centralized constants and environment-sourced secrets.
 | `CHUNK_SIZE` | `1000` | Text splitting chunk size |
 | `CHUNK_OVERLAP` | `200` | Text splitting overlap |
 | `RETRIEVAL_K` | env or `5` | Top-K results for retrieval |
+| `UPLOADS_DIRECTORY` | `data/uploads/` | Where multipart file uploads are stored before ingestion |
+| `MAX_UPLOAD_FILE_SIZE_BYTES` | env or `10485760` | Per-file upload size limit for `/documents/upload` |
 
 ### `app/config/prompts.py`
 
@@ -147,6 +149,7 @@ Current limitation:
 | Method | Path | Body | Response | Description |
 |---|---|---|---|---|
 | POST | `/documents/load` | `{ sources: string[] }` | `{ loaded, skipped, cached_sources, loaded_sources, failed_sources }` | Load documents into the vector store. Skips already-cached sources. |
+| POST | `/documents/upload` | `multipart/form-data` (`files[]`) | `{ loaded, skipped, uploaded_sources, cached_sources, loaded_sources, failed_sources, failed_files, file_results }` | Upload local files, persist to `data/uploads`, ingest uncached sources, and return per-file status. |
 | GET | `/documents` | — | `{ total_sources, sources: [{ source, chunks }] }` | List all documents with chunk counts |
 
 ### Models — `app/api/models.py`

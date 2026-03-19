@@ -21,6 +21,12 @@
 14. [x] **Frontend:** Assistant markdown rendering + deduped clickable sources - ✅ Done.
 	- [x] Assistant text renders markdown lists/links/code instead of raw markdown punctuation.
 	- [x] Duplicate sources are collapsed and HTTP sources open in a new tab.
-15. [ ] **Backend:** Optional rolling summary memory block for long conversations.
+15. [x] **Backend/Frontend:** Chat attachment ingestion baseline (URL + file upload) - ✅ Done.
+	- [x] Composer can queue URL/file attachments before send.
+	- [x] Send flow ingests URL sources via `/documents/load` and file uploads via `/documents/upload`.
+	- [x] User messages persist attachment metadata and render attachment chips.
+16. [ ] **Frontend:** Replace prompt-based URL attach with inline URL input popover.
+17. [ ] **Frontend:** Add explicit attachment error toasts and progress indicators.
+18. [ ] **Backend:** Optional rolling summary memory block for long conversations.
 
 *Core chat + model workflow is working, including multi-turn model switching and budgeted history packing. Next: model accessibility UX, telemetry cleanup, and summary-memory hardening.*

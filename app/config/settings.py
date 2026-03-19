@@ -65,3 +65,9 @@ CHUNK_OVERLAP = 200
 # RETRIEVAL SETTINGS
 # ==========================================
 RETRIEVAL_K = _get_int_env("RETRIEVAL_K", 5)
+
+# ==========================================
+# DOCUMENT UPLOAD SETTINGS
+# ==========================================
+UPLOADS_DIRECTORY = DATA_DIRECTORY / "uploads"
+MAX_UPLOAD_FILE_SIZE_BYTES = _get_int_env("MAX_UPLOAD_FILE_SIZE_BYTES", 10 * 1024 * 1024)

@@ -26,12 +26,22 @@ The definitive type definitions for the application's data structures.
 ### Message
 
 ```ts
+interface MessageAttachment {
+  id: string
+  kind: 'url' | 'file'
+  label: string
+  source: string
+  status?: 'pending' | 'ingested' | 'failed'
+  error?: string
+}
+
 interface Message {
   id: string               // UUID
   role: 'user' | 'assistant' | 'system'
   content: string          // The message text (markdown for assistant)
   model?: string           // Model that produced this reply (assistant messages)
   sources?: string[]       // Citation sources (assistant messages only)
+  attachments?: MessageAttachment[] // URL/file attachments on user messages
   created_at: string       // ISO datetime
 }
 ```
@@ -42,6 +52,7 @@ A single message in a conversation. `role` determines who sent it:
 - `system` — system instructions (not displayed)
 
 `model` is optional and used for message-level provenance when users switch models mid-chat.
+`attachments` stores user-attached URL/file metadata and ingestion status for display/debugging.
 
 ---
 

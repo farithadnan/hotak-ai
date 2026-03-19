@@ -84,15 +84,18 @@ This is the most important flow in the app. Here's what happens step-by-step whe
 1. **User types** in the `<Composer>` textarea → `inputValue` state updates
 2. **User presses Enter** → `handleSend()` fires
 3. If no active chat exists, a **new chat is created** via `POST /chats` → added to `chats` state, URL navigated
-4. A **user message** and an **empty pending assistant message** are added to local state immediately (optimistic UI)
-5. `chatRuntime[chatId].isResponding` is set to `true` → UI shows typing indicator
-6. The **user message is persisted** to the backend via `POST /chats/{id}/messages`
-7. **Streaming begins** via `POST /query/stream` with `question`, `chat_id`, selected `model`, and context `messages` (when available) → `streamAssistantText()` reads chunks via `ReadableStream`
-8. Each chunk **updates the pending assistant's content** in real-time → user sees text appear
-9. When streaming finishes, the **pending assistant is replaced** with the finalized message (parsed for sources/citations and stamped with the resolved model)
-10. The **assistant message is persisted** via `POST /chats/{id}/messages`
-11. `chatRuntime[chatId].isResponding` is set to `false` → typing indicator disappears
-12. If the chat title is "New Chat", a **title is auto-generated** via `POST /chats/{id}/generate-title`
+4. Pending composer attachments are ingested first:
+    - URLs via `POST /documents/load`
+    - Files via `POST /documents/upload`
+5. A **user message** (including attachment metadata and ingestion status) and an **empty pending assistant message** are added to local state immediately (optimistic UI)
+6. `chatRuntime[chatId].isResponding` is set to `true` → UI shows typing indicator
+7. The **user message is persisted** to the backend via `POST /chats/{id}/messages`
+8. **Streaming begins** via `POST /query/stream` with `question`, `chat_id`, selected `model`, and context `messages` (when available) → `streamAssistantText()` reads chunks via `ReadableStream`
+9. Each chunk **updates the pending assistant's content** in real-time → user sees text appear
+10. When streaming finishes, the **pending assistant is replaced** with the finalized message (parsed for sources/citations and stamped with the resolved model)
+11. The **assistant message is persisted** via `POST /chats/{id}/messages`
+12. `chatRuntime[chatId].isResponding` is set to `false` → typing indicator disappears
+13. If the chat title is "New Chat", a **title is auto-generated** via `POST /chats/{id}/generate-title`
     - `chatRuntime[chatId].isGeneratingTitle` = `true` → sidebar shows spinner
     - Title updates → spinner disappears
 
@@ -132,6 +135,12 @@ Templates are pre-configured knowledge bases. Each template has:
 - Settings (model, temperature, chunk size, retrieval K, system prompt)
 
 Templates are managed separately from chats via the `/templates` routes.
+
+### Chat Attachments vs Assistant Sources
+
+- A user attachment means "this source was attached and ingested for retrieval."
+- Assistant **Sources** only list documents that were actually retrieved/cited in that answer.
+- Therefore, an attachment may be visible in the user message but absent from assistant Sources if it was not used by retrieval for that specific reply.
 
 ### Optimistic UI
 

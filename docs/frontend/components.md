@@ -111,6 +111,11 @@ The message input bar at the bottom of the chat window.
 | `textareaRef` | `RefObject<HTMLTextAreaElement \| null>` | Ref for auto-resize. |
 | `className?` | `string` | Additional CSS class. |
 | `mode?` | `'default' \| 'edit'` | Display mode. Default shows full toolbar; edit shows Cancel + Send. |
+| `pendingAttachments?` | `Array<{ id, kind, label }>` | Composer-level queued URL/file attachments (before send). |
+| `isAttaching?` | `boolean` | Disables send while attachment ingestion/upload is in progress. |
+| `onAttachUrl?` | `(url: string) => void` | Adds a URL attachment from composer UI. |
+| `onAttachFiles?` | `(files: File[]) => void` | Adds file attachments selected from local disk. |
+| `onRemoveAttachment?` | `(attachmentId: string) => void` | Removes one queued attachment from the composer. |
 
 #### State
 
@@ -121,6 +126,7 @@ The message input bar at the bottom of the chat window.
 #### Behavior
 
 - **Default mode:** Shows a Plus button (opens attach popover with Upload Files, Attach URL, Attach Templates), Briefcase button (tools), Mic button, and a Send button (visible only when input is non-empty).
+- Shows queued attachment chips inside the composer; clicking a chip removes it.
 - **Edit mode:** Shows Cancel and Send text buttons, no left-side action buttons.
 - The attach popover uses `useFloatingPopover` for positioning.
 
@@ -277,6 +283,11 @@ The scrollable conversation view — renders all messages and the composer.
 | `onRegenerateAssistantMessage` | `(messageId) => void` | Regenerate callback. |
 | `regeneratingAssistantMessageId` | `string \| null` | Which message is regenerating. |
 | `textareaRef` | ref | Composer textarea ref. |
+| `pendingAttachments` | `Array<{ id, kind, label }>` | Queued URL/file attachments shown in composer before send. |
+| `isAttachingSources` | `boolean` | Whether attachment ingestion is currently running. |
+| `onAttachUrl` | `(url) => void` | Queues URL attachment in chat engine. |
+| `onAttachFiles` | `(files) => void` | Queues local file attachments in chat engine. |
+| `onRemovePendingAttachment` | `(attachmentId) => void` | Removes one queued attachment. |
 | `username?` | `string` | Display name for user bubbles. |
 
 #### State

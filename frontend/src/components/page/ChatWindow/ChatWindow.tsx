@@ -26,6 +26,15 @@ interface ChatWindowProps {
   onRegenerateAssistantMessage: (messageId: string) => void;
   regeneratingAssistantMessageId: string | null;
   textareaRef: React.RefObject<HTMLTextAreaElement | null>;
+  pendingAttachments: Array<{
+    id: string;
+    kind: 'url' | 'file';
+    label: string;
+  }>;
+  isAttachingSources: boolean;
+  onAttachUrl: (url: string) => void;
+  onAttachFiles: (files: File[]) => void;
+  onRemovePendingAttachment: (attachmentId: string) => void;
   username?: string;
 }
 
@@ -42,6 +51,11 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   onRegenerateAssistantMessage,
   regeneratingAssistantMessageId,
   textareaRef,
+  pendingAttachments,
+  isAttachingSources,
+  onAttachUrl,
+  onAttachFiles,
+  onRemovePendingAttachment,
   username = 'User',
 }) => {
   const [editingMessageId, setEditingMessageId] = React.useState<string | null>(null);
@@ -223,6 +237,11 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             onSend={onSend}
             textareaRef={textareaRef}
             className="empty-composer"
+            pendingAttachments={pendingAttachments}
+            isAttaching={isAttachingSources}
+            onAttachUrl={onAttachUrl}
+            onAttachFiles={onAttachFiles}
+            onRemoveAttachment={onRemovePendingAttachment}
           />
         </div>
       )}
@@ -258,6 +277,34 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                     ) : (
                       <>
                         <div className="bubble">{message.content}</div>
+                        {message.attachments && message.attachments.length > 0 && (
+                          <div className="user-attachments-row">
+                            {message.attachments.map((attachment) => {
+                              const isUrl = attachment.kind === 'url' && /^https?:\/\//i.test(attachment.source);
+                              const statusClass = attachment.status === 'failed' ? 'is-failed' : 'is-ingested';
+
+                              if (isUrl) {
+                                return (
+                                  <a
+                                    key={attachment.id}
+                                    className={`user-attachment-pill ${statusClass}`}
+                                    href={attachment.source}
+                                    target={EXTERNAL_LINK_TARGET}
+                                    rel={EXTERNAL_LINK_REL}
+                                  >
+                                    {attachment.label}
+                                  </a>
+                                );
+                              }
+
+                              return (
+                                <span key={attachment.id} className={`user-attachment-pill ${statusClass}`}>
+                                  {attachment.label}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        )}
                         <div className="message-actions">
                           {message.id === lastUserMessageId && (
                             <button
@@ -402,6 +449,11 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
               onKeyDown={onKeyDown}
               onSend={onSend}
               textareaRef={textareaRef}
+              pendingAttachments={pendingAttachments}
+              isAttaching={isAttachingSources}
+              onAttachUrl={onAttachUrl}
+              onAttachFiles={onAttachFiles}
+              onRemoveAttachment={onRemovePendingAttachment}
             />
           </div>
         </>
