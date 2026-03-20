@@ -62,6 +62,12 @@ CHUNK_SIZE = 1000
 CHUNK_OVERLAP = 200
 
 # ==========================================
+# SUMMARY MEMORY SETTINGS
+# ==========================================
+ENABLE_SUMMARY_MEMORY = os.getenv("ENABLE_SUMMARY_MEMORY", "true").lower() == "true"
+SUMMARY_MAX_TOKENS = _get_int_env("SUMMARY_MAX_TOKENS", 200)
+
+# ==========================================
 # RETRIEVAL SETTINGS
 # ==========================================
 RETRIEVAL_K = _get_int_env("RETRIEVAL_K", 5)

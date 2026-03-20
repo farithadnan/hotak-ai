@@ -75,7 +75,10 @@ export const listDocuments = async (): Promise<DocumentListResponse> => {
 /**
  * Upload files and ingest them into vector store.
  */
-export const uploadDocuments = async (files: File[]): Promise<DocumentUploadResponse> => {
+export const uploadDocuments = async (
+  files: File[],
+  onUploadProgress?: (percent: number) => void,
+): Promise<DocumentUploadResponse> => {
   try {
     const formData = new FormData();
     files.forEach((file) => formData.append('files', file));
@@ -84,6 +87,13 @@ export const uploadDocuments = async (files: File[]): Promise<DocumentUploadResp
       headers: {
         'Content-Type': 'multipart/form-data',
       },
+      onUploadProgress: onUploadProgress
+        ? (progressEvent) => {
+            if (progressEvent.total) {
+              onUploadProgress(Math.round((progressEvent.loaded / progressEvent.total) * 100))
+            }
+          }
+        : undefined,
     });
 
     return response.data;

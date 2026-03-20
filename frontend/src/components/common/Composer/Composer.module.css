@@ -149,6 +149,13 @@
   border-color: var(--color-accent-border);
 }
 
+.attachment-chip-progress {
+  color: var(--color-accent);
+  font-size: 0.68rem;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
 .attachment-chip-ready {
   border-color: rgba(90, 196, 132, 0.55);
 }

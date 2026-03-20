@@ -24,6 +24,7 @@ type ComposerProps = {
     kind: 'url' | 'file'
     label: string
     status?: 'queued' | 'uploading' | 'ingesting' | 'ready' | 'failed'
+    uploadProgress?: number
     error?: string
   }>
   availableTemplates?: Array<{
@@ -180,6 +181,9 @@ export function Composer({
                     {attachment.kind === 'url' ? 'URL' : 'FILE'}
                   </span>
                   <span className={style['attachment-chip-label']}>{attachment.label}</span>
+                  {attachment.status === 'uploading' && attachment.uploadProgress !== undefined && (
+                    <span className={style['attachment-chip-progress']}>{attachment.uploadProgress}%</span>
+                  )}
                   <span className={style['attachment-chip-remove']}>x</span>
                 </button>
               ))}

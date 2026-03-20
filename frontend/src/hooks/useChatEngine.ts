@@ -28,6 +28,7 @@ type PendingAttachment = {
   source: string
   file?: File
   status: 'queued' | 'uploading' | 'ingesting' | 'ready' | 'failed'
+  uploadProgress?: number
   error?: string
 }
 
@@ -343,9 +344,11 @@ export function useChatEngine(
 
       if (fileAttachments.length > 0) {
         for (const item of fileAttachments) {
-          updatePendingAttachment(item.id, { status: 'uploading', error: undefined })
+          updatePendingAttachment(item.id, { status: 'uploading', uploadProgress: 0, error: undefined })
           try {
-            const uploadResult = await uploadDocuments([item.file as File])
+            const uploadResult = await uploadDocuments([item.file as File], (percent) => {
+              updatePendingAttachment(item.id, { uploadProgress: percent })
+            })
             const result = uploadResult.file_results[0]
             const isIngested = result?.status === 'ingested' || result?.status === 'cached'
             const status: MessageAttachment['status'] = isIngested ? 'ingested' : 'failed'

@@ -16,11 +16,13 @@ from ..config.settings import (
     CHAT_HISTORY_MAX_MESSAGES,
     CHAT_HISTORY_MAX_MESSAGE_TOKENS,
     CHAT_HISTORY_MAX_TOKENS,
+    ENABLE_SUMMARY_MEMORY,
     LLM_MAX_TOKENS,
     LLM_MODEL,
     LLM_TEMPERATURE,
     RETRIEVAL_K,
     STREAM_MAX_CHARS,
+    SUMMARY_MAX_TOKENS,
 )
 from ..utils.logger import setup_logger
 
@@ -28,6 +30,10 @@ logger = setup_logger(__name__)
 router = APIRouter()
 
 STREAM_MODEL_FALLBACK_PREFIX = "[[MODEL_FALLBACK:"
+
+# In-memory summary cache: chat_id -> (overflow_count, summary_text)
+# Ephemeral — intentionally not persisted across server restarts.
+_summary_cache: dict[str, tuple[int, str]] = {}
 
 
 def _extract_retry_after_seconds(error: Exception) -> float | None:
@@ -185,9 +191,10 @@ def _get_messages_for_llm(
     chat_id: str | None = None,
     messages: list[QueryMessage] | None = None,
     model_name: str | None = None,
-) -> list[dict[str, str]]:
+) -> tuple[list[dict[str, str]], list[dict[str, str]]]:
     """
     Build a packed history window for the LLM using a conservative token budget.
+    Returns (packed_messages, source_messages) so callers can detect overflow.
     """
     source_messages = _prepare_history_source_messages(question, chat_id, messages)
     budget = _resolve_history_budget(model_name)
@@ -251,7 +258,7 @@ def _get_messages_for_llm(
         tokens_used,
         token_budget,
     )
-    return packed_messages
+    return packed_messages, source_messages
 
 
 def _resolve_agent_runtime_config(http_request: Request, request: QueryRequest) -> AgentRuntimeConfig:
@@ -292,28 +299,84 @@ def _resolve_agent_runtime_config(http_request: Request, request: QueryRequest) 
     )
 
 
-def _build_payload_messages_with_system_prompt(
+async def _get_or_update_summary(
+    chat_id: str,
+    overflow_messages: list[dict[str, str]],
+) -> str | None:
+    """Return a cached or freshly generated summary of messages that overflowed the history window."""
+    cached = _summary_cache.get(chat_id)
+    if cached and cached[0] >= len(overflow_messages):
+        return cached[1]
+
+    transcript = "\n".join(
+        f"{m['role'].capitalize()}: {m['content'][:400]}"
+        for m in overflow_messages
+    )
+    summary_llm = init_chat_model(model="gpt-4o-mini", temperature=0, max_tokens=SUMMARY_MAX_TOKENS)
+    try:
+        response = await summary_llm.ainvoke([
+            {
+                "role": "system",
+                "content": (
+                    "Summarize the following conversation excerpt in 3-5 sentences. "
+                    "Preserve key facts, decisions, and context that would help continue the conversation."
+                ),
+            },
+            {"role": "user", "content": transcript},
+        ])
+        summary = (response.content or "").strip()
+        if summary:
+            _summary_cache[chat_id] = (len(overflow_messages), summary)
+            logger.info("Generated summary for chat=%s covering %s overflow messages", chat_id, len(overflow_messages))
+            return summary
+    except Exception as exc:
+        logger.warning("Failed to generate conversation summary for chat=%s: %s", chat_id, exc)
+
+    return None
+
+
+async def _build_payload_messages_with_system_prompt(
     question: str,
     chat_id: str | None,
     messages: list[QueryMessage] | None,
     model_name: str,
     system_prompt: str | None,
 ) -> list[dict[str, str]]:
-    llm_messages = _get_messages_for_llm(question, chat_id, messages, model_name=model_name)
+    packed_messages, source_messages = _get_messages_for_llm(question, chat_id, messages, model_name=model_name)
 
+    # --- Rolling summary injection ---
+    summary_message: dict[str, str] | None = None
+    if ENABLE_SUMMARY_MEMORY and chat_id:
+        non_system_source = [m for m in source_messages if m.get("role") != "system"]
+        non_system_packed = [m for m in packed_messages if m.get("role") != "system"]
+        if len(non_system_source) > len(non_system_packed):
+            overflow_count = len(non_system_source) - len(non_system_packed)
+            overflow_messages = non_system_source[:overflow_count]
+            summary_text = await _get_or_update_summary(chat_id, overflow_messages)
+            if summary_text:
+                summary_message = {
+                    "role": "system",
+                    "content": f"Summary of earlier conversation:\n{summary_text}",
+                }
+
+    # --- Assemble final message list ---
     normalized_system_prompt = (system_prompt or "").strip()
-    if not normalized_system_prompt:
-        return llm_messages
 
-    if llm_messages:
-        first_message = llm_messages[0]
-        if (
-            first_message.get("role") == "system"
-            and _normalize_text(first_message.get("content", "")) == _normalize_text(normalized_system_prompt)
-        ):
-            return llm_messages
+    # Strip any leading system message already in packed_messages to avoid duplication
+    rest = packed_messages
+    if rest and rest[0].get("role") == "system":
+        rest = rest[1:]
 
-    return [{"role": "system", "content": normalized_system_prompt}, *llm_messages]
+    header: list[dict[str, str]] = []
+    if normalized_system_prompt:
+        header.append({"role": "system", "content": normalized_system_prompt})
+    if summary_message:
+        header.append(summary_message)
+
+    if not header:
+        return packed_messages
+
+    return [*header, *rest]
 
 
 def _get_rag_agent_for_config(http_request: Request, runtime_config: AgentRuntimeConfig):
@@ -379,7 +442,7 @@ async def query_endpoint(request: QueryRequest, http_request: Request):
 
         warning_message = None
         payload = {
-            "messages": _build_payload_messages_with_system_prompt(
+            "messages": await _build_payload_messages_with_system_prompt(
                 request.question,
                 request.chat_id,
                 request.messages,
@@ -544,7 +607,7 @@ async def query_stream_endpoint(request: QueryRequest, http_request: Request):
             runtime_config = _resolve_agent_runtime_config(http_request, request)
             rag_agent, model_used = _get_rag_agent_for_config(http_request, runtime_config)
             payload = {
-                "messages": _build_payload_messages_with_system_prompt(
+                "messages": await _build_payload_messages_with_system_prompt(
                     request.question,
                     request.chat_id,
                     request.messages,
