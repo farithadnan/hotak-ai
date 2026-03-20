@@ -177,53 +177,57 @@ export function useChatEngine(
       return
     }
 
-    setPendingAttachments((prev) => {
-      const dedupeKeys = new Set(prev.filter((item) => item.kind === 'file').map((item) => item.source))
-      const additions: PendingAttachment[] = []
-      const validationErrors: string[] = []
+    const validationErrors: string[] = []
+    const candidates: PendingAttachment[] = []
 
-      for (const file of files) {
-        const extension = file.name.slice(file.name.lastIndexOf('.')).toLowerCase()
-        if (!ALLOWED_ATTACHMENT_FILE_EXTENSIONS.includes(extension as (typeof ALLOWED_ATTACHMENT_FILE_EXTENSIONS)[number])) {
-          validationErrors.push(`${file.name}: unsupported file type ${extension || '(none)'}`)
-          continue
-        }
-        if (file.size > MAX_ATTACHMENT_FILE_SIZE_BYTES) {
-          validationErrors.push(`${file.name}: exceeds ${formatFileSize(MAX_ATTACHMENT_FILE_SIZE_BYTES)}`)
-          continue
-        }
-
-        const sourceKey = `${file.name}:${file.size}:${file.lastModified}`
-        if (dedupeKeys.has(sourceKey)) {
-          continue
-        }
-        dedupeKeys.add(sourceKey)
-        additions.push({
-          id: crypto.randomUUID(),
-          kind: 'file',
-          label: file.name,
-          source: sourceKey,
-          file,
-          status: 'queued',
-        })
+    for (const file of files) {
+      const extension = file.name.slice(file.name.lastIndexOf('.')).toLowerCase()
+      if (!ALLOWED_ATTACHMENT_FILE_EXTENSIONS.includes(extension as (typeof ALLOWED_ATTACHMENT_FILE_EXTENSIONS)[number])) {
+        validationErrors.push(`${file.name}: unsupported file type ${extension || '(none)'}`)
+        continue
       }
+      if (file.size > MAX_ATTACHMENT_FILE_SIZE_BYTES) {
+        validationErrors.push(`${file.name}: exceeds ${formatFileSize(MAX_ATTACHMENT_FILE_SIZE_BYTES)}`)
+        continue
+      }
+      const sourceKey = `${file.name}:${file.size}:${file.lastModified}`
+      candidates.push({
+        id: crypto.randomUUID(),
+        kind: 'file',
+        label: file.name,
+        source: sourceKey,
+        file,
+        status: 'queued',
+      })
+    }
 
-      if (additions.length === 0) {
-          if (validationErrors.length > 0) {
-            showAttachmentFeedback({
-              title: 'File validation failed',
-              message: validationErrors.slice(0, 2).join(' | '),
-              type: 'error',
-            })
-          }
-      } else if (validationErrors.length > 0) {
+    // Show feedback outside the state updater — updaters must be pure (no side effects)
+    if (candidates.length === 0) {
+      if (validationErrors.length > 0) {
         showAttachmentFeedback({
-          title: 'Some files were skipped',
+          title: 'File validation failed',
           message: validationErrors.slice(0, 2).join(' | '),
           type: 'error',
         })
       }
+      return
+    }
 
+    if (validationErrors.length > 0) {
+      showAttachmentFeedback({
+        title: 'Some files were skipped',
+        message: validationErrors.slice(0, 2).join(' | '),
+        type: 'error',
+      })
+    }
+
+    setPendingAttachments((prev) => {
+      const dedupeKeys = new Set(prev.filter((item) => item.kind === 'file').map((item) => item.source))
+      const additions = candidates.filter((item) => {
+        if (dedupeKeys.has(item.source)) return false
+        dedupeKeys.add(item.source)
+        return true
+      })
       return [...prev, ...additions]
     })
   }
