@@ -1,6 +1,7 @@
 import { useState, useRef, useMemo } from 'react'
 import { Archive, BookType, LoaderCircle, LogOut, MoreHorizontal, PanelRightClose, PanelRightOpen, Pencil, Pin, Settings, SquarePen, Trash2 } from '../../icons'
 import { useFloatingPopover } from '../../hooks/useFloatingPopover'
+import { prettifyModelName } from '../../services/models'
 import {
   SIDEBAR_CHAT_ACTIONS_POPOVER_HEIGHT,
   SIDEBAR_CHAT_ACTIONS_POPOVER_WIDTH,
@@ -301,31 +302,36 @@ export function Sidebar({
                 }}
               >
                 <span className="sidebar-item-title-wrap">
-                  {chatRuntime[chat.id]?.isGeneratingTitle && <LoaderCircle size={12} className="sidebar-title-loader spin" />}
-                  {renamingChatId === chat.id ? (
-                    <input
-                      className="sidebar-chat-title-input"
-                      value={renamingValue}
-                      onChange={(e) => setRenamingValue(e.target.value)}
-                      onClick={(e) => e.stopPropagation()}
-                      onBlur={() => {
-                        void handleSubmitRenameChat(chat.id)
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault()
+                  <span className="sidebar-item-title-row">
+                    {chatRuntime[chat.id]?.isGeneratingTitle && <LoaderCircle size={12} className="sidebar-title-loader spin" />}
+                    {renamingChatId === chat.id ? (
+                      <input
+                        className="sidebar-chat-title-input"
+                        value={renamingValue}
+                        onChange={(e) => setRenamingValue(e.target.value)}
+                        onClick={(e) => e.stopPropagation()}
+                        onBlur={() => {
                           void handleSubmitRenameChat(chat.id)
-                        }
-                        if (e.key === 'Escape') {
-                          e.preventDefault()
-                          setRenamingChatId(null)
-                          setRenamingValue('')
-                        }
-                      }}
-                      autoFocus
-                    />
-                  ) : (
-                    <span className="sidebar-item-title">{chat.title}</span>
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault()
+                            void handleSubmitRenameChat(chat.id)
+                          }
+                          if (e.key === 'Escape') {
+                            e.preventDefault()
+                            setRenamingChatId(null)
+                            setRenamingValue('')
+                          }
+                        }}
+                        autoFocus
+                      />
+                    ) : (
+                      <span className="sidebar-item-title">{chat.title}</span>
+                    )}
+                  </span>
+                  {chat.model && renamingChatId !== chat.id && (
+                    <span className="sidebar-chat-model">{prettifyModelName(chat.model)}</span>
                   )}
                 </span>
                 {chat.pinned && <Pin size={12} className="sidebar-chat-pin-indicator" />}
