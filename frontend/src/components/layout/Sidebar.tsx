@@ -1,4 +1,5 @@
 import { useState, useRef, useMemo } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { Archive, BookType, LoaderCircle, LogOut, MoreHorizontal, PanelRightClose, PanelRightOpen, Pencil, Pin, Settings, ShieldCheck, SquarePen, Trash2 } from '../../icons'
 import { useAuth } from '../../contexts/AuthContext'
@@ -361,7 +362,7 @@ export function Sidebar({
               </div>
             ))}
 
-            {activeChatMenuId && (
+            {activeChatMenuId && createPortal(
               <div
                 ref={chatActionsPopover.popoverRef}
                 className="floating-popover chat-actions-popover"
@@ -383,7 +384,8 @@ export function Sidebar({
                   <Trash2 size={16} />
                   <span>Delete</span>
                 </button>
-              </div>
+              </div>,
+              document.body
             )}
           </div>
 
@@ -408,7 +410,7 @@ export function Sidebar({
                 </span>
                 {!isSidebarCollapsed && <span className="profile-name">{user?.username ?? 'Profile'}</span>}
               </button>
-              {isProfilePopoverOpen && (
+              {isProfilePopoverOpen && createPortal(
                 <div
                   ref={profilePopover.popoverRef}
                   className="floating-popover profile-popover"
@@ -459,7 +461,8 @@ export function Sidebar({
                     <LogOut size={18} />
                     <span>Sign Out</span>
                   </button>
-                </div>
+                </div>,
+                document.body
               )}
             </div>
           </div>
