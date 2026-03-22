@@ -158,7 +158,7 @@ We are building a template-based knowledge management system ("Brains") allowing
 - [x] **Backend:** `AgentRuntimeConfig` carries `user_id`; agent cache key includes `user_id` so each user gets an isolated retrieval agent
 - [x] **Backend:** `/documents` list endpoint filtered by `user_id` — users only see their own ingested sources
 
-### Phase 7.4 — User Settings ✅ Done
+### Phase 7.4 — User Settings + Branding ✅ Done
 - [x] **Backend:** `preferences` JSON column on `users` table (incremental SQLite migration); `DEFAULT_PREFERENCES` constant
 - [x] **Backend:** `PATCH /auth/me` — update username/email with uniqueness checks
 - [x] **Backend:** `POST /auth/me/change-password` — verify current password, hash + store new (204)
@@ -173,6 +173,8 @@ We are building a template-based knowledge management system ("Brains") allowing
 - [x] **Frontend:** Settings button in profile popover wired to open `UserSettingsModal` mounted in `AppShell`
 - [x] **Frontend:** Avatar base64 image rendered in sidebar profile button + profile popover header
 - [x] **Frontend:** Chat scroll container gets `chat-bg-{value}` class from user preferences (dots / grid / gradient-warm / cool / purple)
+- [x] **Frontend:** Custom app logo (`hotak-ai-logo.png`) replaces "HA" text in sidebar and auth brand panel
+- [x] **Frontend:** Favicon suite (ico, 16/32px png, apple-touch-icon, android-chrome 192/512, webmanifest) wired into `index.html`; page title set to "Hotak AI"
 
 ### Phase 7.5 — Docker
 - [ ] `Dockerfile` for backend (FastAPI + ChromaDB volume mount)
