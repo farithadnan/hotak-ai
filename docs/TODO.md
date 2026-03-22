@@ -95,6 +95,10 @@
 	- [x] Auth pages split layout (brand panel left + form right; mobile responsive); login placeholders added.
 	- [x] Settings button wired in profile popover → `UserSettingsModal` mounted in `AppShell`.
 	- [x] Avatar shown in sidebar profile button + popover header; chat bg class applied to scroll container.
+	- [x] Glass sidebar + header with directional fade; full-viewport bg via `app-shell`; all modals/dialogs/forms glass.
+	- [x] Sidebar/header popovers portaled to `document.body` to fix `backdrop-filter` stacking context bug.
+	- [x] Theme-adaptive gradient backgrounds (`color-mix` with `var(--color-bg)`); accent on range/checkbox/radio globally.
+	- [x] App logo switched to `hotak-ai-logo.webp`; cyberpunk login bg image; favicon suite in `public/`; title "Hotak AI".
 
 31. [ ] **Frontend:** Composer Tools integration *(future feature — button disabled/stubbed)*
 	- [ ] Define tool schema and backend tool-call routing.

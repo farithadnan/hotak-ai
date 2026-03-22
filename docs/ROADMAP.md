@@ -173,8 +173,14 @@ We are building a template-based knowledge management system ("Brains") allowing
 - [x] **Frontend:** Settings button in profile popover wired to open `UserSettingsModal` mounted in `AppShell`
 - [x] **Frontend:** Avatar base64 image rendered in sidebar profile button + profile popover header
 - [x] **Frontend:** Chat scroll container gets `chat-bg-{value}` class from user preferences (dots / grid / gradient-warm / cool / purple)
-- [x] **Frontend:** Custom app logo (`hotak-ai-logo.png`) replaces "HA" text in sidebar and auth brand panel
+- [x] **Frontend:** Custom app logo (`hotak-ai-logo.webp`) replaces "HA" text in sidebar and auth brand panel
 - [x] **Frontend:** Favicon suite (ico, 16/32px png, apple-touch-icon, android-chrome 192/512, webmanifest) wired into `index.html`; page title set to "Hotak AI"
+- [x] **Frontend:** Cyberpunk background image on login brand panel with dark overlay and strong text shadows
+- [x] **Frontend:** Glass sidebar/header (directional fade + backdrop-blur); background applied to full `app-shell`; all panels use glass treatment
+- [x] **Frontend:** Sidebar/header popovers rendered via `createPortal` to escape `backdrop-filter` stacking context
+- [x] **Frontend:** Theme-adaptive gradient backgrounds using `color-mix` with `var(--color-bg)`; works in dark and light mode
+- [x] **Frontend:** Accent color on native form controls (`input[type=range/checkbox/radio]`), template card hover, and action buttons
+- [x] **Frontend:** Composer Tools button disabled/stubbed (coming soon)
 
 ### Phase 7.5 — Docker
 - [ ] `Dockerfile` for backend (FastAPI + ChromaDB volume mount)
