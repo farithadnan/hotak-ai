@@ -244,7 +244,7 @@ export function Sidebar({
         <aside className={isSidebarCollapsed ? 'sidebar is-collapsed' : 'sidebar'}>
           <div className="sidebar-header">
             <div className="logo-wrap">
-              <div className="logo-mark">HA</div>
+              <div className="logo-mark"><img src="/src/assets/hotak-ai-logo.png" alt="Hotak AI" className="logo-mark-img" /></div>
               {isSidebarCollapsed && (
                 <button
                   className="icon-button sidebar-toggle is-replace"
