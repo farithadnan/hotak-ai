@@ -41,7 +41,7 @@
 }
 
 .btn {
-  @apply flex-shrink-0 border border-transparent font-semibold cursor-pointer whitespace-nowrap;
+  @apply shrink-0 border border-transparent font-semibold cursor-pointer whitespace-nowrap;
   padding: 0.32rem 0.62rem;
   border-radius: 7px;
   font-size: 0.78rem;

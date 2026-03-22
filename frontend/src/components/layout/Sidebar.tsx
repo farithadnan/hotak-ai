@@ -1,5 +1,7 @@
 import { useState, useRef, useMemo } from 'react'
-import { Archive, BookType, LoaderCircle, LogOut, MoreHorizontal, PanelRightClose, PanelRightOpen, Pencil, Pin, Settings, SquarePen, Trash2 } from '../../icons'
+import { useNavigate } from 'react-router-dom'
+import { Archive, BookType, LoaderCircle, LogOut, MoreHorizontal, PanelRightClose, PanelRightOpen, Pencil, Pin, Settings, ShieldCheck, SquarePen, Trash2 } from '../../icons'
+import { useAuth } from '../../contexts/AuthContext'
 import { useFloatingPopover } from '../../hooks/useFloatingPopover'
 import { prettifyModelName } from '../../services/models'
 import {
@@ -41,6 +43,8 @@ export function Sidebar({
   onOpenTemplates,
   onShowToastr,
 }: SidebarProps) {
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
   const [isProfilePopoverOpen, setIsProfilePopoverOpen] = useState(false)
   const [activeChatMenuId, setActiveChatMenuId] = useState<string | null>(null)
   const [renamingChatId, setRenamingChatId] = useState<string | null>(null)
@@ -395,8 +399,8 @@ export function Sidebar({
                   setIsProfilePopoverOpen(true)
                 }}
               >
-                <span className="profile-avatar">U</span>
-                {!isSidebarCollapsed && <span className="profile-name">User Profile</span>}
+                <span className="profile-avatar">{user?.username?.[0]?.toUpperCase() ?? 'U'}</span>
+                {!isSidebarCollapsed && <span className="profile-name">{user?.username ?? 'Profile'}</span>}
               </button>
               {isProfilePopoverOpen && (
                 <div
@@ -405,10 +409,10 @@ export function Sidebar({
                   style={profilePopover.floatingStyle}
                 >
                   <div className="profile-menu-header">
-                    <span className="profile-menu-avatar">U</span>
+                    <span className="profile-menu-avatar">{user?.username?.[0]?.toUpperCase() ?? 'U'}</span>
                     <div className="profile-menu-info">
-                      <div className="profile-menu-name">User Profile</div>
-                      <div className="profile-menu-email">user@example.com</div>
+                      <div className="profile-menu-name">{user?.username ?? 'User'}</div>
+                      <div className="profile-menu-email">{user?.email ?? ''}</div>
                     </div>
                   </div>
                   <hr className="profile-menu-divider" />
@@ -416,11 +420,32 @@ export function Sidebar({
                     <Settings size={18} />
                     <span>Settings</span>
                   </button>
+                  {user?.role === 'admin' && (
+                    <button
+                      className="profile-menu-item"
+                      type="button"
+                      onClick={() => {
+                        setIsProfilePopoverOpen(false)
+                        navigate('/admin')
+                      }}
+                    >
+                      <ShieldCheck size={18} />
+                      <span>Admin Panel</span>
+                    </button>
+                  )}
                   <button className="profile-menu-item" type="button" onClick={handleOpenArchivedModal}>
                     <Archive size={18} />
                     <span>Archived Chats</span>
                   </button>
-                  <button className="profile-menu-item" type="button">
+                  <button
+                    className="profile-menu-item danger"
+                    type="button"
+                    onClick={() => {
+                      setIsProfilePopoverOpen(false)
+                      logout()
+                      navigate('/login', { replace: true })
+                    }}
+                  >
                     <LogOut size={18} />
                     <span>Sign Out</span>
                   </button>

@@ -162,6 +162,53 @@ function ChatPage({
     setModelSearch('')
   }
 
+  const modelSelectorEl = (
+    <div className="model-selector" ref={modelPopoverRef}>
+      <button
+        className="model-selector-button"
+        type="button"
+        onClick={() => setIsModelPopoverOpen(!isModelPopoverOpen)}
+        title={selectedModel?.name || 'Select Model'}
+      >
+        <span className="model-selector-text">{selectedModel?.name || 'Select Model'}</span>
+        <ChevronDown size={16} className="model-selector-icon" />
+      </button>
+      {isModelPopoverOpen && (
+        <div className="model-popover">
+          <div className="model-search">
+            <Search size={16} className="search-icon" />
+            <input
+              type="text"
+              placeholder="Search models..."
+              value={modelSearch}
+              onChange={(e) => setModelSearch(e.target.value)}
+              autoFocus
+            />
+          </div>
+          <div className="model-list">
+            {isLoadingModels ? (
+              <div className="model-empty">Loading models...</div>
+            ) : filteredModels.length === 0 ? (
+              <div className="model-empty">No models found</div>
+            ) : (
+              filteredModels.map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  className={m.id === model ? 'model-item is-selected' : 'model-item'}
+                  onClick={() => handleModelSelect(m.id)}
+                >
+                  <div className="model-name">{m.name}</div>
+                  <div className="model-category">{m.category}</div>
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+
   return (
     <>
       <header className="main-header">
@@ -177,50 +224,7 @@ function ChatPage({
           </button>
         </div>
         <div className="header-center">
-          <div className="model-selector" ref={modelPopoverRef}>
-            <button
-              className="model-selector-button"
-              type="button"
-              onClick={() => setIsModelPopoverOpen(!isModelPopoverOpen)}
-              title={selectedModel?.name || 'Select Model'}
-            >
-              <span className="model-selector-text">{selectedModel?.name || 'Select Model'}</span>
-              <ChevronDown size={16} className="model-selector-icon" />
-            </button>
-            {isModelPopoverOpen && (
-              <div className="model-popover">
-                <div className="model-search">
-                  <Search size={16} className="search-icon" />
-                  <input
-                    type="text"
-                    placeholder="Search models..."
-                    value={modelSearch}
-                    onChange={(e) => setModelSearch(e.target.value)}
-                    autoFocus
-                  />
-                </div>
-                <div className="model-list">
-                  {isLoadingModels ? (
-                    <div className="model-empty">Loading models...</div>
-                  ) : filteredModels.length === 0 ? (
-                    <div className="model-empty">No models found</div>
-                  ) : (
-                    filteredModels.map((m) => (
-                      <button
-                        key={m.id}
-                        type="button"
-                        className={m.id === model ? 'model-item is-selected' : 'model-item'}
-                        onClick={() => handleModelSelect(m.id)}
-                      >
-                        <div className="model-name">{m.name}</div>
-                        <div className="model-category">{m.category}</div>
-                      </button>
-                    ))
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
+          {modelSelectorEl}
         </div>
         <div className="header-right"></div>
       </header>
