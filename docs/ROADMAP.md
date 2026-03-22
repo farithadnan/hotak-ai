@@ -1,6 +1,6 @@
 # Hotak AI - Development Roadmap (Active)
 
-## 🎯 Current Status: Phase 6 Complete — Entering Phase 7 (Production Readiness)
+## 🎯 Current Status: Phase 7.3 Complete — Next: Phase 7.4 (User Settings)
 
 We are building a template-based knowledge management system ("Brains") allowing users to create reusable knowledge templates for chat sessions.
 
@@ -135,16 +135,28 @@ We are building a template-based knowledge management system ("Brains") allowing
 - [x] **Backend:** First admin bootstrapped from env vars (`ADMIN_BOOTSTRAP_USERNAME/PASSWORD/EMAIL`) at startup; public `/auth/register` removed
 - [x] **Backend:** `get_current_admin` dependency for admin-only endpoints; admin-on-admin protection (lock/delete blocked)
 - [x] **Backend:** Admin CRUD — `GET/POST /admin/users`, `PUT /admin/users/{id}/lock`, `PUT /admin/users/{id}/unlock`, `DELETE /admin/users/{id}`
+- [x] **Backend:** Edit user — `PATCH /admin/users/{id}` (username, email, role); self + other-admin protected
+- [x] **Backend:** Reset password — `POST /admin/users/{id}/reset-password`; self + other-admin protected
 - [x] **Backend:** Model settings — `GET/PUT /admin/models` (enabled list + default); `GET /models` filters by admin-enabled list
-- [x] **Backend:** System settings — `GET/PUT /admin/system`; all "magic number" tunables (temperature, token budgets, chunk size, retrieval K, summary) persisted as JSON; `app/services/system_settings.py`
+- [x] **Backend:** System settings — `GET/PUT /admin/system`; all tunables including `max_upload_file_size_mb` and `access_token_expire_minutes` persisted as JSON; `app/services/system_settings.py`
 - [x] **Frontend:** Admin panel page at `/admin` (two tabs: Users + Models; System Settings modal via header button)
-- [x] **Frontend:** Users tab — table with role/status badges, Lock/Unlock/Delete per row; "New User" opens `CreateUserModal`; self and other admins are protected (no actions shown)
-- [x] **Frontend:** Models tab — checkbox list of accessible models; enable/disable and set default via radio; auto-saves on every change (400 ms debounce), no explicit save button
-- [x] **Frontend:** System Settings modal — all tunables in a responsive two-column grid; explicit Save button; restart note
+- [x] **Frontend:** Users tab — table with role/status badges, search bar, Lock/Unlock/Edit/Delete per row; empty state for no search results; skeleton loading
+- [x] **Frontend:** Edit User modal — tabbed (Details / Security); edit username/email/role; reset password with inline success feedback
+- [x] **Frontend:** Create User modal — per-field validation (username/email/password); validation resets on modal close
+- [x] **Frontend:** Models tab — checkbox list, search bar, Enable All / Disable All (last-model protected); auto-saves on every change (400 ms debounce); skeleton loading
+- [x] **Frontend:** System Settings modal — all tunables in a responsive two-column grid; per-field validation; explicit Save button; skeleton loading
 - [x] **Frontend:** `AdminRoute` guard — non-admins redirected to `/chat`; Admin Panel nav item shown only to admins
+- [x] **Frontend:** `PasswordInput` generic component — show/hide eye icon toggle; used across Login, Register, Create User, Reset Password
+- [x] **Frontend:** `FormField` generic component — label + input slot + inline error/hint display; used in TemplateBuilder and extensible to all forms
+- [x] **Frontend:** Uniform validation UX — always-enabled submit, per-field inline errors on submit, `has-error` red border, clears on field change, resets on modal close
 
-### Phase 7.3 — Per-User Data Isolation
-- [ ] **Backend:** ChromaDB namespace per user (prevent cross-user document retrieval)
+### Phase 7.3 — Per-User Data Isolation ✅ Done
+- [x] **Backend:** `user_id` stamped into every document chunk's ChromaDB metadata at ingest time (`add_documents_to_store`)
+- [x] **Backend:** Cache check (`is_document_cached`) scoped by `user_id` — each user's copy of a source is stored independently
+- [x] **Backend:** Retrieval filter scoped to `user_id`; combined with `allowed_sources` template filter via ChromaDB `$and` operator
+- [x] **Backend:** Citation validation `similarity_search` in `/query` also scoped to `user_id` — no cross-user doc leakage
+- [x] **Backend:** `AgentRuntimeConfig` carries `user_id`; agent cache key includes `user_id` so each user gets an isolated retrieval agent
+- [x] **Backend:** `/documents` list endpoint filtered by `user_id` — users only see their own ingested sources
 
 ### Phase 7.4 — User Settings
 - [ ] **Backend:** User settings model (default model, system prompt override, etc.)

@@ -70,11 +70,20 @@
 28. [x] **Backend/Frontend:** Admin panel & RBAC - ✅ Done (Phase 7.2)
 	- [x] `role` + `is_active` columns added to `users` table with incremental SQLite migration.
 	- [x] Public `/auth/register` removed; first admin bootstrapped from env vars at startup.
-	- [x] `get_current_admin` dependency; admin-on-admin lock/delete protection.
-	- [x] Admin CRUD endpoints: list/create/lock/unlock/delete users.
-	- [x] Model settings endpoints (`GET/PUT /admin/models`); `/models` filtered by enabled list.
-	- [x] System settings endpoints (`GET/PUT /admin/system`); JSON persistence via `app/services/system_settings.py`.
-	- [x] Admin panel at `/admin` — Users tab (table + CreateUserModal), Models tab (auto-save), System Settings modal.
-	- [x] `AdminRoute` guard; Admin Panel nav hidden from non-admins.
+	- [x] `get_current_admin` dependency; admin-on-admin lock/delete/edit protection.
+	- [x] Admin CRUD: list/create/lock/unlock/delete users; edit user details (`PATCH /admin/users/{id}`); reset password (`POST /admin/users/{id}/reset-password`).
+	- [x] Model settings (`GET/PUT /admin/models`); system settings (`GET/PUT /admin/system`) with all tunables inc. `max_upload_file_size_mb` and `access_token_expire_minutes`.
+	- [x] Admin panel — Users tab (search, skeleton, EditUserModal with Details/Security tabs), Models tab (search, Enable All/Disable All, last-model protection), System Settings modal (per-field validation, skeleton).
+	- [x] `PasswordInput` generic component (eye toggle); `FormField` generic component (label + input slot + error/hint); uniform validation UX across all forms.
+	- [x] Validation resets on modal close for CreateUserModal, EditUserModal, and TemplateBuilder.
+	- [x] TemplateBuilder tab buttons match admin panel style; cross-tab error notification (auto-switch + red dot badge).
 
-*Phase 7.2 Admin & RBAC complete. Next: Phase 7.3 — Per-user ChromaDB namespace isolation.*
+29. [x] **Backend:** Per-user ChromaDB data isolation - ✅ Done (Phase 7.3)
+	- [x] `user_id` stamped into every document chunk's metadata at ingest (`add_documents_to_store`).
+	- [x] Cache check (`is_document_cached`) and `filter_uncached_sources` scoped to `user_id`.
+	- [x] Retrieval filter in `create_retrieval_tool` scoped to `user_id`; combined with `allowed_sources` via `$and`.
+	- [x] Citation validation `similarity_search` in `/query` scoped to `user_id`.
+	- [x] `AgentRuntimeConfig.user_id` carries user identity into agent cache; cache key includes `user_id`.
+	- [x] `GET /documents` filtered by `user_id`; all document endpoints use `current_user` (not `_current_user`).
+
+*Phase 7.3 Per-user data isolation complete. Next: Phase 7.4 — User Settings modal.*
