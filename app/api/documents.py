@@ -67,7 +67,7 @@ def _save_upload(file: UploadFile) -> tuple[Path | None, str | None]:
 async def load_documents_endpoint(
     request: DocumentLoadRequest,
     http_request: Request,
-    _current_user: UserDB = Depends(get_current_user),
+    current_user: UserDB = Depends(get_current_user),
 ):
     """Endpoint to load documents from URLs or file paths."""
     try:
@@ -75,7 +75,8 @@ async def load_documents_endpoint(
 
         cached_sources, uncached_sources = filter_uncached_sources(
             http_request.app.state.vector_store,
-            request.sources
+            request.sources,
+            current_user.id,
         )
 
         if cached_sources:
@@ -111,7 +112,7 @@ async def load_documents_endpoint(
 
         try:
             all_splits = split_documents(docs)
-            add_documents_to_store(http_request.app.state.vector_store, all_splits)
+            add_documents_to_store(http_request.app.state.vector_store, all_splits, current_user.id)
         except ValueError as split_error:
             logger.warning("Document splitting failed, marking uncached sources as failed: %s", split_error)
             combined_failed = list(dict.fromkeys([*failed_sources, *loaded_sources]))
@@ -141,13 +142,13 @@ async def load_documents_endpoint(
 @router.get("/documents")
 async def list_documents_endpoint(
     http_request: Request,
-    _current_user: UserDB = Depends(get_current_user),
+    current_user: UserDB = Depends(get_current_user),
 ):
     """Endpoint to list all documents in the vector store."""
     try:
         logger.info("Listing all documents in vector store...")
 
-        source_counts = get_all_stored_sources(http_request.app.state.vector_store)
+        source_counts = get_all_stored_sources(http_request.app.state.vector_store, current_user.id)
         sources = [
             {"source": source, "chunks": count}
             for source, count in source_counts.items()
@@ -167,7 +168,7 @@ async def list_documents_endpoint(
 async def upload_documents_endpoint(
     http_request: Request,
     files: list[UploadFile] = File(...),
-    _current_user: UserDB = Depends(get_current_user),
+    current_user: UserDB = Depends(get_current_user),
 ):
     """Upload files, then ingest them into the vector store."""
     if not files:
@@ -219,6 +220,7 @@ async def upload_documents_endpoint(
     cached_sources, uncached_sources = filter_uncached_sources(
         http_request.app.state.vector_store,
         uploaded_sources,
+        current_user.id,
     )
 
     loaded_sources: list[str] = []
@@ -229,7 +231,7 @@ async def upload_documents_endpoint(
         loaded_sources = [source for source in uncached_sources if source not in failed_sources]
         if docs:
             all_splits = split_documents(docs)
-            add_documents_to_store(http_request.app.state.vector_store, all_splits)
+            add_documents_to_store(http_request.app.state.vector_store, all_splits, current_user.id)
 
     for item in file_results:
         source = item.get("source")

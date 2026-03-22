@@ -14,6 +14,7 @@ def create_retrieval_tool(
     vector_store: Chroma,
     retrieval_k: int | None = None,
     allowed_sources: list[str] | None = None,
+    user_id: str | None = None,
 ):
     """
     Create a retrieval tool using the provided vector store.
@@ -22,6 +23,7 @@ def create_retrieval_tool(
         vector_store: The Chroma vector store instance
         retrieval_k: Number of documents to retrieve
         allowed_sources: If provided, only retrieve from these source paths/URLs
+        user_id: If provided, restrict retrieval to this user's documents only
 
     Returns:
         tool: A LangChain tool for retrieving context from the vector store
@@ -41,10 +43,21 @@ def create_retrieval_tool(
                 logger.warning(f"Invalid RETRIEVAL_K value: {effective_retrieval_k}. Defaulting to 5.")
                 k = 5
 
-            if effective_sources:
-                retrieved_docs = vector_store.similarity_search(
-                    query, k=k, filter={"source": {"$in": effective_sources}}
-                )
+            # Build filter: scope by user_id and optionally by allowed sources
+            if user_id and effective_sources:
+                chroma_filter = {"$and": [
+                    {"user_id": {"$eq": user_id}},
+                    {"source": {"$in": effective_sources}},
+                ]}
+            elif user_id:
+                chroma_filter = {"user_id": {"$eq": user_id}}
+            elif effective_sources:
+                chroma_filter = {"source": {"$in": effective_sources}}
+            else:
+                chroma_filter = None
+
+            if chroma_filter:
+                retrieved_docs = vector_store.similarity_search(query, k=k, filter=chroma_filter)
             else:
                 retrieved_docs = vector_store.similarity_search(query, k=k)
 
@@ -90,6 +103,7 @@ def create_rag_agent(
     system_prompt: str | None = None,
     retrieval_k: int | None = None,
     allowed_sources: list[str] | None = None,
+    user_id: str | None = None,
 ):
     """
     Create a RAG agent with retrieval capabilities.
@@ -112,6 +126,7 @@ def create_rag_agent(
             vector_store,
             retrieval_k=retrieval_k,
             allowed_sources=allowed_sources,
+            user_id=user_id,
         )
         tools = [retrieval_tool]
         effective_system_prompt = (system_prompt or SYSTEM_PROMPT).strip() or SYSTEM_PROMPT

@@ -91,6 +91,7 @@ class AgentRuntimeConfig(BaseModel):
     retrieval_k: int | None = None
     temperature: float | None = None
     allowed_sources: list[str] | None = None
+    user_id: str | None = None
 
 
 def _normalize_text(value: str) -> str:
@@ -263,7 +264,7 @@ def _get_messages_for_llm(
     return packed_messages, source_messages
 
 
-def _resolve_agent_runtime_config(http_request: Request, request: QueryRequest) -> AgentRuntimeConfig:
+def _resolve_agent_runtime_config(http_request: Request, request: QueryRequest, current_user: UserDB | None = None) -> AgentRuntimeConfig:
     template_settings: TemplateSettings | None = None
     allowed_sources: list[str] | None = None
 
@@ -298,6 +299,7 @@ def _resolve_agent_runtime_config(http_request: Request, request: QueryRequest) 
         retrieval_k=retrieval_k,
         temperature=temperature,
         allowed_sources=allowed_sources,
+        user_id=current_user.id if current_user else None,
     )
 
 
@@ -390,6 +392,7 @@ def _get_rag_agent_for_config(http_request: Request, runtime_config: AgentRuntim
         and runtime_config.retrieval_k in {None, RETRIEVAL_K}
         and runtime_config.temperature in {None, LLM_TEMPERATURE}
         and not runtime_config.allowed_sources
+        and not runtime_config.user_id
     )
 
     if using_defaults:
@@ -402,6 +405,7 @@ def _get_rag_agent_for_config(http_request: Request, runtime_config: AgentRuntim
 
     sources_key = "|".join(sorted(runtime_config.allowed_sources)) if runtime_config.allowed_sources else ""
     cache_key = "||".join([
+        runtime_config.user_id or "",
         model_name,
         str(runtime_config.retrieval_k if runtime_config.retrieval_k is not None else RETRIEVAL_K),
         f"{runtime_config.temperature if runtime_config.temperature is not None else LLM_TEMPERATURE}",
@@ -428,6 +432,7 @@ def _get_rag_agent_for_config(http_request: Request, runtime_config: AgentRuntim
             system_prompt=runtime_config.system_prompt,
             retrieval_k=runtime_config.retrieval_k,
             allowed_sources=runtime_config.allowed_sources,
+            user_id=runtime_config.user_id,
         )
 
     return cache[cache_key], model_name
@@ -437,13 +442,13 @@ def _get_rag_agent_for_config(http_request: Request, runtime_config: AgentRuntim
 async def query_endpoint(
     request: QueryRequest,
     http_request: Request,
-    _current_user: UserDB = Depends(get_current_user),
+    current_user: UserDB = Depends(get_current_user),
 ):
     """Endpoint to handle user queries."""
     try:
         logger.info(f"Processing query: {request.question}")
 
-        runtime_config = _resolve_agent_runtime_config(http_request, request)
+        runtime_config = _resolve_agent_runtime_config(http_request, request, current_user)
         rag_agent, model_used = _get_rag_agent_for_config(http_request, runtime_config)
 
         warning_message = None
@@ -483,7 +488,10 @@ async def query_endpoint(
             if isinstance(content, str):
                 full_response = content
 
-        top_docs = http_request.app.state.vector_store.similarity_search(request.question, k=5)
+        user_filter = {"user_id": {"$eq": current_user.id}} if current_user else None
+        top_docs = http_request.app.state.vector_store.similarity_search(
+            request.question, k=5, filter=user_filter
+        )
 
         validated_response = full_response
         citation_info = "No citations validated"
@@ -528,7 +536,7 @@ async def query_endpoint(
 async def query_stream_endpoint(
     request: QueryRequest,
     http_request: Request,
-    _current_user: UserDB = Depends(get_current_user),
+    current_user: UserDB = Depends(get_current_user),
 ):
     """Endpoint to handle streaming user queries."""
     try:
@@ -614,7 +622,7 @@ async def query_stream_endpoint(
                         break
 
         async def event_generator():
-            runtime_config = _resolve_agent_runtime_config(http_request, request)
+            runtime_config = _resolve_agent_runtime_config(http_request, request, current_user)
             rag_agent, model_used = _get_rag_agent_for_config(http_request, runtime_config)
             payload = {
                 "messages": await _build_payload_messages_with_system_prompt(
