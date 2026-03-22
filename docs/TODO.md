@@ -86,4 +86,14 @@
 	- [x] `AgentRuntimeConfig.user_id` carries user identity into agent cache; cache key includes `user_id`.
 	- [x] `GET /documents` filtered by `user_id`; all document endpoints use `current_user` (not `_current_user`).
 
-*Phase 7.3 Per-user data isolation complete. Next: Phase 7.4 — User Settings modal.*
+30. [x] **Backend/Frontend:** User Settings (Phase 7.4) - ✅ Done
+	- [x] `preferences` JSON column + incremental migration; `DEFAULT_PREFERENCES` constant.
+	- [x] `PATCH /auth/me`, `POST /auth/me/change-password`, `GET/PATCH /auth/me/preferences` endpoints.
+	- [x] Frontend types (`AccentColor`, `ThemeMode`, `ChatBackground`, `UserPreferences`), auth service, and `AuthContext` with `updateUser`, `changePassword`, `updatePreferences`.
+	- [x] `utils/theme.ts` — `applyTheme()` with 6 accent palettes × dark/light; applied on login, logout, preference change.
+	- [x] `UserSettingsModal` — Account / Security / Preferences / Appearance tabs; avatar upload (canvas 200×200 base64); theme toggle; accent color grid; chat background grid.
+	- [x] Auth pages split layout (brand panel left + form right; mobile responsive); login placeholders added.
+	- [x] Settings button wired in profile popover → `UserSettingsModal` mounted in `AppShell`.
+	- [x] Avatar shown in sidebar profile button + popover header; chat bg class applied to scroll container.
+
+*Phase 7.4 User Settings complete. Next: Phase 7.5 — Docker.*

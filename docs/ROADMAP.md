@@ -1,6 +1,6 @@
 # Hotak AI - Development Roadmap (Active)
 
-## 🎯 Current Status: Phase 7.3 Complete — Next: Phase 7.4 (User Settings)
+## 🎯 Current Status: Phase 7.4 Complete — Next: Phase 7.5 (Docker)
 
 We are building a template-based knowledge management system ("Brains") allowing users to create reusable knowledge templates for chat sessions.
 
@@ -158,10 +158,21 @@ We are building a template-based knowledge management system ("Brains") allowing
 - [x] **Backend:** `AgentRuntimeConfig` carries `user_id`; agent cache key includes `user_id` so each user gets an isolated retrieval agent
 - [x] **Backend:** `/documents` list endpoint filtered by `user_id` — users only see their own ingested sources
 
-### Phase 7.4 — User Settings
-- [ ] **Backend:** User settings model (default model, system prompt override, etc.)
-- [ ] **Frontend:** Settings page/modal accessible from profile popover
-- [ ] **Frontend:** Persist model preference per user (instead of per-session only)
+### Phase 7.4 — User Settings ✅ Done
+- [x] **Backend:** `preferences` JSON column on `users` table (incremental SQLite migration); `DEFAULT_PREFERENCES` constant
+- [x] **Backend:** `PATCH /auth/me` — update username/email with uniqueness checks
+- [x] **Backend:** `POST /auth/me/change-password` — verify current password, hash + store new (204)
+- [x] **Backend:** `GET /auth/me/preferences` + `PATCH /auth/me/preferences` — merge-patch JSON preferences
+- [x] **Backend:** `UpdateProfile`, `ChangePassword`, `UpdatePreferences` Pydantic schemas; preferences deserialized with defaults via `@field_validator`
+- [x] **Frontend:** `types/auth.ts` — `AccentColor`, `ThemeMode`, `ChatBackground`, `UserPreferences`, `AuthUser` with preferences field
+- [x] **Frontend:** `services/auth.ts` — `updateProfileApi`, `changePasswordApi`, `getPreferencesApi`, `updatePreferencesApi`
+- [x] **Frontend:** `AuthContext` — `updateUser`, `changePassword`, `updatePreferences` in context value; applies theme on login and preference change; resets to defaults on logout
+- [x] **Frontend:** `utils/theme.ts` — `applyTheme()` sets CSS custom properties for 6 accent palettes × dark/light; `ACCENT_LABELS`, `ACCENT_SWATCHES`
+- [x] **Frontend:** `UserSettingsModal` — 4-tab modal (Account / Security / Preferences / Appearance); avatar upload with canvas resize to 200×200 base64; theme toggle; accent color grid; chat background grid; per-tab save with inline success/error feedback
+- [x] **Frontend:** Auth pages redesigned with split layout (branding left panel + form right panel; mobile stacks); missing login placeholders added
+- [x] **Frontend:** Settings button in profile popover wired to open `UserSettingsModal` mounted in `AppShell`
+- [x] **Frontend:** Avatar base64 image rendered in sidebar profile button + profile popover header
+- [x] **Frontend:** Chat scroll container gets `chat-bg-{value}` class from user preferences (dots / grid / gradient-warm / cool / purple)
 
 ### Phase 7.5 — Docker
 - [ ] `Dockerfile` for backend (FastAPI + ChromaDB volume mount)
