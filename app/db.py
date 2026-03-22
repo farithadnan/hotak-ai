@@ -42,4 +42,9 @@ def _migrate():
             conn.execute(__import__("sqlalchemy").text(
                 "ALTER TABLE users ADD COLUMN is_active BOOLEAN NOT NULL DEFAULT 1"
             ))
+        # Phase 7.4: add preferences JSON column
+        if "preferences" not in existing:
+            conn.execute(__import__("sqlalchemy").text(
+                "ALTER TABLE users ADD COLUMN preferences TEXT"
+            ))
         conn.commit()
