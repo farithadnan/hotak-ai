@@ -96,4 +96,9 @@
 	- [x] Settings button wired in profile popover → `UserSettingsModal` mounted in `AppShell`.
 	- [x] Avatar shown in sidebar profile button + popover header; chat bg class applied to scroll container.
 
+31. [ ] **Frontend:** Composer Tools integration *(future feature — button disabled/stubbed)*
+	- [ ] Define tool schema and backend tool-call routing.
+	- [ ] Composer Tools button (`Briefcase` icon) is currently disabled with `title="Tools (coming soon)"`.
+	- [ ] Planned: web search, calculator, code execution, and user-defined tool plugins.
+
 *Phase 7.4 User Settings complete. Next: Phase 7.5 — Docker.*

@@ -32,10 +32,8 @@ function AppShell() {
   const engine = useChatEngine(activeChatId, openChat)
 
   const chatBg = user?.preferences?.chat_background
-  const mainPanelClass = [
-    isChatView && (!engine.activeChat || engine.activeChat.messages.length === 0) ? 'main-panel is-empty' : 'main-panel',
-    chatBg && chatBg !== 'none' ? `chat-bg-${chatBg}` : '',
-  ].filter(Boolean).join(' ')
+  const appShellClass = ['app-shell', chatBg && chatBg !== 'none' ? `chat-bg-${chatBg}` : ''].filter(Boolean).join(' ')
+  const mainPanelClass = isChatView && (!engine.activeChat || engine.activeChat.messages.length === 0) ? 'main-panel is-empty' : 'main-panel'
 
   const showToastr = (options: Partial<typeof toastr>) => {
     setToastr((prev) => ({
@@ -68,7 +66,7 @@ function AppShell() {
   })
 
   return (
-    <div className="app-shell">
+    <div className={appShellClass}>
       {sidebar.render}
 
       <main className={mainPanelClass}>

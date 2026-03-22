@@ -142,7 +142,8 @@
 }
 
 .template-card:hover {
-  border-color: rgba(255, 255, 255, 0.2);
+  border-color: var(--color-accent-border);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-accent-border) 40%, transparent), 0 4px 16px rgba(0,0,0,0.3);
   transform: translateY(-2px);
 }
 
@@ -177,8 +178,9 @@
 }
 
 .template-action:hover {
-  border-color: #ffffff;
-  color: #ffffff;
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  background: var(--color-accent-soft);
 }
 
 .template-action.is-danger:hover {

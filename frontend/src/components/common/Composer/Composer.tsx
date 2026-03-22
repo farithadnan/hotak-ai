@@ -301,7 +301,7 @@ export function Composer({
                     </div>
                   )}
                 </div>
-                <button className={style['composer-action-button']} type="button" title="Tools">
+                <button className={style['composer-action-button']} type="button" title="Tools (coming soon)" disabled>
                   <Briefcase size={20} />
                 </button>
               </div>

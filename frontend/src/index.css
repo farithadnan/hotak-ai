@@ -56,3 +56,10 @@ select {
 button {
   cursor: pointer;
 }
+
+/* Global accent color for native form controls */
+input[type="range"],
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--color-accent);
+}
