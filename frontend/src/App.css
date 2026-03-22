@@ -15,7 +15,7 @@
 /* Left branding panel */
 .auth-brand {
   flex: 0 0 45%;
-  background: linear-gradient(145deg, rgba(10,8,20,0.55) 0%, rgba(20,12,40,0.45) 100%),
+  background: linear-gradient(145deg, rgba(6,4,14,0.78) 0%, rgba(14,8,28,0.68) 100%),
               url('/src/assets/cyberpunk-login.webp') center/cover no-repeat;
   display: flex;
   align-items: center;
@@ -45,12 +45,6 @@
   align-items: flex-start;
   gap: 1rem;
   max-width: 320px;
-  background: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
-  padding: 1.6rem;
 }
 
 .auth-brand-logo {
@@ -66,19 +60,20 @@
 }
 
 .auth-brand-name {
-  @apply text-text font-bold;
+  color: #ffffff;
   font-size: 2rem;
+  font-weight: 700;
   margin: 0;
   letter-spacing: -0.5px;
-  text-shadow: 0 2px 12px rgba(0,0,0,0.8), 0 1px 3px rgba(0,0,0,0.9);
+  text-shadow: 0 0 20px rgba(0,0,0,1), 0 2px 8px rgba(0,0,0,1), 0 1px 2px rgba(0,0,0,1);
 }
 
 .auth-brand-tagline {
-  @apply text-muted;
+  color: rgba(255,255,255,0.82);
   font-size: 0.92rem;
   line-height: 1.55;
   margin: 0;
-  text-shadow: 0 1px 8px rgba(0,0,0,0.9), 0 1px 2px rgba(0,0,0,1);
+  text-shadow: 0 0 16px rgba(0,0,0,1), 0 1px 4px rgba(0,0,0,1);
 }
 
 .auth-brand-features {
@@ -91,9 +86,9 @@
 }
 
 .auth-brand-features li {
-  @apply text-muted;
+  color: rgba(255,255,255,0.75);
   font-size: 0.88rem;
-  text-shadow: 0 1px 8px rgba(0,0,0,0.9), 0 1px 2px rgba(0,0,0,1);
+  text-shadow: 0 0 16px rgba(0,0,0,1), 0 1px 4px rgba(0,0,0,1);
 }
 
 /* Right form panel */
