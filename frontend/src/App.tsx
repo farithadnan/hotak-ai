@@ -10,6 +10,7 @@ import { Toastr } from './components/common/Toastr/Toastr'
 import type { ToastrType, ToastrPosition } from './components/common/Toastr/Toastr'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import LoginPage from './components/page/Auth/LoginPage'
+import { UserSettingsModal } from './components/page/UserSettings/UserSettingsModal'
 import './App.css'
 
 function AppShell() {
@@ -17,6 +18,7 @@ function AppShell() {
   const { activeChatId, isChatView, openTemplates, openChat, openNewChat } = useAppRouting()
 
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [toastr, setToastr] = useState({
     open: false,
     message: '',
@@ -55,6 +57,7 @@ function AppShell() {
     onOpenChat: openChat,
     onNewChat: handleNewChat,
     onOpenTemplates: openTemplates,
+    onOpenSettings: () => setIsSettingsOpen(true),
     onShowToastr: showToastr,
   })
 
@@ -146,6 +149,8 @@ function AppShell() {
         position={toastr.position}
         onClose={() => setToastr((prev) => ({ ...prev, open: false }))}
       />
+
+      <UserSettingsModal open={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
     </div>
   )
 }

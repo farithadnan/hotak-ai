@@ -27,6 +27,7 @@ type SidebarProps = {
   onOpenChat: (chatId?: string) => void
   onNewChat: () => void
   onOpenTemplates: () => void
+  onOpenSettings: () => void
   onShowToastr: (options: { title?: string; message?: string; type?: 'success' | 'error' | 'info' }) => void
 }
 
@@ -41,6 +42,7 @@ export function Sidebar({
   onOpenChat,
   onNewChat,
   onOpenTemplates,
+  onOpenSettings,
   onShowToastr,
 }: SidebarProps) {
   const { user, logout } = useAuth()
@@ -399,7 +401,11 @@ export function Sidebar({
                   setIsProfilePopoverOpen(true)
                 }}
               >
-                <span className="profile-avatar">{user?.username?.[0]?.toUpperCase() ?? 'U'}</span>
+                <span className="profile-avatar">
+                  {user?.preferences?.avatar
+                    ? <img src={user.preferences.avatar} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                    : user?.username?.[0]?.toUpperCase() ?? 'U'}
+                </span>
                 {!isSidebarCollapsed && <span className="profile-name">{user?.username ?? 'Profile'}</span>}
               </button>
               {isProfilePopoverOpen && (
@@ -409,14 +415,18 @@ export function Sidebar({
                   style={profilePopover.floatingStyle}
                 >
                   <div className="profile-menu-header">
-                    <span className="profile-menu-avatar">{user?.username?.[0]?.toUpperCase() ?? 'U'}</span>
+                    <span className="profile-menu-avatar">
+                      {user?.preferences?.avatar
+                        ? <img src={user.preferences.avatar} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                        : user?.username?.[0]?.toUpperCase() ?? 'U'}
+                    </span>
                     <div className="profile-menu-info">
                       <div className="profile-menu-name">{user?.username ?? 'User'}</div>
                       <div className="profile-menu-email">{user?.email ?? ''}</div>
                     </div>
                   </div>
                   <hr className="profile-menu-divider" />
-                  <button className="profile-menu-item" type="button">
+                  <button className="profile-menu-item" type="button" onClick={() => { setIsProfilePopoverOpen(false); onOpenSettings() }}>
                     <Settings size={18} />
                     <span>Settings</span>
                   </button>
