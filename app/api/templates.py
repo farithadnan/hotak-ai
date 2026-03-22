@@ -1,8 +1,10 @@
 """Template-related API routes."""
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
 from ..models.template import TemplateCreate, TemplateUpdate, Template
+from ..models.user import UserDB
+from ..services.auth import get_current_user
 from ..utils.logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -10,19 +12,19 @@ router = APIRouter()
 
 
 @router.post("/templates", status_code=201)
-async def create_template_endpoint(template_data: TemplateCreate):
+async def create_template_endpoint(
+    template_data: TemplateCreate,
+    current_user: UserDB = Depends(get_current_user),
+):
     """Create a new knowledge template."""
     try:
         from ..storage.template_storage import create_template
 
-        logger.info(f"Creating template: {template_data.name}")
-        template = create_template(template_data)
-        logger.info(f"Template created successfully: {template.id}")
-
+        template = create_template(template_data, user_id=current_user.id)
+        logger.info(f"Template created: {template.id}")
         return template
 
     except ValueError as e:
-        logger.error(f"Validation error creating template: {e}")
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.error(f"Failed to create template: {e}")
@@ -30,15 +32,12 @@ async def create_template_endpoint(template_data: TemplateCreate):
 
 
 @router.get("/templates", response_model=list[Template])
-async def list_templates_endpoint():
-    """Get all knowledge templates."""
+async def list_templates_endpoint(current_user: UserDB = Depends(get_current_user)):
+    """Get all knowledge templates for the current user."""
     try:
         from ..storage.template_storage import get_all_templates
 
-        logger.info("Listing all templates")
-        templates = get_all_templates()
-
-        return templates
+        return get_all_templates(user_id=current_user.id)
 
     except Exception as e:
         logger.error(f"Failed to list templates: {e}")
@@ -46,17 +45,17 @@ async def list_templates_endpoint():
 
 
 @router.get("/templates/{template_id}")
-async def get_template_endpoint(template_id: str):
+async def get_template_endpoint(
+    template_id: str,
+    current_user: UserDB = Depends(get_current_user),
+):
     """Get a specific template by ID."""
     try:
         from ..storage.template_storage import get_template
 
-        logger.info(f"Getting template: {template_id}")
-        template = get_template(template_id)
-
+        template = get_template(template_id, user_id=current_user.id)
         if not template:
             raise HTTPException(status_code=404, detail=f"Template not found: {template_id}")
-
         return template
 
     except HTTPException:
@@ -67,22 +66,21 @@ async def get_template_endpoint(template_id: str):
 
 
 @router.put("/templates/{template_id}")
-async def update_template_endpoint(template_id: str, update_data: TemplateUpdate):
-    """Update an existing template. Only provided fields are updated."""
+async def update_template_endpoint(
+    template_id: str,
+    update_data: TemplateUpdate,
+    current_user: UserDB = Depends(get_current_user),
+):
+    """Update an existing template."""
     try:
         from ..storage.template_storage import update_template
 
-        logger.info(f"Updating template: {template_id}")
-        template = update_template(template_id, update_data)
-
+        template = update_template(template_id, update_data, user_id=current_user.id)
         if not template:
             raise HTTPException(status_code=404, detail=f"Template not found: {template_id}")
-
-        logger.info(f"Template updated successfully: {template_id}")
         return template
 
     except ValueError as e:
-        logger.error(f"Validation error updating template: {e}")
         raise HTTPException(status_code=400, detail=str(e))
     except HTTPException:
         raise
@@ -92,18 +90,16 @@ async def update_template_endpoint(template_id: str, update_data: TemplateUpdate
 
 
 @router.delete("/templates/{template_id}")
-async def delete_template_endpoint(template_id: str):
-    """Delete a template by ID. This is permanent."""
+async def delete_template_endpoint(
+    template_id: str,
+    current_user: UserDB = Depends(get_current_user),
+):
+    """Delete a template by ID."""
     try:
         from ..storage.template_storage import delete_template
 
-        logger.info(f"Deleting template: {template_id}")
-        deleted = delete_template(template_id)
-
-        if not deleted:
+        if not delete_template(template_id, user_id=current_user.id):
             raise HTTPException(status_code=404, detail=f"Template not found: {template_id}")
-
-        logger.info(f"Template deleted successfully: {template_id}")
         return {"message": "Template deleted successfully", "id": template_id}
 
     except HTTPException:

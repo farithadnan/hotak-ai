@@ -3,7 +3,9 @@
 import asyncio
 import re
 from pydantic import BaseModel
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
+from ..models.user import UserDB
+from ..services.auth import get_current_user
 from fastapi.responses import StreamingResponse
 from openai import PermissionDeniedError, RateLimitError
 from langchain.chat_models import init_chat_model
@@ -432,7 +434,11 @@ def _get_rag_agent_for_config(http_request: Request, runtime_config: AgentRuntim
 
 
 @router.post("/query")
-async def query_endpoint(request: QueryRequest, http_request: Request):
+async def query_endpoint(
+    request: QueryRequest,
+    http_request: Request,
+    _current_user: UserDB = Depends(get_current_user),
+):
     """Endpoint to handle user queries."""
     try:
         logger.info(f"Processing query: {request.question}")
@@ -519,7 +525,11 @@ async def query_endpoint(request: QueryRequest, http_request: Request):
 
 
 @router.post("/query/stream")
-async def query_stream_endpoint(request: QueryRequest, http_request: Request):
+async def query_stream_endpoint(
+    request: QueryRequest,
+    http_request: Request,
+    _current_user: UserDB = Depends(get_current_user),
+):
     """Endpoint to handle streaming user queries."""
     try:
         logger.info(f"Processing streaming query: {request.question}")

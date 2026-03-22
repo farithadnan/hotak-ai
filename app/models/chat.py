@@ -50,6 +50,7 @@ class Chat(BaseModel):
     """Complete chat session model."""
 
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: Optional[str] = Field(default=None, description="Owner user ID")
     title: str
     template_id: Optional[str] = None
     pinned: bool = False

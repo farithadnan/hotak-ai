@@ -19,6 +19,13 @@ logger = setup_logger(__name__)
 _CHAT_PREFIXES = ('gpt-', 'o1', 'o3', 'o4', 'chatgpt-')
 _CHAT_EXCLUDES = ('embedding', 'tts', 'transcribe', 'whisper', 'moderation', 'image', 'audio')
 
+# Module-level cache populated on startup — list of accessible model IDs (strings)
+_accessible_model_ids: list[str] = []
+
+
+def get_accessible_models_cache() -> list[str]:
+    return _accessible_model_ids
+
 
 def is_chat_model(model_id: str) -> bool:
     """Return True if the model ID looks like a usable chat/completions model."""
@@ -98,10 +105,14 @@ async def build_accessible_chat_models(api_key: str) -> list[dict]:
         if ok
     ]
 
+    # Populate module-level cache so admin API can read it
+    global _accessible_model_ids
+    _accessible_model_ids = [m["id"] for m in accessible]
+
     logger.info(
         "Accessible chat models (%d/%d): %s",
         len(accessible),
         len(candidates),
-        [m["id"] for m in accessible],
+        _accessible_model_ids,
     )
     return accessible

@@ -54,39 +54,50 @@ def _save_chats_to_file(chats: List[Chat]):
         raise
 
 
-def create_chat(chat_data: ChatCreate) -> Chat:
+def create_chat(chat_data: ChatCreate, user_id: Optional[str] = None) -> Chat:
     """Create a new chat session."""
     chats = _load_chats_from_file()
-    
-    new_chat = Chat(**chat_data.model_dump())
+
+    new_chat = Chat(**chat_data.model_dump(), user_id=user_id)
     chats.append(new_chat)
-    
+
     _save_chats_to_file(chats)
     logger.info(f"Created chat session: {new_chat.title} (ID: {new_chat.id})")
-    
+
     return new_chat
 
 
-def get_all_chats() -> List[Chat]:
-    """Get all non-archived chat sessions."""
-    return [c for c in _load_chats_from_file() if not c.archived]
-
-
-def get_archived_chats() -> List[Chat]:
-    """Get all archived chat sessions."""
-    return [c for c in _load_chats_from_file() if c.archived]
-
-
-def get_chat(chat_id: str) -> Optional[Chat]:
-    """Get a chat session by ID."""
+def get_all_chats(user_id: Optional[str] = None) -> List[Chat]:
+    """Get all non-archived chat sessions, optionally scoped to a user."""
     chats = _load_chats_from_file()
-    return next((c for c in chats if c.id == chat_id), None)
+    if user_id is not None:
+        chats = [c for c in chats if c.user_id == user_id]
+    return [c for c in chats if not c.archived]
 
 
-def update_chat(chat_id: str, update_data: ChatUpdate) -> Optional[Chat]:
+def get_archived_chats(user_id: Optional[str] = None) -> List[Chat]:
+    """Get all archived chat sessions, optionally scoped to a user."""
+    chats = _load_chats_from_file()
+    if user_id is not None:
+        chats = [c for c in chats if c.user_id == user_id]
+    return [c for c in chats if c.archived]
+
+
+def get_chat(chat_id: str, user_id: Optional[str] = None) -> Optional[Chat]:
+    """Get a chat session by ID, optionally verifying ownership."""
+    chats = _load_chats_from_file()
+    chat = next((c for c in chats if c.id == chat_id), None)
+    if chat and user_id is not None and chat.user_id != user_id:
+        return None
+    return chat
+
+
+def update_chat(chat_id: str, update_data: ChatUpdate, user_id: Optional[str] = None) -> Optional[Chat]:
     """Update chat session metadata (title, template)."""
     chats = _load_chats_from_file()
     chat = next((c for c in chats if c.id == chat_id), None)
+    if chat and user_id is not None and chat.user_id != user_id:
+        return None
     
     if not chat:
         return None
@@ -103,10 +114,12 @@ def update_chat(chat_id: str, update_data: ChatUpdate) -> Optional[Chat]:
     return chat
 
 
-def add_message_to_chat(chat_id: str, message: Message) -> Optional[Chat]:
+def add_message_to_chat(chat_id: str, message: Message, user_id: Optional[str] = None) -> Optional[Chat]:
     """Add a message to an existing chat session."""
     chats = _load_chats_from_file()
     chat = next((c for c in chats if c.id == chat_id), None)
+    if chat and user_id is not None and chat.user_id != user_id:
+        return None
     
     if not chat:
         return None
@@ -118,13 +131,16 @@ def add_message_to_chat(chat_id: str, message: Message) -> Optional[Chat]:
     return chat
 
 
-def delete_chat(chat_id: str) -> bool:
-    """Delete a chat session."""
+def delete_chat(chat_id: str, user_id: Optional[str] = None) -> bool:
+    """Delete a chat session, optionally verifying ownership."""
     chats = _load_chats_from_file()
     initial_count = len(chats)
-    
-    chats = [c for c in chats if c.id != chat_id]
-    
+
+    if user_id is not None:
+        chats = [c for c in chats if not (c.id == chat_id and c.user_id == user_id)]
+    else:
+        chats = [c for c in chats if c.id != chat_id]
+
     if len(chats) < initial_count:
         _save_chats_to_file(chats)
         return True

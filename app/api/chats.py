@@ -1,9 +1,11 @@
 """Chat-related API routes."""
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from typing import List
 
 from ..models.chat import Chat, ChatCreate, ChatUpdate, Message
+from ..models.user import UserDB
+from ..services.auth import get_current_user
 from ..storage.chat_storage import (
     create_chat,
     get_all_chats,
@@ -20,10 +22,13 @@ router = APIRouter()
 
 
 @router.post("/chats", response_model=Chat, status_code=201)
-async def create_chat_endpoint(chat_data: ChatCreate):
+async def create_chat_endpoint(
+    chat_data: ChatCreate,
+    current_user: UserDB = Depends(get_current_user),
+):
     """Create a new chat session."""
     try:
-        chat = create_chat(chat_data)
+        chat = create_chat(chat_data, user_id=current_user.id)
         return chat
     except Exception as e:
         logger.error(f"Failed to create chat: {e}")
@@ -31,47 +36,58 @@ async def create_chat_endpoint(chat_data: ChatCreate):
 
 
 @router.get("/chats", response_model=List[Chat])
-async def list_chats_endpoint():
-    """Get all chat sessions."""
+async def list_chats_endpoint(current_user: UserDB = Depends(get_current_user)):
+    """Get all chat sessions for the current user."""
     try:
-        return get_all_chats()
+        return get_all_chats(user_id=current_user.id)
     except Exception as e:
         logger.error(f"Failed to list chats: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/chats/archived", response_model=List[Chat])
-async def list_archived_chats_endpoint():
-    """Get all archived chat sessions."""
+async def list_archived_chats_endpoint(current_user: UserDB = Depends(get_current_user)):
+    """Get all archived chat sessions for the current user."""
     try:
-        return get_archived_chats()
+        return get_archived_chats(user_id=current_user.id)
     except Exception as e:
         logger.error(f"Failed to list archived chats: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/chats/{chat_id}", response_model=Chat)
-async def get_chat_endpoint(chat_id: str):
+async def get_chat_endpoint(
+    chat_id: str,
+    current_user: UserDB = Depends(get_current_user),
+):
     """Get a specific chat session by ID."""
-    chat = get_chat(chat_id)
+    chat = get_chat(chat_id, user_id=current_user.id)
     if not chat:
         raise HTTPException(status_code=404, detail="Chat session not found")
     return chat
 
 
 @router.put("/chats/{chat_id}", response_model=Chat)
-async def update_chat_endpoint(chat_id: str, update_data: ChatUpdate):
+async def update_chat_endpoint(
+    chat_id: str,
+    update_data: ChatUpdate,
+    current_user: UserDB = Depends(get_current_user),
+):
     """Update chat session metadata."""
-    chat = update_chat(chat_id, update_data)
+    chat = update_chat(chat_id, update_data, user_id=current_user.id)
     if not chat:
         raise HTTPException(status_code=404, detail="Chat session not found")
     return chat
 
 
 @router.post("/chats/{chat_id}/generate-title", response_model=Chat)
-async def generate_chat_title_endpoint(chat_id: str, request: Request):
+async def generate_chat_title_endpoint(
+    chat_id: str,
+    request: Request,
+    current_user: UserDB = Depends(get_current_user),
+):
     """Generate and persist a concise title based on the first user message."""
-    chat = get_chat(chat_id)
+    chat = get_chat(chat_id, user_id=current_user.id)
     if not chat:
         raise HTTPException(status_code=404, detail="Chat session not found")
 
@@ -108,7 +124,7 @@ async def generate_chat_title_endpoint(chat_id: str, request: Request):
         if len(generated_title) > 64:
             generated_title = generated_title[:64].rstrip()
 
-        updated_chat = update_chat(chat_id, ChatUpdate(title=generated_title))
+        updated_chat = update_chat(chat_id, ChatUpdate(title=generated_title), user_id=current_user.id)
         if not updated_chat:
             raise HTTPException(status_code=404, detail="Chat session not found")
 
@@ -120,17 +136,24 @@ async def generate_chat_title_endpoint(chat_id: str, request: Request):
 
 
 @router.delete("/chats/{chat_id}")
-async def delete_chat_endpoint(chat_id: str):
+async def delete_chat_endpoint(
+    chat_id: str,
+    current_user: UserDB = Depends(get_current_user),
+):
     """Delete a chat session."""
-    if not delete_chat(chat_id):
+    if not delete_chat(chat_id, user_id=current_user.id):
         raise HTTPException(status_code=404, detail="Chat session not found")
     return {"message": "Chat session deleted successfully"}
 
 
 @router.post("/chats/{chat_id}/messages", response_model=Chat)
-async def add_message_endpoint(chat_id: str, message: Message):
+async def add_message_endpoint(
+    chat_id: str,
+    message: Message,
+    current_user: UserDB = Depends(get_current_user),
+):
     """Add a message to a chat session."""
-    chat = add_message_to_chat(chat_id, message)
+    chat = add_message_to_chat(chat_id, message, user_id=current_user.id)
     if not chat:
         raise HTTPException(status_code=404, detail="Chat session not found")
     return chat

@@ -61,7 +61,7 @@ def _save_templates_to_file(templates: List[Template]):
         raise
 
 
-def create_template(template_data: TemplateCreate) -> Template:
+def create_template(template_data: TemplateCreate, user_id: Optional[str] = None) -> Template:
     """
     Create a new template.
     
@@ -76,12 +76,11 @@ def create_template(template_data: TemplateCreate) -> Template:
     """
     templates = _load_templates_from_file()
     
-    # Check for duplicate name
-    if any(t.name == template_data.name for t in templates):
+    # Check for duplicate name scoped to user
+    if any(t.name == template_data.name and t.user_id == user_id for t in templates):
         raise ValueError(f"Template with name '{template_data.name}' already exists")
-    
-    # Create new template
-    new_template = Template(**template_data.model_dump())
+
+    new_template = Template(**template_data.model_dump(), user_id=user_id)
     templates.append(new_template)
     
     _save_templates_to_file(templates)
@@ -90,7 +89,7 @@ def create_template(template_data: TemplateCreate) -> Template:
     return new_template
 
 
-def get_all_templates() -> List[Template]:
+def get_all_templates(user_id: Optional[str] = None) -> List[Template]:
     """
     Get all templates.
     
@@ -98,11 +97,13 @@ def get_all_templates() -> List[Template]:
         List of all templates
     """
     templates = _load_templates_from_file()
+    if user_id is not None:
+        templates = [t for t in templates if t.user_id == user_id]
     logger.info(f"Retrieved {len(templates)} templates")
     return templates
 
 
-def get_template(template_id: str) -> Optional[Template]:
+def get_template(template_id: str, user_id: Optional[str] = None) -> Optional[Template]:
     """
     Get a template by ID.
     
@@ -114,16 +115,18 @@ def get_template(template_id: str) -> Optional[Template]:
     """
     templates = _load_templates_from_file()
     template = next((t for t in templates if t.id == template_id), None)
-    
+    if template and user_id is not None and template.user_id != user_id:
+        template = None
+
     if template:
         logger.info(f"Retrieved template: {template.name} (ID: {template_id})")
     else:
         logger.warning(f"Template not found: {template_id}")
-    
+
     return template
 
 
-def update_template(template_id: str, update_data: TemplateUpdate) -> Optional[Template]:
+def update_template(template_id: str, update_data: TemplateUpdate, user_id: Optional[str] = None) -> Optional[Template]:
     """
     Update an existing template.
     
@@ -139,14 +142,14 @@ def update_template(template_id: str, update_data: TemplateUpdate) -> Optional[T
     """
     templates = _load_templates_from_file()
     template = next((t for t in templates if t.id == template_id), None)
-    
-    if not template:
+
+    if not template or (user_id is not None and template.user_id != user_id):
         logger.warning(f"Template not found for update: {template_id}")
         return None
-    
+
     # Check for name conflict (if name is being updated)
     if update_data.name and update_data.name != template.name:
-        if any(t.name == update_data.name for t in templates if t.id != template_id):
+        if any(t.name == update_data.name and t.user_id == user_id for t in templates if t.id != template_id):
             raise ValueError(f"Template with name '{update_data.name}' already exists")
     
     # Update fields
@@ -163,7 +166,7 @@ def update_template(template_id: str, update_data: TemplateUpdate) -> Optional[T
     return template
 
 
-def delete_template(template_id: str) -> bool:
+def delete_template(template_id: str, user_id: Optional[str] = None) -> bool:
     """
     Delete a template by ID.
     
@@ -175,9 +178,12 @@ def delete_template(template_id: str) -> bool:
     """
     templates = _load_templates_from_file()
     initial_count = len(templates)
-    
-    templates = [t for t in templates if t.id != template_id]
-    
+
+    if user_id is not None:
+        templates = [t for t in templates if not (t.id == template_id and t.user_id == user_id)]
+    else:
+        templates = [t for t in templates if t.id != template_id]
+
     if len(templates) < initial_count:
         _save_templates_to_file(templates)
         logger.info(f"Deleted template: {template_id}")

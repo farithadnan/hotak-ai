@@ -3,8 +3,10 @@
 from pathlib import Path
 from uuid import uuid4
 from pydantic import BaseModel
-from fastapi import APIRouter, File, HTTPException, Request, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 
+from ..models.user import UserDB
+from ..services.auth import get_current_user
 from ..storage.vector_storage import (
     filter_uncached_sources,
     add_documents_to_store,
@@ -62,7 +64,11 @@ def _save_upload(file: UploadFile) -> tuple[Path | None, str | None]:
 
 
 @router.post("/documents/load")
-async def load_documents_endpoint(request: DocumentLoadRequest, http_request: Request):
+async def load_documents_endpoint(
+    request: DocumentLoadRequest,
+    http_request: Request,
+    _current_user: UserDB = Depends(get_current_user),
+):
     """Endpoint to load documents from URLs or file paths."""
     try:
         logger.info(f"Received request to load {len(request.sources)} source(s)")
@@ -133,7 +139,10 @@ async def load_documents_endpoint(request: DocumentLoadRequest, http_request: Re
 
 
 @router.get("/documents")
-async def list_documents_endpoint(http_request: Request):
+async def list_documents_endpoint(
+    http_request: Request,
+    _current_user: UserDB = Depends(get_current_user),
+):
     """Endpoint to list all documents in the vector store."""
     try:
         logger.info("Listing all documents in vector store...")
@@ -155,7 +164,11 @@ async def list_documents_endpoint(http_request: Request):
 
 
 @router.post("/documents/upload")
-async def upload_documents_endpoint(http_request: Request, files: list[UploadFile] = File(...)):
+async def upload_documents_endpoint(
+    http_request: Request,
+    files: list[UploadFile] = File(...),
+    _current_user: UserDB = Depends(get_current_user),
+):
     """Upload files, then ingest them into the vector store."""
     if not files:
         raise HTTPException(status_code=400, detail="No files provided")

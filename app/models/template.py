@@ -38,8 +38,9 @@ class TemplateCreate(BaseModel):
 
 class Template(BaseModel):
     """Complete template model with metadata."""
-    
+
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: Optional[str] = Field(default=None, description="Owner user ID")
     name: str
     description: str
     sources: List[str]
