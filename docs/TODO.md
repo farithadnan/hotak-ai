@@ -67,4 +67,14 @@
 	- [x] `create_retrieval_tool` applies ChromaDB `filter={"source": {"$in": allowed_sources}}` when set.
 	- [x] Agent cache keyed by sorted sources; falls back to all-docs search when template has no sources.
 
-*All attachment UX hardening and context memory features are complete. Next: Tailwind CSS styling pass (Step 10) and retrieval reduction tuning based on remaining token budget.*
+28. [x] **Backend/Frontend:** Admin panel & RBAC - ✅ Done (Phase 7.2)
+	- [x] `role` + `is_active` columns added to `users` table with incremental SQLite migration.
+	- [x] Public `/auth/register` removed; first admin bootstrapped from env vars at startup.
+	- [x] `get_current_admin` dependency; admin-on-admin lock/delete protection.
+	- [x] Admin CRUD endpoints: list/create/lock/unlock/delete users.
+	- [x] Model settings endpoints (`GET/PUT /admin/models`); `/models` filtered by enabled list.
+	- [x] System settings endpoints (`GET/PUT /admin/system`); JSON persistence via `app/services/system_settings.py`.
+	- [x] Admin panel at `/admin` — Users tab (table + CreateUserModal), Models tab (auto-save), System Settings modal.
+	- [x] `AdminRoute` guard; Admin Panel nav hidden from non-admins.
+
+*Phase 7.2 Admin & RBAC complete. Next: Phase 7.3 — Per-user ChromaDB namespace isolation.*

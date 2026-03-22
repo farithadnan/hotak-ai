@@ -118,34 +118,51 @@ We are building a template-based knowledge management system ("Brains") allowing
 
 ## 🚀 Phase 7: Production Readiness
 
-### Phase 7.1 — Authentication & User Identity
-- [ ] **Backend:** User model + register/login endpoints (JWT access + refresh tokens)
-- [ ] **Backend:** Auth middleware — protect all `/chats`, `/messages`, `/query`, `/templates`, `/documents` routes
-- [ ] **Frontend:** Login / Register pages
-- [ ] **Frontend:** Auth context (store token, auto-refresh, redirect to login on 401)
-- [ ] **Frontend:** Logout action in profile popover
+### Phase 7.1 — Authentication & User Identity ✅ Done
+- [x] **Backend:** SQLite DB (`app/db.py`) + `UserDB` SQLAlchemy model + Pydantic schemas
+- [x] **Backend:** `POST /auth/register`, `POST /auth/login`, `GET /auth/me` endpoints (JWT HS256)
+- [x] **Backend:** `get_current_user` FastAPI dependency (Bearer token validation via `python-jose` + `passlib/bcrypt`)
+- [x] **Backend:** All routes protected — `/chats`, `/messages`, `/query`, `/query/stream`, `/templates`, `/documents`
+- [x] **Backend:** Chats and templates scoped to `user_id` — each user sees only their own data
+- [x] **Frontend:** `AuthContext` with login/register/logout + token persisted in `localStorage`
+- [x] **Frontend:** Axios interceptor attaches Bearer token on every request; 401 redirects to `/login`
+- [x] **Frontend:** `/login` and `/register` pages with form validation and error display
+- [x] **Frontend:** `ProtectedRoute` wrapper — unauthenticated users redirected to `/login`
+- [x] **Frontend:** Logout wired to profile popover; avatar/name/email show real user data
 
-### Phase 7.2 — Per-User Data Isolation
-- [ ] **Backend:** Scope chats, templates, and uploaded documents to authenticated user (DB foreign keys + query filters)
+### Phase 7.2 — Admin & RBAC ✅ Done
+- [x] **Backend:** Added `role` (`admin`/`user`) + `is_active` fields to `UserDB` model; incremental SQLite migration via `PRAGMA table_info` + `ALTER TABLE`
+- [x] **Backend:** First admin bootstrapped from env vars (`ADMIN_BOOTSTRAP_USERNAME/PASSWORD/EMAIL`) at startup; public `/auth/register` removed
+- [x] **Backend:** `get_current_admin` dependency for admin-only endpoints; admin-on-admin protection (lock/delete blocked)
+- [x] **Backend:** Admin CRUD — `GET/POST /admin/users`, `PUT /admin/users/{id}/lock`, `PUT /admin/users/{id}/unlock`, `DELETE /admin/users/{id}`
+- [x] **Backend:** Model settings — `GET/PUT /admin/models` (enabled list + default); `GET /models` filters by admin-enabled list
+- [x] **Backend:** System settings — `GET/PUT /admin/system`; all "magic number" tunables (temperature, token budgets, chunk size, retrieval K, summary) persisted as JSON; `app/services/system_settings.py`
+- [x] **Frontend:** Admin panel page at `/admin` (two tabs: Users + Models; System Settings modal via header button)
+- [x] **Frontend:** Users tab — table with role/status badges, Lock/Unlock/Delete per row; "New User" opens `CreateUserModal`; self and other admins are protected (no actions shown)
+- [x] **Frontend:** Models tab — checkbox list of accessible models; enable/disable and set default via radio; auto-saves on every change (400 ms debounce), no explicit save button
+- [x] **Frontend:** System Settings modal — all tunables in a responsive two-column grid; explicit Save button; restart note
+- [x] **Frontend:** `AdminRoute` guard — non-admins redirected to `/chat`; Admin Panel nav item shown only to admins
+
+### Phase 7.3 — Per-User Data Isolation
 - [ ] **Backend:** ChromaDB namespace per user (prevent cross-user document retrieval)
 
-### Phase 7.3 — User Settings
+### Phase 7.4 — User Settings
 - [ ] **Backend:** User settings model (default model, system prompt override, etc.)
 - [ ] **Frontend:** Settings page/modal accessible from profile popover
 - [ ] **Frontend:** Persist model preference per user (instead of per-session only)
 
-### Phase 7.4 — Docker
+### Phase 7.5 — Docker
 - [ ] `Dockerfile` for backend (FastAPI + ChromaDB volume mount)
 - [ ] `Dockerfile` for frontend (Vite build → nginx)
 - [ ] `docker-compose.yml` with env var wiring for both services
 
-### Phase 7.5 — Testing
+### Phase 7.6 — Testing
 - [ ] **Backend:** Unit tests for core services (query, ingestion, model catalog)
 - [ ] **Backend:** Integration tests hitting real FastAPI + real ChromaDB
 - [ ] **Frontend:** Component tests for critical flows (send message, attach file, template picker)
 - [ ] Token-estimation quality tuning and summary refresh strategy tests
 
-### Phase 7.6 — Observability
+### Phase 7.7 — Observability
 - [ ] Structured logging (request IDs, user IDs, latency)
 - [ ] Token usage tracking per user/chat
 - [ ] Health check endpoint (`/health`)
