@@ -15,7 +15,8 @@
 /* Left branding panel */
 .auth-brand {
   flex: 0 0 45%;
-  background: linear-gradient(145deg, #0e0e1a 0%, #1a1a2e 60%, #12121e 100%);
+  background: linear-gradient(145deg, rgba(10,8,20,0.55) 0%, rgba(20,12,40,0.45) 100%),
+              url('/src/assets/cyberpunk-login.webp') center/cover no-repeat;
   display: flex;
   align-items: center;
   justify-content: center;
