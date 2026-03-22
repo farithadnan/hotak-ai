@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Route, Routes } from 'react-router-dom'
 import { PanelRightClose } from './icons'
 import { useAppRouting } from './hooks/useAppRouting'
 import { useChatEngine } from './hooks/useChatEngine'
@@ -7,9 +8,12 @@ import AppRoutes from './routes/AppRoutes'
 import { ConfirmDialog } from './components/common/ConfirmDialog/ConfirmDialog'
 import { Toastr } from './components/common/Toastr/Toastr'
 import type { ToastrType, ToastrPosition } from './components/common/Toastr/Toastr'
+import { AuthProvider, useAuth } from './contexts/AuthContext'
+import LoginPage from './components/page/Auth/LoginPage'
 import './App.css'
 
-function App() {
+function AppShell() {
+  const { user } = useAuth()
   const { activeChatId, isChatView, openTemplates, openChat, openNewChat } = useAppRouting()
 
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
@@ -21,7 +25,7 @@ function App() {
     position: 'top-right' as ToastrPosition,
   })
 
-  const username = 'Avery'
+  const username = user?.username ?? ''
 
   const engine = useChatEngine(activeChatId, openChat)
 
@@ -143,6 +147,17 @@ function App() {
         onClose={() => setToastr((prev) => ({ ...prev, open: false }))}
       />
     </div>
+  )
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="*" element={<AppShell />} />
+      </Routes>
+    </AuthProvider>
   )
 }
 

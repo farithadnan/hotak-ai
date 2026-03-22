@@ -1,4 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext'
+import { AdminPage } from '../components/page/Admin/AdminPage'
 import ChatPage from '../components/page/ChatPage/ChatPage'
 import TemplateList from '../components/page/TemplateList/TemplateList'
 import type { ChatThread } from '../types'
@@ -49,6 +51,20 @@ type AppRoutesProps = {
   username: string
   onToggleSidebar: () => void
 }
+
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { token } = useAuth()
+  if (!token) return <Navigate to="/login" replace />
+  return <>{children}</>
+}
+
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const { token, user } = useAuth()
+  if (!token) return <Navigate to="/login" replace />
+  if (user?.role !== 'admin') return <Navigate to="/chat" replace />
+  return <>{children}</>
+}
+
 
 function AppRoutes({
   activeChat,
@@ -106,9 +122,22 @@ function AppRoutes({
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/chat" replace />} />
-      <Route path="/chat" element={<ChatPage {...chatPageProps} />} />
-      <Route path="/chat/:chatId" element={<ChatPage {...chatPageProps} />} />
-      <Route path="/templates" element={<TemplateList />} />
+      <Route
+        path="/chat"
+        element={<ProtectedRoute><ChatPage {...chatPageProps} /></ProtectedRoute>}
+      />
+      <Route
+        path="/chat/:chatId"
+        element={<ProtectedRoute><ChatPage {...chatPageProps} /></ProtectedRoute>}
+      />
+      <Route
+        path="/templates"
+        element={<ProtectedRoute><TemplateList /></ProtectedRoute>}
+      />
+      <Route
+        path="/admin"
+        element={<AdminRoute><AdminPage /></AdminRoute>}
+      />
       <Route path="*" element={<Navigate to="/chat" replace />} />
     </Routes>
   )
