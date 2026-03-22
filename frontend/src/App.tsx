@@ -28,13 +28,14 @@ function AppShell() {
   })
 
   const username = user?.username ?? ''
+
+  const engine = useChatEngine(activeChatId, openChat)
+
   const chatBg = user?.preferences?.chat_background
   const mainPanelClass = [
     isChatView && (!engine.activeChat || engine.activeChat.messages.length === 0) ? 'main-panel is-empty' : 'main-panel',
     chatBg && chatBg !== 'none' ? `chat-bg-${chatBg}` : '',
   ].filter(Boolean).join(' ')
-
-  const engine = useChatEngine(activeChatId, openChat)
 
   const showToastr = (options: Partial<typeof toastr>) => {
     setToastr((prev) => ({
