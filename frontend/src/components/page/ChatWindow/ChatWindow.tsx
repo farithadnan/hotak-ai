@@ -7,7 +7,6 @@ import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Bot, Copy, LoaderCircle, RotateCcw, Pencil, FileText, Link as LinkIcon } from '../../../icons';
 import { Composer } from '../../common/Composer/Composer';
 import { Toastr } from '../../common/Toastr/Toastr';
-import { useAuth } from '../../../contexts/AuthContext';
 import { ChatLoadingSkeleton } from './ChatLoadingSkeleton';
 import { dedupeSources, getSourceHref, parseAssistantResponse } from '../../../utils/assistantResponse';
 import { prettifyModelName } from '../../../services/models';
@@ -87,11 +86,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   onClearAttachmentFeedback,
   username = 'User',
 }) => {
-  const { user } = useAuth();
-  const chatBgClass = user?.preferences?.chat_background && user.preferences.chat_background !== 'none'
-    ? `chat-bg-${user.preferences.chat_background}`
-    : ''
-
   const [editingMessageId, setEditingMessageId] = React.useState<string | null>(null);
   const [editingContent, setEditingContent] = React.useState('');
   const [editingAttachments, setEditingAttachments] = React.useState<MessageAttachment[]>([]);
@@ -465,7 +459,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
       {chat && chat.messages.length > 0 && (
         <>
-          <div className={`chat-scroll chat-scroll-fixed${chatBgClass ? ` ${chatBgClass}` : ''}`} ref={chatScrollRef}>
+          <div className="chat-scroll chat-scroll-fixed" ref={chatScrollRef}>
             {chat.messages.map((message) => (
               <div
                 key={message.id}
