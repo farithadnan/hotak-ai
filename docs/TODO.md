@@ -22,7 +22,7 @@
 12. [x] **Backend:** Harden web-document ingestion for empty parsed pages - ✅ Done.
 	- [x] Web loader now falls back to full-page parse when filtered extraction is empty.
 	- [x] Empty extracted documents are marked failed instead of crashing split/embed flow.
-13. [ ] **Frontend:** Show model in sidebar chat rows (optional UX enhancement).
+13. [x] **Frontend:** Show model in sidebar chat rows (optional UX enhancement). - ✅ Done.
 14. [x] **Backend/Frontend:** Token-budget context packing + stream timeout safeguards - ✅ Done.
 	- [x] Backend packs prior chat history against configurable token budgets.
 	- [x] Frontend stream timeout aborts stalled chunk reads and falls back to `/query`.
@@ -43,13 +43,16 @@
 20. [x] **Frontend:** Add drag-and-drop attachment support in composer - ✅ Done.
 21. [x] **Frontend:** Replace placeholder "Attach Templates" action with a real template picker - ✅ Done.
 	- [x] Template selection queues template sources as URL/file attachments.
-22. [ ] **Frontend:** Add byte-level upload progress percentages for file attachments.
+22. [x] **Frontend:** Add byte-level upload progress percentages for file attachments. - ✅ Done.
+	- [x] `documents.ts` exposes `onUploadProgress` callback via axios `onUploadProgress`.
+	- [x] `useChatEngine` updates `uploadProgress` percent on pending attachment during upload.
+	- [x] Composer chip renders `{uploadProgress}%` while status is `uploading`.
 23. [x] **Templates:** Persist uploaded template files as real saved sources instead of browser-only file names - ✅ Done.
 	- [x] TemplateBuilder now calls `POST /documents/upload` immediately when files are selected.
 	- [x] Template `sources` stores the full server path returned by the upload endpoint (used for ChromaDB source filtering).
 	- [x] File list displays just the filename (basename) but stores the full path.
 	- [x] Upload errors shown inline; submit button disabled while uploading.
-24. [ ] **Backend:** Optional rolling summary memory block for long conversations.
+24. [x] **Backend:** Optional rolling summary memory block for long conversations. - ✅ Done.
 25. [x] **Backend:** Fix streaming cut-off and PDF content leaking into stream - ✅ Done.
 	- [x] Switched to `stream_mode="messages"` for true token-by-token streaming.
 	- [x] Added `AIMessageChunk` filter to exclude tool message content (retrieved docs) from stream output.
@@ -64,4 +67,4 @@
 	- [x] `create_retrieval_tool` applies ChromaDB `filter={"source": {"$in": allowed_sources}}` when set.
 	- [x] Agent cache keyed by sorted sources; falls back to all-docs search when template has no sources.
 
-*Core chat + model workflow is working, including multi-turn model switching and budgeted history packing. Next: model accessibility UX and summary-memory hardening.*
+*All attachment UX hardening and context memory features are complete. Next: Tailwind CSS styling pass (Step 10) and retrieval reduction tuning based on remaining token budget.*

@@ -1,6 +1,6 @@
 # Hotak AI - Development Roadmap (Active)
 
-## 🎯 Current Status: Phase 6.8 - Chat Attachment Ingestion Baseline
+## 🎯 Current Status: Phase 6.10 - Attachment UX Hardening Complete
 
 We are building a template-based knowledge management system ("Brains") allowing users to create reusable knowledge templates for chat sessions.
 
@@ -75,10 +75,10 @@ We are building a template-based knowledge management system ("Brains") allowing
   - [x] `app/services/model_catalog.py` probes each chat model candidate at startup with a `max_tokens=1` request.
   - [x] `GET /models` serves only confirmed-accessible models from `app.state.accessible_models`.
   - [x] Frontend `isLikelyChatModel` client-side filter removed — backend is now authoritative.
-- [ ] **Context Memory Hardening** - Planned (after UX hardening)
-  - [ ] Add optional rolling summary memory block for long chats.
+- [x] **Context Memory Hardening** - ✅ Done
+  - [x] Add optional rolling summary memory block for long chats.
   - [ ] Tune retrieval reduction based on remaining token budget.
-- [ ] **Attachment UX Hardening** - Planned
+- [x] **Attachment UX Hardening** - ✅ Done
   - [x] Replace prompt-based URL entry with an inline composer URL field.
   - [x] Add per-attachment progress indicators during ingestion.
   - [x] Add toast feedback for attach success/partial failure/failure.
@@ -87,7 +87,7 @@ We are building a template-based knowledge management system ("Brains") allowing
   - [x] Replace placeholder template action with real template source selection.
   - [x] Add Archive action to chat context menu (sidebar chat rows).
   - [x] Archived Chats modal — searchable list with per-item Unarchive/Delete and bulk Unarchive All / Delete All.
-  - [ ] Add byte-level upload progress percentages.
+  - [x] Add byte-level upload progress percentages.
   - [x] Persist template-uploaded local files as reusable saved sources for template attach parity.
 
 
