@@ -66,6 +66,9 @@ async def startup_event():
             CHUNK_OVERLAP,
             RETRIEVAL_K,
         )
+        from app.db import create_tables, SessionLocal
+        create_tables()
+
         from app.services.llm import initialize_models
         from app.services.model_catalog import build_accessible_chat_models
         from app.storage.vector_storage import initialize_vector_store
@@ -87,13 +90,47 @@ async def startup_event():
 
         accessible_models = await build_accessible_chat_models(OPENAI_API_KEY)
 
+        # Initialize model settings (enables all if no settings file yet)
+        from app.services.model_settings import initialize_model_settings
+        accessible_ids = [m["id"] for m in accessible_models]
+        initialize_model_settings(accessible_ids)
+
+        # Bootstrap first admin user if no users exist yet
+        from app.config.settings import (
+            ADMIN_BOOTSTRAP_USERNAME,
+            ADMIN_BOOTSTRAP_PASSWORD,
+            ADMIN_BOOTSTRAP_EMAIL,
+        )
+        from app.models.user import UserDB
+        from app.services.auth import hash_password
+        db = SessionLocal()
+        try:
+            if not db.query(UserDB).first():
+                if ADMIN_BOOTSTRAP_PASSWORD:
+                    admin = UserDB(
+                        username=ADMIN_BOOTSTRAP_USERNAME,
+                        email=ADMIN_BOOTSTRAP_EMAIL,
+                        hashed_password=hash_password(ADMIN_BOOTSTRAP_PASSWORD),
+                        role="admin",
+                    )
+                    db.add(admin)
+                    db.commit()
+                    logger.info("Bootstrap admin user created: %s", ADMIN_BOOTSTRAP_USERNAME)
+                else:
+                    logger.warning(
+                        "No users exist and ADMIN_BOOTSTRAP_PASSWORD is not set. "
+                        "Set it in .env to create the first admin account."
+                    )
+        finally:
+            db.close()
+
         # Store in app.state
         app.state.llm = llm
         app.state.embeddings = embeddings
         app.state.vector_store = vector_store
         app.state.rag_agent = rag_agent
         app.state.accessible_models = accessible_models
-        
+
         logger.info("Hotak AI Server started successfully!")
 
     except Exception as e:

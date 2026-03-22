@@ -77,3 +77,17 @@ RETRIEVAL_K = _get_int_env("RETRIEVAL_K", 5)
 # ==========================================
 UPLOADS_DIRECTORY = DATA_DIRECTORY / "uploads"
 MAX_UPLOAD_FILE_SIZE_BYTES = _get_int_env("MAX_UPLOAD_FILE_SIZE_BYTES", 10 * 1024 * 1024)
+
+# ==========================================
+# AUTH / JWT SETTINGS
+# ==========================================
+JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "change-this-secret-in-production")
+JWT_ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = _get_int_env("ACCESS_TOKEN_EXPIRE_MINUTES", 60 * 24 * 7)  # 7 days default
+
+# ==========================================
+# ADMIN BOOTSTRAP SETTINGS
+# ==========================================
+ADMIN_BOOTSTRAP_USERNAME = os.getenv("ADMIN_BOOTSTRAP_USERNAME", "admin")
+ADMIN_BOOTSTRAP_PASSWORD = os.getenv("ADMIN_BOOTSTRAP_PASSWORD", "")
+ADMIN_BOOTSTRAP_EMAIL = os.getenv("ADMIN_BOOTSTRAP_EMAIL", "admin@localhost")

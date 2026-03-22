@@ -16,4 +16,9 @@ dependencies:
   - pypdf
   - langchain-openai
   - python-docx
+  - sqlalchemy
+  - python-jose
+  - cryptography
+  - passlib
+  - bcrypt==4.0.1
 prefix: C:\Users\User\miniconda3\envs\hotak-ai-venv
