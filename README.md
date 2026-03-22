@@ -1,50 +1,98 @@
-# Hotak AI - RAG System with Template Management
+# Hotak AI — RAG Knowledge Assistant
 
-## 🚀 Quick Start
+A template-based RAG system. Upload documents/URLs, create reusable knowledge templates ("Brains"), and chat with your data in real-time.
 
-### Backend (FastAPI)
+---
+
+## 🐳 Quick Start — Docker (recommended)
+
+```bash
+cp .env.sample .env
+# Edit .env: set OPENAI_API_KEY, JWT_SECRET_KEY, ADMIN_BOOTSTRAP_PASSWORD
+docker compose up --build
+```
+
+| Service  | URL |
+|----------|-----|
+| App (frontend) | http://localhost |
+| API docs       | http://localhost:8000/docs |
+
+Log in with the credentials from `ADMIN_BOOTSTRAP_USERNAME` / `ADMIN_BOOTSTRAP_PASSWORD` in your `.env`.
+
+Data persists in Docker named volumes (`backend_data`, `backend_logs`). To reset, run `docker compose down -v`.
+
+---
+
+## 💻 Quick Start — Local Dev
+
+**Backend (FastAPI)**
 ```bash
 conda activate hotak-ai-venv
 uvicorn app.server:app --reload
-# API Docs: http://localhost:8000/docs
+# API docs: http://localhost:8000/docs
 ```
 
-### Frontend (React + Vite)
+**Frontend (React + Vite)**
 ```bash
 cd frontend
 npm install
 npm run dev
-# App URL: http://localhost:5173
+# App: http://localhost:5173
 ```
 
 ---
 
-## 📂 Documentation & Progress
+## ⚙️ Environment Variables
 
-- **📖 [Project Documentation](docs/PROJECT.md):** Full architecture docs — every module, component, and function explained.
-- **🎯 [Current Tasks](docs/TODO.md):** The next 3 things to work on.
-- **🗺️ [Development Roadmap](docs/ROADMAP.md):** Full project status and architecture.
+Copy `.env.sample` to `.env` and fill in the required values.
+
+| Variable | Required | Default | Description |
+|---|---|---|---|
+| `OPENAI_API_KEY` | ✅ | — | OpenAI API key |
+| `JWT_SECRET_KEY` | ✅ | `change-this-...` | Secret for signing JWTs — change in production |
+| `ADMIN_BOOTSTRAP_PASSWORD` | ✅ | — | Password for the first admin account |
+| `ADMIN_BOOTSTRAP_USERNAME` | | `admin` | Username for the first admin account |
+| `ADMIN_BOOTSTRAP_EMAIL` | | `admin@localhost` | Email for the first admin account |
+| `CORS_ORIGINS` | | `http://localhost:5173` | Comma-separated allowed origins (use `http://localhost` for Docker) |
+| `VITE_API_BASE_URL` | | `http://localhost:8000` | Backend URL baked into the frontend bundle (Docker build arg) |
+| `LLM_MAX_TOKENS` | | `4096` | Max completion tokens per response |
+| `STREAM_MAX_CHARS` | | `32000` | Max characters emitted per streaming response |
+| `RETRIEVAL_K` | | `5` | Number of document chunks retrieved as context |
+| `CHAT_HISTORY_MAX_TOKENS` | | `2800` | Token budget for prior chat history per request |
+| `ENABLE_SUMMARY_MEMORY` | | `true` | Rolling summary block for long conversations |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | | `10080` | JWT expiry (default 7 days) |
+| `LOG_LEVEL` | | `INFO` | Logging level (`DEBUG`, `INFO`, `WARNING`, `ERROR`) |
+| `LANGSMITH_TRACING` | | `false` | Enable LangSmith tracing |
+| `LANGSMITH_API_KEY` | | — | LangSmith API key |
 
 ---
 
-## ⚙️ Runtime Settings
+## 📂 Documentation
 
-- `STREAM_MAX_CHARS` (default: `6000`): Maximum characters emitted by `/query/stream` per response.
-- `LLM_MAX_TOKENS` (default: `512`): Max completion tokens per model response.
-- `RETRIEVAL_K` (default: `5`): Number of chunks retrieved as context; lowering reduces token usage.
-- `CHAT_HISTORY_MAX_TOKENS` (default: `2800`): Approximate token budget reserved for prior chat history per request.
-- `CHAT_HISTORY_MAX_MESSAGE_TOKENS` (default: `700`): Approximate token cap for any single historical message before truncation.
-- `CHAT_HISTORY_MAX_MESSAGES` (default: `10`): Hard cap on how many prior messages are considered before packing.
+- **🎯 [Current Tasks](docs/TODO.md)** — completed + upcoming work
+- **🗺️ [Development Roadmap](docs/ROADMAP.md)** — full phase-by-phase status
 
 ---
 
 ## 📁 Project Structure
 
-| Layer | Folder | Responsibility |
-| :--- | :--- | :--- |
-| **Frontend** | `frontend/src` | React UI (Vite + TS + Tailwind). |
-| **API** | `app/api/` | FastAPI routes for docs, queries, and templates. |
-| **Logic** | `app/agents/` | RAG logic (LLM + Vector Search). |
-| **Ingestion** | `app/loaders/` | Document extractors (PDF, URL, DOCX). |
-| **Storage** | `app/storage/` | Template storage (JSON) and Vectors (ChromaDB). |
-| **Config** | `app/config/` | System prompts and environment settings. |
+| Layer | Path | Responsibility |
+|---|---|---|
+| **Frontend** | `frontend/src/` | React 18 + TypeScript + Vite + Tailwind CSS |
+| **API** | `app/api/` | FastAPI routes (auth, chats, messages, query, templates, documents, admin) |
+| **Agents** | `app/agents/` | LangChain RAG agent (retrieval + LLM) |
+| **Services** | `app/services/` | LLM init, model catalog, system settings, summary memory |
+| **Ingestion** | `app/loaders/` | Document extractors (PDF, DOCX, URL) |
+| **Storage** | `app/storage/` | ChromaDB vector store |
+| **Config** | `app/config/` | Settings + system prompts |
+| **DB** | `app/db.py` | SQLite via SQLAlchemy (users, chats, messages, templates) |
+
+---
+
+## 🛠️ Tech Stack
+
+- **Frontend:** React 18, TypeScript, Vite, Tailwind CSS v4, Axios
+- **Backend:** Python 3.13, FastAPI, LangChain, ChromaDB, SQLite
+- **LLM:** OpenAI (GPT-4o / GPT-4o-mini) · Ollama (local models)
+- **Auth:** JWT (HS256) · bcrypt passwords · RBAC (admin/user roles)
+- **Deploy:** Docker + docker-compose; nginx SPA serve for frontend
