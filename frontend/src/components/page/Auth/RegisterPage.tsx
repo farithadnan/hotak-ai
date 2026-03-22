@@ -41,7 +41,7 @@ export default function RegisterPage() {
       <div className="auth-brand">
         <div className="auth-brand-glow" />
         <div className="auth-brand-content">
-          <div className="auth-brand-logo"><img src="/src/assets/hotak-ai-logo.webp" alt="Hotak AI" /></div>
+          <div className="auth-brand-logo"><img src="/hotak-ai-logo.webp" alt="Hotak AI" /></div>
           <h1 className="auth-brand-name">Hotak AI</h1>
           <p className="auth-brand-tagline">
             Your intelligent knowledge assistant. Upload documents, ask questions, get instant answers.

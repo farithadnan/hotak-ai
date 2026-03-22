@@ -1,6 +1,6 @@
 # Hotak AI - Development Roadmap (Active)
 
-## 🎯 Current Status: Phase 7.4 Complete — Next: Phase 7.5 (Docker)
+## 🎯 Current Status: Phase 7.5 Complete — Next: Phase 7.6 (Testing)
 
 We are building a template-based knowledge management system ("Brains") allowing users to create reusable knowledge templates for chat sessions.
 
@@ -182,10 +182,17 @@ We are building a template-based knowledge management system ("Brains") allowing
 - [x] **Frontend:** Accent color on native form controls (`input[type=range/checkbox/radio]`), template card hover, and action buttons
 - [x] **Frontend:** Composer Tools button disabled/stubbed (coming soon)
 
-### Phase 7.5 — Docker
-- [ ] `Dockerfile` for backend (FastAPI + ChromaDB volume mount)
-- [ ] `Dockerfile` for frontend (Vite build → nginx)
-- [ ] `docker-compose.yml` with env var wiring for both services
+### Phase 7.5 — Docker ✅ Done
+- [x] `requirements.txt` pinning all backend dependencies
+- [x] `Dockerfile` for backend (Python 3.13-slim, FastAPI + uvicorn, data/logs volumes)
+- [x] `frontend/Dockerfile` — multi-stage: Node 22 build → nginx 1.27 serve
+- [x] `frontend/nginx.conf` — SPA fallback (`try_files $uri /index.html`) + static asset cache headers
+- [x] `docker-compose.yml` — both services wired with named volumes, env var pass-through
+- [x] `.dockerignore` (root) + `frontend/.dockerignore`
+- [x] `VITE_API_BASE_URL` build arg — backend URL baked into frontend bundle; configurable per-env
+- [x] `CORS_ORIGINS` env var — backend CORS origins comma-separated, replaces hardcoded dev URL
+- [x] `.env.sample` updated with all Docker-relevant vars and comments
+- [x] Production asset paths fixed (`/src/assets/...` → `/...` via `public/`)
 
 ### Phase 7.6 — Testing
 - [ ] **Backend:** Unit tests for core services (query, ingestion, model catalog)

@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Development data (mounted as volumes in prod)
+app/data/
+app/logs/
+
+# Frontend (separate container)
+frontend/
+
+# Docs / misc
+docs/
+*.md
+.git/
+.gitignore
+.env
+.env.*
+!.env.sample
+
+# IDE
+.vscode/
+.idea/

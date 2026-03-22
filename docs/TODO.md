@@ -100,9 +100,19 @@
 	- [x] Theme-adaptive gradient backgrounds (`color-mix` with `var(--color-bg)`); accent on range/checkbox/radio globally.
 	- [x] App logo switched to `hotak-ai-logo.webp`; cyberpunk login bg image; favicon suite in `public/`; title "Hotak AI".
 
-31. [ ] **Frontend:** Composer Tools integration *(future feature — button disabled/stubbed)*
+31. [x] **Docker:** Phase 7.5 containerisation - ✅ Done
+	- [x] `requirements.txt` pinning all backend Python deps.
+	- [x] `Dockerfile` (backend) — Python 3.13-slim, uvicorn entrypoint, named volumes for `data/` + `logs/`.
+	- [x] `frontend/Dockerfile` — multi-stage Node 22 build → nginx 1.27 serve; `VITE_API_BASE_URL` build arg.
+	- [x] `frontend/nginx.conf` — SPA fallback + static asset cache headers.
+	- [x] `docker-compose.yml` — both services, env var pass-through, `CORS_ORIGINS` + `VITE_API_BASE_URL`.
+	- [x] `.dockerignore` for root and `frontend/`.
+	- [x] `.env.sample` updated with all Docker vars.
+	- [x] Fixed production asset paths (`/src/assets/...` → `public/` files served as `/...`).
+
+32. [ ] **Frontend:** Composer Tools integration *(future feature — button disabled/stubbed)*
 	- [ ] Define tool schema and backend tool-call routing.
 	- [ ] Composer Tools button (`Briefcase` icon) is currently disabled with `title="Tools (coming soon)"`.
 	- [ ] Planned: web search, calculator, code execution, and user-defined tool plugins.
 
-*Phase 7.4 User Settings complete. Next: Phase 7.5 — Docker.*
+*Phase 7.5 Docker complete. Next: Phase 7.6 — Testing.*
