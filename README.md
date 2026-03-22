@@ -69,6 +69,7 @@ Copy `.env.sample` to `.env` and fill in the required values.
 
 ## 📂 Documentation
 
+- **📖 [Project Documentation](docs/PROJECT.md)** — full architecture docs, every module and function explained
 - **🎯 [Current Tasks](docs/TODO.md)** — completed + upcoming work
 - **🗺️ [Development Roadmap](docs/ROADMAP.md)** — full phase-by-phase status
 
