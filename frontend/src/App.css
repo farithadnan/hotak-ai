@@ -91,7 +91,12 @@
 }
 
 .auth-card {
-  @apply flex flex-col gap-5 bg-panel border border-border rounded-2xl p-8 w-full;
+  @apply flex flex-col gap-5 border rounded-2xl p-8 w-full;
+  background: color-mix(in srgb, var(--color-panel) 85%, transparent);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-color: color-mix(in srgb, var(--color-accent-border) 40%, var(--color-border));
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
   max-width: 400px;
 }
 
@@ -237,7 +242,7 @@
 /* Overlay Composer at the bottom, centered */
 .composer-overlay {
   @apply absolute left-0 right-0 bottom-0 z-10 w-full block text-center;
-  background: linear-gradient(180deg, transparent 0 60%, var(--color-bg) 100%);
+  background: linear-gradient(180deg, transparent 0%, color-mix(in srgb, var(--color-bg) 90%, transparent) 55%, var(--color-bg) 100%);
   pointer-events: none;
 }
 .composer-overlay > .composer {
@@ -413,7 +418,10 @@
 }
 
 .form {
-  @apply flex flex-col bg-panel w-full box-border overflow-x-hidden;
+  @apply flex flex-col w-full box-border overflow-x-hidden;
+  background: color-mix(in srgb, var(--color-panel) 85%, transparent);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   gap: 1rem;
   border-radius: 12px;
   padding: 1.2rem 1.5vw;
@@ -958,8 +966,9 @@
 }
 
 .main-panel {
-  /* Main content column with header + body */
-  @apply flex flex-col min-h-screen bg-bg overflow-y-auto;
+  /* Main content column with header + body — transparent so app-shell bg shows through */
+  @apply flex flex-col min-h-screen overflow-y-auto;
+  background: transparent;
 }
 
 .main-panel.is-empty {

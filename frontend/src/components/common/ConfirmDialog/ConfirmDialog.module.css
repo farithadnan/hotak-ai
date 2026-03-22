@@ -7,9 +7,13 @@
   backdrop-filter: blur(2px);
 }
 .confirm-dialog {
-  @apply bg-panel text-text border border-border;
+  @apply text-text;
+  background: color-mix(in srgb, var(--color-panel) 88%, transparent);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid color-mix(in srgb, var(--color-accent-border) 40%, var(--color-border));
   border-radius: 11px;
-  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.5), 0 0 0 1px color-mix(in srgb, var(--color-accent-border) 20%, transparent);
   padding: 0.85rem 0.9rem;
   min-width: 280px;
   max-width: 90vw;

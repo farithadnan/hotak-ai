@@ -17,14 +17,18 @@
 
 /* Modal content box */
 .modalContent {
-  @apply flex flex-col w-full relative bg-panel box-border overflow-y-auto overflow-x-hidden;
+  @apply flex flex-col w-full relative box-border overflow-y-auto overflow-x-hidden;
+  background: color-mix(in srgb, var(--color-panel) 88%, transparent);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid color-mix(in srgb, var(--color-accent-border) 40%, var(--color-border));
   max-width: min(760px, 94vw);
   max-height: 90vh;
   margin: auto;
   gap: 0.5rem;
   border-radius: 12px;
   padding: 0.78rem 0.9rem 0.9rem;
-  box-shadow: 0 2px 12px #0004;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px color-mix(in srgb, var(--color-accent-border) 20%, transparent);
   animation: modalIn 0.16s ease;
 }
 
