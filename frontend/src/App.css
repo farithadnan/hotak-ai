@@ -1,41 +1,186 @@
 @reference "./index.css";
 
 /* =========================================
-   AUTH PAGES
+   AUTH PAGES — split layout
    ========================================= */
-.auth-page {
-  @apply flex items-center justify-center min-h-screen bg-bg;
+
+/* Split container */
+.auth-split {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+  background: var(--color-bg);
 }
+
+/* Left branding panel */
+.auth-brand {
+  flex: 0 0 45%;
+  background: linear-gradient(145deg, #0e0e1a 0%, #1a1a2e 60%, #12121e 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-brand-glow {
+  position: absolute;
+  width: 340px;
+  height: 340px;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--color-accent) 20%, transparent) 0%, transparent 70%);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -55%);
+  pointer-events: none;
+}
+
+.auth-brand-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+  max-width: 320px;
+}
+
+.auth-brand-logo {
+  @apply flex items-center justify-center rounded-2xl bg-accent-soft text-accent font-bold;
+  width: 52px;
+  height: 52px;
+  font-size: 1.2rem;
+}
+
+.auth-brand-name {
+  @apply text-text font-bold;
+  font-size: 2rem;
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+.auth-brand-tagline {
+  @apply text-muted;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.auth-brand-features {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.auth-brand-features li {
+  @apply text-muted;
+  font-size: 0.88rem;
+}
+
+/* Right form panel */
+.auth-form-panel {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
 .auth-card {
-  @apply flex flex-col items-center gap-6 bg-panel border border-border rounded-2xl p-8 w-full;
+  @apply flex flex-col gap-5 bg-panel border border-border rounded-2xl p-8 w-full;
   max-width: 400px;
 }
-.auth-logo {
-  @apply flex items-center justify-center w-12 h-12 rounded-xl bg-accent-soft text-accent font-bold text-lg;
-}
+
 .auth-title {
-  @apply text-text font-semibold text-xl m-0;
+  @apply text-text font-bold m-0;
+  font-size: 1.4rem;
 }
+
+.auth-subtitle {
+  @apply text-muted m-0;
+  font-size: 0.88rem;
+  margin-top: -0.3rem !important;
+}
+
 .auth-form {
-  @apply flex flex-col gap-4 w-full;
+  @apply flex flex-col gap-3 w-full;
 }
+
 .auth-error {
   @apply bg-[#3a2323] border border-[#f44336] text-[#ffb9b9] rounded-lg px-3 py-2 text-sm;
 }
+
 .auth-submit-btn {
-  @apply w-full py-2 px-4 rounded-lg bg-accent text-[#1a1a2e] font-semibold cursor-pointer border-none transition-opacity mt-1;
+  @apply w-full py-2 px-4 rounded-lg bg-accent font-semibold cursor-pointer border-none transition-opacity;
+  color: #0e0e1a;
+  margin-top: 0.25rem;
 }
+
 .auth-submit-btn:hover:not(:disabled) {
   @apply opacity-90;
 }
+
 .auth-submit-btn:disabled {
   @apply opacity-50 cursor-not-allowed;
 }
+
 .auth-switch {
-  @apply text-muted text-sm m-0;
+  @apply text-muted text-sm m-0 text-center;
 }
+
 .auth-switch a {
   @apply text-accent;
+}
+
+/* Mobile: stack vertically */
+@media (max-width: 768px) {
+  .auth-split {
+    flex-direction: column;
+  }
+  .auth-brand {
+    flex: 0 0 auto;
+    padding: 2rem 1.5rem;
+    min-height: 220px;
+  }
+  .auth-brand-content {
+    align-items: center;
+    text-align: center;
+  }
+  .auth-brand-features {
+    align-items: center;
+  }
+}
+
+/* =========================================
+   CHAT WINDOW BACKGROUNDS
+   ========================================= */
+
+.chat-bg-dots {
+  background-image: radial-gradient(circle, color-mix(in srgb, var(--color-muted) 18%, transparent) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+.chat-bg-grid {
+  background-image:
+    linear-gradient(to right, color-mix(in srgb, var(--color-border) 60%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in srgb, var(--color-border) 60%, transparent) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.chat-bg-gradient-warm {
+  background: linear-gradient(160deg, #2d1b0e 0%, var(--color-bg) 55%, #1a0e20 100%);
+}
+
+.chat-bg-gradient-cool {
+  background: linear-gradient(160deg, #0e1a2d 0%, var(--color-bg) 55%, #0e2020 100%);
+}
+
+.chat-bg-gradient-purple {
+  background: linear-gradient(160deg, #1a0e2d 0%, var(--color-bg) 55%, #200e2d 100%);
 }
 
 :root {
