@@ -8,6 +8,7 @@ import type { TemplateCreate } from '../../../types/models';
 import { DEFAULT_TEMPLATE_SETTINGS } from '../../../types/models';
 import { Plus, Trash2 } from '../../../icons';
 import { Modal } from '../../common/Modal/Modal';
+import { FormField } from '../../common/FormField/FormField';
 import style from './TemplateBuilder.module.css';
 
 interface TemplateBuilderProps {
@@ -26,16 +27,22 @@ function TemplateBuilder({ open, onClose, mode, initialData, onSuccess }: Templa
     const [isUploadingFiles, setIsUploadingFiles] = useState(false);
     const [uploadError, setUploadError] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [nameError, setNameError] = useState('');
     const [success, setSuccess] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<'basic' | 'settings'>('basic');
     const [_urlInput, setUrlInput] = useState<string>('');
     const [availableModels, setAvailableModels] = useState<Model[]>([]);
 
     useEffect(() => {
+        if (!open) {
+            setNameError('');
+            return;
+        }
         if (open) {
             setFormData(initialData || { name: '', description: '', sources: [], settings: DEFAULT_TEMPLATE_SETTINGS });
             setError(null);
             setSuccess(null);
+            setNameError('');
             setUploadError(null);
             setActiveTab('basic');
             setUrlInput('');
@@ -97,9 +104,11 @@ function TemplateBuilder({ open, onClose, mode, initialData, onSuccess }: Templa
         setError(null);
         setSuccess(null);
         if (!formData.name.trim()) {
-            setError('Template name is required');
+            setNameError('Template name is required');
+            setActiveTab('basic');
             return;
         }
+        setNameError('');
         try {
             setIsLoading(true);
             let result;
@@ -136,7 +145,11 @@ function TemplateBuilder({ open, onClose, mode, initialData, onSuccess }: Templa
                 <div className="form-tabs">
                     <button
                         type="button"
-                        className={activeTab === 'basic' ? 'form-tab is-active' : 'form-tab'}
+                        className={[
+                            'form-tab',
+                            activeTab === 'basic' ? 'is-active' : '',
+                            nameError ? 'has-error' : '',
+                        ].filter(Boolean).join(' ')}
                         onClick={() => setActiveTab('basic')}
                     >
                         Basic Info
@@ -154,22 +167,19 @@ function TemplateBuilder({ open, onClose, mode, initialData, onSuccess }: Templa
                         {activeTab === 'basic' && (
                             <>
                                 {/* Name Field */}
-                                <div className="form-group">
-                                    <label className="form-label" htmlFor="template-name">Template Name *</label>
+                                <FormField label="Template Name" htmlFor="template-name" error={nameError} required>
                                     <input
                                         id="template-name"
-                                        className="form-input"
+                                        className={`form-input${nameError ? ' has-error' : ''}`}
                                         type="text"
                                         value={formData.name}
-                                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                        onChange={(e) => { setFormData({ ...formData, name: e.target.value }); setNameError(''); }}
                                         placeholder="e.g., Python Documentation Helper"
-                                        required
                                         autoFocus
                                     />
-                                </div>
+                                </FormField>
                                 {/* Description Field */}
-                                <div className="form-group">
-                                    <label className={`form-label ${style['mt-1']}`} htmlFor="template-desc">Description (optional)</label>
+                                <FormField label="Description" htmlFor="template-desc" hint="What is this template for?">
                                     <textarea
                                         id="template-desc"
                                         className="form-textarea"
@@ -178,7 +188,7 @@ function TemplateBuilder({ open, onClose, mode, initialData, onSuccess }: Templa
                                         placeholder="What is this template for?"
                                         rows={3}
                                     />
-                                </div>
+                                </FormField>
                                 {/* Document Sources: File Upload and URLs */}
                                 <fieldset className="form-fieldset sources-fieldset">
                                     <legend className="form-legend">Document Sources</legend>
@@ -268,9 +278,8 @@ function TemplateBuilder({ open, onClose, mode, initialData, onSuccess }: Templa
                         )}
                         {activeTab === 'settings' && (
                             <>
-                                {/* System Prompt (move to top) */}
-                                <div className="form-group">
-                                    <label className="form-label" htmlFor="template-system-prompt">System Prompt</label>
+                                {/* System Prompt */}
+                                <FormField label="System Prompt" htmlFor="template-system-prompt" hint="The system prompt guides the AI's behavior for this template.">
                                     <textarea
                                         id="template-system-prompt"
                                         className="form-textarea"
@@ -282,13 +291,9 @@ function TemplateBuilder({ open, onClose, mode, initialData, onSuccess }: Templa
                                         placeholder="Custom instructions for the AI (optional)"
                                         rows={3}
                                     />
-                                    <span className="form-hint">
-                                        The system prompt guides the AI's behavior for this template.
-                                    </span>
-                                </div>
+                                </FormField>
                                 {/* Model Dropdown */}
-                                <div className="form-group">
-                                    <label className="form-label" htmlFor="template-model">Model</label>
+                                <FormField label="Model" htmlFor="template-model">
                                     <select
                                         id="template-model"
                                         className="form-select"
@@ -309,12 +314,13 @@ function TemplateBuilder({ open, onClose, mode, initialData, onSuccess }: Templa
                                             </option>
                                         ))}
                                     </select>
-                                </div>
+                                </FormField>
                                 {/* Temperature Slider */}
-                                <div className="form-group">
-                                    <label className="form-label" htmlFor="template-temp">
-                                        Temperature: {(formData.settings || DEFAULT_TEMPLATE_SETTINGS).temperature.toFixed(1)}
-                                    </label>
+                                <FormField
+                                    label={`Temperature: ${(formData.settings || DEFAULT_TEMPLATE_SETTINGS).temperature.toFixed(1)}`}
+                                    htmlFor="template-temp"
+                                    hint="0 = Focused and deterministic, 1 = Creative and random"
+                                >
                                     <input
                                         id="template-temp"
                                         className="form-input"
@@ -328,13 +334,9 @@ function TemplateBuilder({ open, onClose, mode, initialData, onSuccess }: Templa
                                             settings: { ...(formData.settings || DEFAULT_TEMPLATE_SETTINGS), temperature: parseFloat(e.target.value) }
                                         })}
                                     />
-                                    <span className="form-hint">
-                                        0 = Focused and deterministic, 1 = Creative and random
-                                    </span>
-                                </div>
+                                </FormField>
                                 {/* Chunk Size */}
-                                <div className="form-group">
-                                    <label className="form-label" htmlFor="template-chunksize">Chunk Size</label>
+                                <FormField label="Chunk Size" htmlFor="template-chunksize" hint="Characters per chunk (default: 1000)">
                                     <input
                                         id="template-chunksize"
                                         className="form-input"
@@ -346,13 +348,9 @@ function TemplateBuilder({ open, onClose, mode, initialData, onSuccess }: Templa
                                             settings: { ...(formData.settings || DEFAULT_TEMPLATE_SETTINGS), chunk_size: parseInt(e.target.value) || 1000 }
                                         })}
                                     />
-                                    <span className="form-hint">
-                                        Characters per chunk (default: 1000)
-                                    </span>
-                                </div>
+                                </FormField>
                                 {/* Chunk Overlap */}
-                                <div className="form-group">
-                                    <label className="form-label" htmlFor="template-chunkoverlap">Chunk Overlap</label>
+                                <FormField label="Chunk Overlap" htmlFor="template-chunkoverlap" hint="Overlapping characters between chunks (default: 200)">
                                     <input
                                         id="template-chunkoverlap"
                                         className="form-input"
@@ -364,13 +362,9 @@ function TemplateBuilder({ open, onClose, mode, initialData, onSuccess }: Templa
                                             settings: { ...(formData.settings || DEFAULT_TEMPLATE_SETTINGS), chunk_overlap: parseInt(e.target.value) || 200 }
                                         })}
                                     />
-                                    <span className="form-hint">
-                                        Overlapping characters between chunks (default: 200)
-                                    </span>
-                                </div>
+                                </FormField>
                                 {/* Retrieval K */}
-                                <div className="form-group">
-                                    <label className="form-label" htmlFor="template-retrievalk">Retrieved Chunks (K)</label>
+                                <FormField label="Retrieved Chunks (K)" htmlFor="template-retrievalk" hint="How many relevant chunks to retrieve (default: 4)">
                                     <input
                                         id="template-retrievalk"
                                         className="form-input"
@@ -382,10 +376,7 @@ function TemplateBuilder({ open, onClose, mode, initialData, onSuccess }: Templa
                                             settings: { ...(formData.settings || DEFAULT_TEMPLATE_SETTINGS), retrieval_k: parseInt(e.target.value) || 4 }
                                         })}
                                     />
-                                    <span className="form-hint">
-                                        How many relevant chunks to retrieve (default: 4)
-                                    </span>
-                                </div>
+                                </FormField>
                             </>
                         )}
                     </div>
@@ -401,7 +392,7 @@ function TemplateBuilder({ open, onClose, mode, initialData, onSuccess }: Templa
                     <button
                         className="form-submit"
                         type="submit"
-                        disabled={isLoading || isUploadingFiles || !formData.name.trim()}
+                        disabled={isLoading || isUploadingFiles}
                     >
                         {isUploadingFiles ? 'Uploading files…' : isLoading ? (mode === 'create' ? 'Creating...' : 'Updating...') : (mode === 'create' ? 'Create Template' : 'Update Template')}
                     </button>

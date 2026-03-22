@@ -172,17 +172,17 @@ function TemplateList() {
             <span className={style['template-count']}>{filteredTemplates.length} templates</span>
           </div>
           <div className={style['template-header-right']}>
-            <label className={style['template-search']} aria-label="Search templates">
-              <Search size={16} />
+            <div className={style['template-search']}>
+              <span className={style['template-search-icon']}><Search size={12} /></span>
               <input
                 type="text"
-                placeholder="Search templates"
+                placeholder="Search templates…"
                 value={searchValue}
                 onChange={(event) => setSearchValue(event.target.value)}
               />
-            </label>
-            <button className={`primary-button ${style['template-create']}`} type="button" onClick={handleOpenCreate}>
-              <Plus size={16} />
+            </div>
+            <button className={style['template-create']} type="button" onClick={handleOpenCreate}>
+              <Plus size={13} />
               <span>New Template</span>
             </button>
           </div>

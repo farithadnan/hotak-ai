@@ -52,22 +52,44 @@
 }
 
 .template-search {
-  @apply flex items-center border border-border bg-surface text-muted;
-  gap: 6px;
-  padding: 6px 10px;
-  border-radius: 10px;
-  min-width: 200px;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.template-search-icon {
+  position: absolute;
+  left: 7px;
+  color: var(--color-muted);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
 }
 
 .template-search input {
-  @apply border-none bg-transparent text-text outline-none w-full;
-  font-size: 0.84rem;
+  @apply border border-border bg-surface text-text outline-none;
+  min-height: 28px;
+  padding: 0.2rem 0.5rem 0.2rem 1.6rem;
+  font-size: 0.82rem;
+  border-radius: 7px;
+  width: 200px;
+}
+
+.template-search input:focus {
+  @apply border-accent;
 }
 
 .template-create {
+  @apply inline-flex items-center gap-1 bg-accent text-panel border-none font-semibold cursor-pointer;
+  border-radius: 8px;
+  padding: 0.28rem 0.65rem;
+  font-size: 0.8rem;
+  transition: opacity 0.2s;
   width: auto;
-  padding: 6px 11px;
-  gap: 6px;
+}
+
+.template-create:hover {
+  @apply opacity-80;
 }
 
 .template-state {
