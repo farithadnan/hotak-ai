@@ -1,5 +1,13 @@
 import api from './api'
-import type { AuthUser, LoginCredentials, RegisterCredentials, TokenResponse } from '../types/auth'
+import type {
+  AuthUser,
+  ChangePassword,
+  LoginCredentials,
+  RegisterCredentials,
+  TokenResponse,
+  UpdateProfile,
+  UserPreferences,
+} from '../types/auth'
 
 export const TOKEN_KEY = 'hotak_access_token'
 export const USER_KEY = 'hotak_user'
@@ -40,5 +48,24 @@ export async function registerApi(credentials: RegisterCredentials): Promise<Tok
 
 export async function getMeApi(): Promise<AuthUser> {
   const res = await api.get<AuthUser>('/auth/me')
+  return res.data
+}
+
+export async function updateProfileApi(data: UpdateProfile): Promise<AuthUser> {
+  const res = await api.patch<AuthUser>('/auth/me', data)
+  return res.data
+}
+
+export async function changePasswordApi(data: ChangePassword): Promise<void> {
+  await api.post('/auth/me/change-password', data)
+}
+
+export async function getPreferencesApi(): Promise<UserPreferences> {
+  const res = await api.get<UserPreferences>('/auth/me/preferences')
+  return res.data
+}
+
+export async function updatePreferencesApi(data: Partial<UserPreferences>): Promise<UserPreferences> {
+  const res = await api.patch<UserPreferences>('/auth/me/preferences', data)
   return res.data
 }
