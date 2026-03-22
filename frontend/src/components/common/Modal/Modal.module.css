@@ -1,3 +1,5 @@
+@reference "../../../index.css";
+
 /* Reduce gap between modal title and children */
 .modalContent h2 {
   margin: 0 26px 0.15rem 0;
@@ -6,36 +8,23 @@
 }
 /* Modal overlay covers the whole screen with a semi-transparent background */
 .modalOverlay {
-  position: fixed;
-  top: 0;
-  left: 0;
+  @apply fixed top-0 left-0 flex items-center justify-center overflow-hidden;
   width: 100vw;
   height: 100vh;
   background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
   z-index: 1000;
-  overflow: hidden;
 }
 
 /* Modal content box */
 .modalContent {
-  display: flex;
-  flex-direction: column;
+  @apply flex flex-col w-full relative bg-panel box-border overflow-y-auto overflow-x-hidden;
   max-width: min(760px, 94vw);
-  width: 100%;
   max-height: 90vh;
   margin: auto;
-  position: relative;
   gap: 0.5rem;
-  background: var(--color-panel);
   border-radius: 12px;
   padding: 0.78rem 0.9rem 0.9rem;
   box-shadow: 0 2px 12px #0004;
-  box-sizing: border-box;
-  overflow-y: auto;
-  overflow-x: hidden;
   animation: modalIn 0.16s ease;
 }
 
@@ -46,17 +35,13 @@
 
 /* Optional: Close button styling */
 .closeButton {
-  position: absolute;
+  @apply absolute bg-transparent border-none cursor-pointer opacity-70;
   top: 0.56rem;
   right: 0.56rem;
-  background: none;
-  border: none;
   color: #fff;
   font-size: 1.05rem;
-  cursor: pointer;
-  opacity: 0.7;
   transition: opacity 0.2s;
 }
 .closeButton:hover {
-  opacity: 1;
+  @apply opacity-100;
 }

@@ -1,18 +1,13 @@
+@reference "../../../index.css";
+
 /* ConfirmDialog modal styles */
 .confirm-dialog-backdrop {
-  position: fixed;
-  inset: 0;
+  @apply fixed inset-0 flex items-center justify-center z-[1000];
   background: rgba(0, 0, 0, 0.55);
   backdrop-filter: blur(2px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
 }
 .confirm-dialog {
-  background: var(--color-panel);
-  color: var(--color-text);
-  border: 1px solid var(--color-border);
+  @apply bg-panel text-text border border-border;
   border-radius: 11px;
   box-shadow: 0 14px 34px rgba(0, 0, 0, 0.45);
   padding: 0.85rem 0.9rem;
@@ -21,45 +16,39 @@
   animation: confirmDialogIn 0.15s ease;
 }
 .confirm-dialog-title {
+  @apply font-bold;
   font-size: 0.94rem;
-  font-weight: 700;
   margin-bottom: 0.45rem;
 }
 .confirm-dialog-message {
+  @apply text-muted;
   margin-bottom: 0.75rem;
-  color: var(--color-muted);
   font-size: 0.84rem;
   line-height: 1.35;
 }
 .confirm-dialog-actions {
-  display: flex;
+  @apply flex justify-end;
   gap: 0.5rem;
-  justify-content: flex-end;
 }
 .confirm-dialog-cancel,
 .confirm-dialog-confirm {
+  @apply border border-transparent font-semibold cursor-pointer;
   padding: 0.38rem 0.68rem;
   border-radius: 8px;
-  border: 1px solid transparent;
   font-size: 0.82rem;
-  font-weight: 600;
-  cursor: pointer;
   transition: all 0.14s ease;
 }
 .confirm-dialog-cancel {
-  background: var(--color-surface);
-  color: var(--color-muted);
-  border-color: var(--color-border);
+  @apply bg-surface text-muted border-border;
 }
 
 .confirm-dialog-cancel:hover {
-  border-color: var(--color-accent-border);
-  color: var(--color-text);
+  @apply border-accent-border text-text;
 }
 
 .confirm-dialog-confirm {
-  background: var(--ui-info-bg);
   color: var(--ui-on-solid);
+  background: var(--ui-info-bg);
   border-color: var(--ui-info-bg);
 }
 

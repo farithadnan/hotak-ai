@@ -1,14 +1,12 @@
+@reference "../../../index.css";
+
 /* Utility class for margin top */
 .mt-1 {
   margin-top: 0.35rem;
 }
 .template-builder-root {
-  width: 100%;
-  display: block;
-  padding: 0;
-  box-sizing: border-box;
+  @apply w-full block p-0 box-border bg-transparent;
   height: auto;
-  background: transparent;
   border-radius: 0;
   box-shadow: none;
 }
@@ -18,40 +16,29 @@
 }
 
 .template-builder-subtitle {
+  @apply text-muted;
   margin: 0;
   font-size: 0.82rem;
   line-height: 1.35;
-  color: var(--color-muted);
 }
 
 .template-builder-form {
-  display: block;
-  width: 100%;
-  max-width: 100%;
+  @apply block w-full max-w-full;
   margin: 0;
   height: auto;
   overflow: visible;
 }
 
 .back-to-template-btn {
-  background: transparent;
-  border: 1px solid transparent;
-  color: var(--color-text);
+  @apply bg-transparent border border-transparent text-text font-semibold text-left inline-flex items-center cursor-pointer overflow-hidden;
   padding: 8px 10px;
   border-radius: 12px;
-  font-weight: 600;
-  text-align: left;
-  display: inline-flex;
-  align-items: center;
   gap: 8px;
-  cursor: pointer;
   transition: all 0.2s ease;
-  overflow: hidden;
 }
 
 .back-to-template-btn:hover {
-  background: var(--color-surface);
-  border-color: var(--color-border);
+  @apply bg-surface border-border;
 }
 
 .template-builder-root :global(.form-tabs) {

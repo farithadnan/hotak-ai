@@ -1,15 +1,15 @@
+@reference "../../../index.css";
+
 /* Skeleton loader styles for template cards */
 .skeleton {
-  background: var(--color-panel);
+  @apply bg-panel relative overflow-hidden;
   border: none !important;
   box-shadow: none !important;
-  position: relative;
-  overflow: hidden;
 }
 
 .skeleton-box {
+  @apply rounded-md;
   background: linear-gradient(90deg, #232232 25%, #292940 50%, #232232 75%);
-  border-radius: 6px;
   animation: skeleton-shimmer 1.2s infinite linear;
   background-size: 400px 100%;
   border: none !important;
@@ -21,23 +21,18 @@
 }
 
 .template-view {
+  @apply flex flex-col;
   padding: 14px 16px;
-  display: flex;
-  flex-direction: column;
   gap: 14px;
 }
 
 .template-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  @apply flex items-center justify-between flex-wrap;
   gap: 10px;
-  flex-wrap: wrap;
 }
 
 .template-header-left {
-  display: flex;
-  align-items: center;
+  @apply flex items-center;
   gap: 12px;
 }
 
@@ -47,34 +42,25 @@
 }
 
 .template-count {
+  @apply text-muted;
   font-size: 0.74rem;
-  color: var(--color-muted);
 }
 
 .template-header-right {
-  display: flex;
-  align-items: center;
+  @apply flex items-center;
   gap: 8px;
 }
 
 .template-search {
-  display: flex;
-  align-items: center;
+  @apply flex items-center border border-border bg-surface text-muted;
   gap: 6px;
   padding: 6px 10px;
   border-radius: 10px;
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
-  color: var(--color-muted);
   min-width: 200px;
 }
 
 .template-search input {
-  border: none;
-  background: transparent;
-  color: var(--color-text);
-  outline: none;
-  width: 100%;
+  @apply border-none bg-transparent text-text outline-none w-full;
   font-size: 0.84rem;
 }
 
@@ -85,11 +71,9 @@
 }
 
 .template-state {
+  @apply border border-border bg-surface text-muted;
   padding: 9px 11px;
   border-radius: 12px;
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
-  color: var(--color-muted);
 }
 
 .template-state.is-error {
@@ -98,14 +82,11 @@
 }
 
 .template-empty {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  @apply flex items-center justify-between bg-surface;
   gap: 10px;
   padding: 14px;
   border-radius: 16px;
   border: 1px dashed var(--color-border);
-  background: var(--color-surface);
 }
 
 .template-empty h3 {
@@ -113,8 +94,8 @@
 }
 
 .template-empty p {
+  @apply text-muted;
   margin: 4px 0 0;
-  color: var(--color-muted);
 }
 
 .template-empty-button {
@@ -125,18 +106,15 @@
 
 .template-grid {
   /* Responsive card grid for templates */
-  display: grid;
+  @apply grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 12px;
 }
 
 .template-card {
-  background: var(--color-panel);
-  border: 1px solid var(--color-border);
+  @apply bg-panel border border-border flex flex-col;
   border-radius: 14px;
   padding: 12px;
-  display: flex;
-  flex-direction: column;
   gap: 10px;
   transition: transform 0.2s ease, border-color 0.2s ease;
 }
@@ -147,45 +125,32 @@
 }
 
 .template-card-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  @apply flex items-center justify-between;
   gap: 8px;
 }
 
 .template-badge {
+  @apply grid place-items-center font-semibold border border-border;
   width: 36px;
   height: 36px;
   border-radius: 10px;
-  display: grid;
-  place-items: center;
-  font-weight: 600;
   letter-spacing: 0.05em;
-  border: 1px solid var(--color-border);
 }
 
 .template-card-actions {
-  display: flex;
-  align-items: center;
+  @apply flex items-center opacity-0;
   gap: 6px;
-  opacity: 0;
   transition: opacity 0.2s ease;
 }
 
 .template-card:hover .template-card-actions {
-  opacity: 1;
+  @apply opacity-100;
 }
 
 .template-action {
-  background: transparent;
-  border: 1px solid var(--color-border);
-  color: var(--color-text);
+  @apply bg-transparent border border-border text-text cursor-pointer inline-flex items-center justify-center;
   padding: 5px;
   border-radius: 9px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   transition: all 0.2s ease;
 }
 
@@ -205,34 +170,29 @@
 }
 
 .template-card-body p {
+  @apply text-muted;
   margin: 3px 0 0;
-  color: var(--color-muted);
   line-height: 1.35;
   font-size: 0.83rem;
 }
 
 .template-card-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  @apply flex items-center justify-between;
   gap: 8px;
 }
 
 .template-meta {
+  @apply text-muted;
   font-size: 0.72rem;
-  color: var(--color-muted);
 }
 
 .template-builder-view {
+  @apply flex flex-col;
   padding: 24px;
-  display: flex;
-  flex-direction: column;
   gap: 16px;
 }
 
 .template-builder-header {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
+  @apply flex items-center justify-start;
   gap: 12px;
 }

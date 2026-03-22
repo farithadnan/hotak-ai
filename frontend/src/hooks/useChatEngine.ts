@@ -69,10 +69,6 @@ export function useChatEngine(
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
   }
 
-  const inferAttachmentKind = (source: string): 'url' | 'file' => (
-    /^https?:\/\//i.test(source) ? 'url' : 'file'
-  )
-
   const normalizeUrl = (value: string): string | null => {
     try {
       const parsed = new URL(value.trim())

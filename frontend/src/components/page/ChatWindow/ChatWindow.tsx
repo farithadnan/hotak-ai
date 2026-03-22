@@ -7,7 +7,6 @@ import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Bot, Copy, LoaderCircle, RotateCcw, Pencil, FileText, Link as LinkIcon } from '../../../icons';
 import { Composer } from '../../common/Composer/Composer';
 import { Toastr } from '../../common/Toastr/Toastr';
-import type { ToastrType } from '../../common/Toastr/Toastr';
 import { ChatLoadingSkeleton } from './ChatLoadingSkeleton';
 import { dedupeSources, getSourceHref, parseAssistantResponse } from '../../../utils/assistantResponse';
 import { prettifyModelName } from '../../../services/models';

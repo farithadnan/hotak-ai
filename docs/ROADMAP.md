@@ -1,6 +1,6 @@
 # Hotak AI - Development Roadmap (Active)
 
-## 🎯 Current Status: Phase 6.10 - Attachment UX Hardening Complete
+## 🎯 Current Status: Phase 6 Complete — Entering Phase 7 (Production Readiness)
 
 We are building a template-based knowledge management system ("Brains") allowing users to create reusable knowledge templates for chat sessions.
 
@@ -33,7 +33,11 @@ We are building a template-based knowledge management system ("Brains") allowing
   - [x] `App.tsx` shell (collapsible sidebar, responsive header).
   - [x] Navigation between Chat/Templates views.
   - [x] Model selector integration.
-- [ ] **Tailwind CSS Styling (Step 10)** - Planned
+- [x] **Tailwind CSS Styling (Step 10)** - ✅ Done
+  - [x] Installed `tailwindcss` + `@tailwindcss/vite` (v4) and wired into `vite.config.ts`.
+  - [x] Mapped all CSS custom property design tokens to a Tailwind `@theme` block in `index.css`.
+  - [x] Migrated `App.css` (global layout) to use `@apply` directives throughout.
+  - [x] Migrated all 7 CSS module files to use `@apply` directives (`Modal`, `ConfirmDialog`, `Toastr`, `ArchivedChatsModal`, `Composer`, `TemplateBuilder`, `TemplateList`).
 
 ### Backend Status
 - [x] Template API Endpoints (CRUD) - Done

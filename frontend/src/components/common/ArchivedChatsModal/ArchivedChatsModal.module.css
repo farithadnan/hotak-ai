@@ -1,86 +1,64 @@
+@reference "../../../index.css";
+
 .search-input {
-  width: 100%;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  color: var(--color-text);
+  @apply w-full bg-surface border border-border text-text outline-none box-border;
   font-family: inherit;
   font-size: 0.85rem;
   padding: 0.48rem 0.7rem;
-  outline: none;
+  border-radius: 8px;
   transition: border-color 0.15s ease;
-  box-sizing: border-box;
 }
 .search-input::placeholder {
-  color: var(--color-muted);
+  @apply text-muted;
 }
 .search-input:focus {
-  border-color: var(--color-accent);
+  @apply border-accent;
 }
 
 .list {
-  display: flex;
-  flex-direction: column;
+  @apply flex flex-col overflow-y-auto;
   gap: 4px;
-  overflow-y: auto;
   max-height: 52vh;
   margin: 0.4rem 0;
 }
 
 .list-empty {
-  color: var(--color-muted);
+  @apply text-muted text-center;
   font-size: 0.84rem;
-  text-align: center;
   padding: 1.6rem 0;
 }
 
 .chat-row {
-  display: flex;
-  align-items: center;
+  @apply flex items-center bg-surface border border-border;
   gap: 0.5rem;
   padding: 0.46rem 0.6rem;
   border-radius: 8px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
 }
 
 .chat-title {
-  flex: 1;
+  @apply flex-1 text-text whitespace-nowrap overflow-hidden text-ellipsis min-w-0;
   font-size: 0.85rem;
-  color: var(--color-text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  min-width: 0;
 }
 
 .btn {
-  flex-shrink: 0;
+  @apply flex-shrink-0 border border-transparent font-semibold cursor-pointer whitespace-nowrap;
   padding: 0.32rem 0.62rem;
   border-radius: 7px;
-  border: 1px solid transparent;
   font-size: 0.78rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.13s ease;
   font-family: inherit;
-  white-space: nowrap;
+  transition: all 0.13s ease;
 }
 
 .btn-unarchive {
-  background: var(--color-surface);
-  color: var(--color-muted);
-  border-color: var(--color-border);
+  @apply bg-surface text-muted border-border;
 }
 .btn-unarchive:hover {
-  border-color: var(--color-accent-border);
-  color: var(--color-text);
+  @apply border-accent-border text-text;
 }
 
 .btn-danger {
-  background: transparent;
+  @apply bg-transparent border-transparent;
   color: var(--ui-danger-bg);
-  border-color: transparent;
 }
 .btn-danger:hover {
   background: var(--ui-danger-bg);
@@ -88,36 +66,29 @@
 }
 
 .footer {
-  display: flex;
+  @apply flex justify-end flex-wrap border-t border-border;
   gap: 0.5rem;
-  justify-content: flex-end;
   padding-top: 0.5rem;
-  border-top: 1px solid var(--color-border);
-  flex-wrap: wrap;
 }
 
 .btn-footer {
+  @apply border border-border font-semibold cursor-pointer;
   padding: 0.38rem 0.72rem;
   border-radius: 8px;
-  border: 1px solid var(--color-border);
   font-size: 0.82rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.14s ease;
   font-family: inherit;
+  transition: all 0.14s ease;
 }
 
 .btn-footer-secondary {
-  background: var(--color-surface);
-  color: var(--color-muted);
+  @apply bg-surface text-muted;
 }
 .btn-footer-secondary:hover {
-  border-color: var(--color-accent-border);
-  color: var(--color-text);
+  @apply border-accent-border text-text;
 }
 
 .btn-footer-danger {
-  background: transparent;
+  @apply bg-transparent;
   color: var(--ui-danger-bg);
   border-color: var(--ui-danger-bg);
 }
@@ -127,8 +98,7 @@
 }
 
 .loading {
-  color: var(--color-muted);
+  @apply text-muted text-center;
   font-size: 0.84rem;
-  text-align: center;
   padding: 1.2rem 0;
 }

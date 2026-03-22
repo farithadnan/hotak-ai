@@ -1,14 +1,7 @@
-:root {
-  /* Design tokens: global theme colors and typography */
-  font-family: 'Inter', 'Geist', 'Segoe UI', ui-sans-serif, system-ui, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-  color-scheme: dark;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@import "tailwindcss";
 
+@theme {
+  /* Map CSS custom properties to Tailwind theme tokens */
   --color-bg: #151515;
   --color-panel: #1b1b1b;
   --color-surface: #212121;
@@ -18,6 +11,19 @@
   --color-accent: #b9c4ff;
   --color-accent-soft: #232632;
   --color-accent-border: #2f3450;
+
+  --font-sans: 'Inter', 'Geist', 'Segoe UI', ui-sans-serif, system-ui, sans-serif;
+}
+
+:root {
+  font-family: var(--font-sans);
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: dark;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 * {

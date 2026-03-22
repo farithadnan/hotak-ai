@@ -1,27 +1,23 @@
+@reference "../../../index.css";
 
 .composer {
-  display: flex;
-  align-items: flex-end;
+  @apply flex items-end w-full justify-center bg-transparent;
   gap: 12px;
   padding: 12px var(--chat-horizontal-padding) 18px var(--chat-horizontal-padding);
-  background: transparent;
-  width: 100%;
-  justify-content: center;
 }
 
 .composer-inner {
-  width: 100%;
+  @apply w-full;
   max-width: none;
 }
 
 .main-panel.is-empty > .composer {
-  display: none;
+  @apply hidden;
 }
 
 .empty-composer {
-  border: 1px solid var(--color-border);
+  @apply border border-border bg-transparent;
   border-radius: 16px;
-  background: transparent;
   padding: 12px 16px;
 }
 
@@ -29,9 +25,7 @@
 
 .composer-input-wrapper {
   /* Input container with focus styling and actions slot */
-  position: relative;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  @apply relative bg-surface border border-border;
   border-radius: 14px;
   padding: 12px 14px 48px 14px;
   transition: all 0.2s ease;
@@ -39,20 +33,16 @@
 }
 
 .composer-input-wrapper-drag-active {
-  border-color: var(--color-accent-border);
+  @apply border-accent-border;
   background: rgba(255, 255, 255, 0.08);
 }
 
 .composer-input-wrapper:focus-within {
-  border-color: var(--color-accent);
+  @apply border-accent;
 }
 
 .composer-input-wrapper textarea {
-  width: 100%;
-  min-width: 0;
-  background: transparent;
-  border: none;
-  color: var(--color-text);
+  @apply w-full min-w-0 bg-transparent border-none text-text outline-none;
   font-family: inherit;
   font-size: inherit;
   line-height: 1.5;
@@ -60,36 +50,29 @@
   overflow-y: hidden;
   max-height: 200px;
   min-height: 20px;
-  outline: none;
 }
 
 .composer-input-wrapper textarea::placeholder {
-  color: var(--color-muted);
+  @apply text-muted;
 }
 
 .hidden-file-input {
-  display: none;
+  @apply hidden;
 }
 
 .pending-attachments {
-  display: flex;
-  flex-wrap: wrap;
+  @apply flex flex-wrap;
   gap: 6px;
   margin-bottom: 8px;
 }
 
 .attachment-chip {
-  display: inline-flex;
-  align-items: center;
+  @apply inline-flex items-center border border-border text-text cursor-pointer max-w-full;
   gap: 6px;
-  border: 1px solid var(--color-border);
   background: rgba(255, 255, 255, 0.05);
-  color: var(--color-text);
   border-radius: 999px;
   padding: 4px 8px;
   font-size: 0.74rem;
-  cursor: pointer;
-  max-width: 100%;
 }
 
 .attachment-chip:disabled {
@@ -98,39 +81,33 @@
 }
 
 .attachment-chip:hover {
-  border-color: var(--color-accent-border);
-  background: var(--color-accent-soft);
+  @apply border-accent-border bg-accent-soft;
 }
 
 .attachment-chip-kind {
-  color: var(--color-muted);
+  @apply text-muted;
   font-size: 0.68rem;
   letter-spacing: 0.04em;
 }
 
 .attachment-chip-label {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  @apply overflow-hidden text-ellipsis whitespace-nowrap;
   max-width: 220px;
 }
 
 .attachment-chip-remove {
-  color: var(--color-muted);
+  @apply text-muted;
 }
 
 .attachment-chip-summary {
-  display: inline-flex;
-  align-items: center;
-  border: 1px dashed var(--color-border);
+  @apply inline-flex items-center border border-dashed border-border text-muted;
   border-radius: 999px;
   padding: 4px 8px;
-  color: var(--color-muted);
   font-size: 0.72rem;
 }
 
 .attachment-chip-summary-inline {
-  color: var(--color-muted);
+  @apply text-muted;
   font-size: 0.68rem;
 }
 
@@ -146,14 +123,13 @@
 
 .attachment-chip-uploading,
 .attachment-chip-ingesting {
-  border-color: var(--color-accent-border);
+  @apply border-accent-border;
 }
 
 .attachment-chip-progress {
-  color: var(--color-accent);
+  @apply text-accent shrink-0;
   font-size: 0.68rem;
   font-variant-numeric: tabular-nums;
-  flex-shrink: 0;
 }
 
 .attachment-chip-ready {
@@ -165,81 +141,61 @@
 }
 
 .attach-template-panel {
-  display: flex;
-  flex-direction: column;
+  @apply flex flex-col;
   gap: 8px;
   padding: 8px 10px 6px;
 }
 
 .attach-template-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  @apply flex items-center justify-between;
   gap: 10px;
 }
 
 .attach-template-title {
+  @apply text-muted uppercase;
   font-size: 0.78rem;
-  color: var(--color-muted);
   letter-spacing: 0.04em;
-  text-transform: uppercase;
 }
 
 .attach-template-back {
-  border: 1px solid var(--color-border);
+  @apply border border-border bg-transparent text-text cursor-pointer;
   border-radius: 999px;
-  background: transparent;
-  color: var(--color-text);
   padding: 4px 10px;
   font-size: 0.74rem;
-  cursor: pointer;
 }
 
 .attach-template-back:hover {
-  border-color: var(--color-accent-border);
-  background: var(--color-accent-soft);
+  @apply border-accent-border bg-accent-soft;
 }
 
 .attach-template-search {
-  border: 1px solid var(--color-border);
+  @apply border border-border text-text;
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.04);
-  color: var(--color-text);
   padding: 8px 10px;
   font: inherit;
 }
 
 .attach-template-search:focus {
-  outline: none;
-  border-color: var(--color-accent-border);
+  @apply outline-none border-accent-border;
 }
 
 .attach-template-list {
-  display: flex;
-  flex-direction: column;
+  @apply flex flex-col overflow-y-auto;
   gap: 6px;
   max-height: 180px;
-  overflow-y: auto;
 }
 
 .attach-template-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  @apply flex items-center justify-between w-full border border-border text-text cursor-pointer text-left;
   gap: 8px;
-  width: 100%;
-  border: 1px solid var(--color-border);
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.03);
-  color: var(--color-text);
   padding: 9px 10px;
-  cursor: pointer;
-  text-align: left;
 }
 
 .attach-template-item:hover {
-  border-color: var(--color-accent-border);
-  background: var(--color-accent-soft);
+  @apply border-accent-border bg-accent-soft;
 }
 
 .attach-template-name {
@@ -248,56 +204,41 @@
 
 .attach-template-count,
 .attach-template-empty {
+  @apply text-muted;
   font-size: 0.72rem;
-  color: var(--color-muted);
 }
 
 .drag-overlay {
-  position: absolute;
+  @apply absolute flex items-center justify-center text-text z-1;
   inset: 10px;
   border: 1px dashed var(--color-accent-border);
   border-radius: 12px;
   background: rgba(17, 24, 39, 0.55);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--color-text);
   font-size: 0.88rem;
   pointer-events: none;
-  z-index: 1;
 }
 
 .composer-actions {
-  position: absolute;
+  @apply absolute flex items-center justify-between;
   bottom: 8px;
   left: 8px;
   right: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
 }
 
 .composer-actions-edit {
-  justify-content: flex-end;
+  @apply justify-end;
 }
 
 .composer-actions-left,
 .composer-actions-right {
-  display: flex;
-  align-items: center;
+  @apply flex items-center;
   gap: 4px;
 }
 
 .composer-action-button {
-  background: transparent;
-  border: none;
-  color: var(--color-text);
+  @apply bg-transparent border-none text-text cursor-pointer inline-flex items-center justify-center;
   padding: 6px;
   border-radius: 8px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   transition: all 0.2s ease;
 }
 
@@ -307,25 +248,23 @@
 }
 
 .composer-action-button.send-button {
-  color: var(--color-accent);
+  @apply text-accent;
 }
 
 .composer-action-button.send-button:hover {
   color: #ffffff;
-  background: var(--color-accent);
+  @apply bg-accent;
 }
 
 .attach-wrapper {
-  position: relative;
+  @apply relative;
 }
 
 .attach-popover {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  @apply bg-surface border border-border z-1000;
   border-radius: 12px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
   padding: 6px;
-  z-index: 1000;
   animation: slideUpFade 0.15s ease;
 }
 
@@ -341,19 +280,12 @@
 }
 
 .attach-menu-item {
-  display: flex;
-  align-items: center;
+  @apply flex items-center w-full bg-transparent border-none text-text cursor-pointer text-left;
   gap: 10px;
-  width: 100%;
-  background: transparent;
-  border: none;
-  color: var(--color-text);
   padding: 10px 12px;
   border-radius: 8px;
-  cursor: pointer;
   transition: all 0.15s ease;
   font-size: 0.9rem;
-  text-align: left;
 }
 
 .attach-menu-item:hover {
@@ -361,7 +293,7 @@
 }
 
 .composer-edit-mode {
-  padding: 0;
+  @apply p-0;
 }
 
 .composer-edit-mode .composer-input-wrapper {
@@ -369,40 +301,33 @@
 }
 
 .composer-text-button {
-  border: 1px solid var(--color-border);
-  background: transparent;
-  color: var(--color-text);
+  @apply border border-border bg-transparent text-text cursor-pointer;
   border-radius: 999px;
   padding: 6px 12px;
   font-size: 0.82rem;
-  cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .composer-text-button:hover:not(:disabled) {
-  background: var(--color-accent-soft);
-  border-color: var(--color-accent-border);
+  @apply bg-accent-soft border-accent-border;
 }
 
 .composer-text-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+  @apply opacity-50 cursor-not-allowed;
 }
 
 .composer-text-button-cancel:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.1);
-  border-color: var(--color-border);
+  @apply border-border;
 }
 
 .composer-text-button-send {
-  color: var(--color-accent);
-  border-color: var(--color-accent-border);
+  @apply text-accent border-accent-border;
 }
 
 .composer-text-button-send:hover:not(:disabled) {
   color: #ffffff;
-  background: var(--color-accent);
-  border-color: var(--color-accent);
+  @apply bg-accent border-accent;
 }
 
 @media (max-width: 900px) {
