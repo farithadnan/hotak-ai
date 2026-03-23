@@ -192,28 +192,31 @@ class ModelSettingsResponse(BaseModel):
 
 @router.get("/models", response_model=ModelSettingsResponse)
 def get_model_settings(
+    http_request: Request,
     _admin: UserDB = Depends(get_current_admin),
     db: Session = Depends(get_db),
 ):
     """Get current model settings and the full list of API-accessible models."""
-    from ..services.model_catalog import get_accessible_models_cache
+    all_models: list[dict] = getattr(http_request.app.state, "accessible_models", None) or []
+    accessible_ids = [m["id"] for m in all_models]
     return ModelSettingsResponse(
         enabled_models=get_enabled_models(),
         default_model=get_default_model(),
-        accessible_models=get_accessible_models_cache(),
+        accessible_models=accessible_ids,
     )
 
 
 @router.put("/models", response_model=ModelSettingsResponse)
 def update_models(
     body: ModelSettingsUpdate,
+    http_request: Request,
     _admin: UserDB = Depends(get_current_admin),
     db: Session = Depends(get_db),
 ):
     """Update which models users can select and which is the default."""
-    from ..services.model_catalog import get_accessible_models_cache
-    accessible = get_accessible_models_cache()
-    invalid = [m for m in body.enabled_models if m not in accessible]
+    all_models: list[dict] = getattr(http_request.app.state, "accessible_models", None) or []
+    accessible_ids = [m["id"] for m in all_models]
+    invalid = [m for m in body.enabled_models if m not in accessible_ids]
     if invalid:
         raise HTTPException(status_code=400, detail=f"Models not accessible: {invalid}")
     if body.default_model and body.default_model not in body.enabled_models:
@@ -223,7 +226,7 @@ def update_models(
     return ModelSettingsResponse(
         enabled_models=data["enabled_models"],
         default_model=data["default_model"],
-        accessible_models=accessible,
+        accessible_models=accessible_ids,
     )
 
 
