@@ -19,7 +19,29 @@ docker compose up --build
 
 Log in with the credentials from `ADMIN_BOOTSTRAP_USERNAME` / `ADMIN_BOOTSTRAP_PASSWORD` in your `.env`.
 
-Data persists in Docker named volumes (`backend_data`, `backend_logs`). To reset, run `docker compose down -v`.
+Data persists in Docker named volumes (`backend_data`, `backend_logs`, `ollama_data`). To reset, run `docker compose down -v`.
+
+> **CORS:** `CORS_ORIGINS` must include both `http://localhost:5173` (local dev) and `http://localhost` (Docker frontend). Both are set in `.env.sample` by default.
+
+### Using Ollama (local models)
+
+Ollama runs as a Docker service automatically. Pull a model once — it persists in the `ollama_data` volume:
+
+```bash
+# Pull a model (do once; ~2GB for llama3.2)
+docker exec hotak-ai-ollama ollama pull llama3.2
+
+# Other small options
+docker exec hotak-ai-ollama ollama pull phi3        # ~2.3 GB
+docker exec hotak-ai-ollama ollama pull gemma3:1b   # ~800 MB
+```
+
+After pulling, restart the backend so it picks up the new model:
+```bash
+docker compose restart backend
+```
+
+Ollama models will appear in the model picker alongside OpenAI models. If no `OPENAI_API_KEY` is set, only Ollama models are available.
 
 ---
 
@@ -53,7 +75,8 @@ Copy `.env.sample` to `.env` and fill in the required values.
 | `ADMIN_BOOTSTRAP_PASSWORD` | ✅ | — | Password for the first admin account |
 | `ADMIN_BOOTSTRAP_USERNAME` | | `admin` | Username for the first admin account |
 | `ADMIN_BOOTSTRAP_EMAIL` | | `admin@localhost` | Email for the first admin account |
-| `CORS_ORIGINS` | | `http://localhost:5173` | Comma-separated allowed origins (use `http://localhost` for Docker) |
+| `CORS_ORIGINS` | | `http://localhost:5173,http://localhost` | Comma-separated allowed origins — include both for dev + Docker |
+| `OLLAMA_BASE_URL` | | `http://ollama:11434` | Ollama server URL — `http://ollama:11434` in Docker, `http://localhost:11434` for local dev |
 | `VITE_API_BASE_URL` | | `http://localhost:8000` | Backend URL baked into the frontend bundle (Docker build arg) |
 | `LLM_MAX_TOKENS` | | `4096` | Max completion tokens per response |
 | `STREAM_MAX_CHARS` | | `32000` | Max characters emitted per streaming response |

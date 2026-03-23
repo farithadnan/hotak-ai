@@ -109,8 +109,17 @@
 	- [x] `.dockerignore` for root and `frontend/`.
 	- [x] `.env.sample` updated with all Docker vars.
 	- [x] Fixed production asset paths (`/src/assets/...` → `public/` files served as `/...`).
+	- [x] Ollama service added to `docker-compose.yml` (`ollama/ollama:latest`, `ollama_data` volume, port 11434).
+	- [x] `CORS_ORIGINS` fix — must include both `http://localhost:5173` (dev) and `http://localhost` (Docker).
 
-32. [ ] **Frontend:** Composer Tools integration *(future feature — button disabled/stubbed)*
+33. [x] **Backend/Frontend:** Ollama multi-provider support - ✅ Done
+	- [x] `get_ollama_models()` in `model_catalog.py` — hits `/api/tags`, gracefully skips if Ollama unreachable.
+	- [x] `create_llm_for_model()` in `llm.py` — routes `ollama/*` to `ChatOllama`, everything else to OpenAI.
+	- [x] `initialize_model_settings` merges new models on every restart — Ollama models auto-appear without wiping settings.
+	- [x] `OLLAMA_BASE_URL` env var — `http://ollama:11434` in Docker, `http://localhost:11434` for local dev.
+	- [x] Pull models with: `docker exec hotak-ai-ollama ollama pull llama3.2`
+
+34. [ ] **Frontend:** Composer Tools integration *(future feature — button disabled/stubbed)*
 	- [ ] Define tool schema and backend tool-call routing.
 	- [ ] Composer Tools button (`Briefcase` icon) is currently disabled with `title="Tools (coming soon)"`.
 	- [ ] Planned: web search, calculator, code execution, and user-defined tool plugins.

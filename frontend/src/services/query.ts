@@ -54,10 +54,12 @@ export const streamQuery = async function* (
 ): AsyncGenerator<QueryStreamChunk> {
   try {
     const controller = new AbortController();
+    const token = localStorage.getItem('hotak_access_token');
     const response = await fetch(`${API_BASE_URL}/query/stream`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: JSON.stringify(request),
       signal: controller.signal,

@@ -1,6 +1,6 @@
 # Hotak AI - Development Roadmap (Active)
 
-## 🎯 Current Status: Phase 7.5 Complete — Next: Phase 7.6 (Testing)
+## 🎯 Current Status: Phase 7.5 Complete (incl. Ollama) — Next: Phase 7.6 (Testing)
 
 We are building a template-based knowledge management system ("Brains") allowing users to create reusable knowledge templates for chat sessions.
 
@@ -190,9 +190,15 @@ We are building a template-based knowledge management system ("Brains") allowing
 - [x] `docker-compose.yml` — both services wired with named volumes, env var pass-through
 - [x] `.dockerignore` (root) + `frontend/.dockerignore`
 - [x] `VITE_API_BASE_URL` build arg — backend URL baked into frontend bundle; configurable per-env
-- [x] `CORS_ORIGINS` env var — backend CORS origins comma-separated, replaces hardcoded dev URL
+- [x] `CORS_ORIGINS` env var — backend CORS origins comma-separated; must include `http://localhost` for Docker and `http://localhost:5173` for local dev
 - [x] `.env.sample` updated with all Docker-relevant vars and comments
 - [x] Production asset paths fixed (`/src/assets/...` → `/...` via `public/`)
+- [x] **Ollama service** added to `docker-compose.yml` (`ollama/ollama:latest`; `ollama_data` volume; port 11434)
+- [x] `OLLAMA_BASE_URL` env var — defaults to `http://ollama:11434` (internal Docker service); override for local dev
+- [x] `app/services/model_catalog.py` — `get_ollama_models()` probes `GET /api/tags`; graceful no-op if Ollama unreachable
+- [x] `app/services/llm.py` — `create_llm_for_model()` routes `ollama/*` model IDs to `ChatOllama`, others to OpenAI
+- [x] `app/services/model_settings.py` — `initialize_model_settings` now merges newly discovered models into existing settings on every restart (prevents Ollama models being invisible after first-run)
+- [x] Pull models with: `docker exec hotak-ai-ollama ollama pull llama3.2`
 
 ### Phase 7.6 — Testing
 - [ ] **Backend:** Unit tests for core services (query, ingestion, model catalog)
