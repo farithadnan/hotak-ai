@@ -1,7 +1,7 @@
-"""Admin-only API routes — user management and model settings."""
+"""Admin-only API routes — user management, model settings, and provider config."""
 
-from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, status
+from typing import Literal, Optional
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -56,11 +56,11 @@ def create_user(
 class UserUpdate(BaseModel):
     username: Optional[str] = None
     email: Optional[str] = None
-    role: Optional[str] = None  # "admin" | "user"
+    role: Optional[Literal["admin", "user"]] = None
 
 
 class PasswordReset(BaseModel):
-    new_password: str
+    new_password: str = Field(..., min_length=8)
 
 
 @router.patch("/users/{user_id}", response_model=UserResponse)
@@ -262,3 +262,95 @@ def update_system_settings_endpoint(
     """Update system settings (take effect on next server restart)."""
     from ..services.system_settings import update_system_settings
     return update_system_settings(body.model_dump())
+
+
+# ---------------------------------------------------------------------------
+# Provider settings (API keys + endpoints)
+# ---------------------------------------------------------------------------
+
+class ProviderSettingsResponse(BaseModel):
+    openai_api_key_preview: str
+    openai_api_key_set: bool
+    openai_api_key_source: str   # "db" | "env" | "none"
+    ollama_base_url: str
+    ollama_base_url_source: str  # "db" | "env"
+
+
+class ProviderSettingsUpdate(BaseModel):
+    openai_api_key: Optional[str] = None  # None = don't change; "" = clear DB value
+    ollama_base_url: Optional[str] = None
+
+
+class ProviderTestRequest(BaseModel):
+    provider: str   # "openai" | "ollama"
+    value: str      # API key or base URL to test
+
+
+@router.get("/providers", response_model=ProviderSettingsResponse)
+def get_providers(_admin: UserDB = Depends(get_current_admin)):
+    """Get current provider settings (API key is masked)."""
+    from ..services.provider_settings import get_provider_settings
+    return get_provider_settings()
+
+
+@router.put("/providers", response_model=ProviderSettingsResponse)
+async def update_providers(
+    body: ProviderSettingsUpdate,
+    http_request: Request,
+    _admin: UserDB = Depends(get_current_admin),
+):
+    """
+    Update provider settings and immediately re-probe accessible models.
+    The new model list is pushed to app.state so the frontend sees it without a restart.
+    """
+    from ..services.provider_settings import update_provider_settings, get_effective_openai_key, get_effective_ollama_url
+    from ..services.model_catalog import build_accessible_chat_models, get_ollama_models
+    from ..services.model_settings import initialize_model_settings
+
+    result = update_provider_settings(body.openai_api_key, body.ollama_base_url)
+
+    # Re-probe models with updated credentials
+    effective_key = get_effective_openai_key()
+    effective_ollama = get_effective_ollama_url()
+    openai_models = await build_accessible_chat_models(effective_key)
+    ollama_models = await get_ollama_models(effective_ollama)
+    all_models = openai_models + ollama_models
+
+    http_request.app.state.accessible_models = all_models
+    initialize_model_settings([m["id"] for m in all_models])
+
+    logger.info("Provider settings saved; %d model(s) now accessible.", len(all_models))
+    return result
+
+
+@router.post("/providers/test")
+async def test_provider(body: ProviderTestRequest, _admin: UserDB = Depends(get_current_admin)):
+    """Test a provider connection without saving."""
+    if body.provider == "ollama" and not body.value.startswith(("http://", "https://")):
+        raise HTTPException(status_code=400, detail="Ollama URL must start with http:// or https://")
+
+    if body.provider == "openai":
+        from openai import AsyncOpenAI, AuthenticationError
+        try:
+            client = AsyncOpenAI(api_key=body.value)
+            await client.models.list()
+            return {"ok": True, "message": "OpenAI connection successful."}
+        except AuthenticationError:
+            return {"ok": False, "message": "Invalid API key."}
+        except Exception as e:
+            return {"ok": False, "message": f"Connection failed: {e}"}
+
+    elif body.provider == "ollama":
+        import httpx
+        try:
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                response = await client.get(f"{body.value.rstrip('/')}/api/tags")
+                response.raise_for_status()
+                models = response.json().get("models", [])
+                names = [m.get("name", "") for m in models]
+                msg = f"Ollama reachable. {len(names)} model(s) installed: {', '.join(names) or 'none'}."
+                return {"ok": True, "message": msg}
+        except Exception as e:
+            return {"ok": False, "message": f"Cannot reach Ollama at {body.value}: {e}"}
+
+    raise HTTPException(status_code=400, detail=f"Unknown provider: {body.provider}")

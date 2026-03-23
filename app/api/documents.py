@@ -136,7 +136,7 @@ async def load_documents_endpoint(
 
     except Exception as e:
         logger.error(f"Failed to load documents: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="An internal error occurred processing the documents.")
 
 
 @router.get("/documents")
@@ -161,7 +161,7 @@ async def list_documents_endpoint(
 
     except Exception as e:
         logger.error(f"Failed to list documents: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="An internal error occurred processing the documents.")
 
 
 @router.post("/documents/upload")

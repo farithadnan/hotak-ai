@@ -14,9 +14,12 @@ from .txt_loader import load_txt_document
 from .docx_loader import load_docx_document
 from .md_loader import load_md_document
 
+from ..config.settings import UPLOADS_DIRECTORY
 from ..utils.logger import setup_logger
 
 logger = setup_logger(__name__)
+
+_ALLOWED_ROOT = UPLOADS_DIRECTORY.resolve()
 
 
 def load_document(source: str) -> List[Document]:
@@ -46,10 +49,16 @@ def load_document(source: str) -> List[Document]:
         logger.info("Detected: Web URL")
         return load_web_document(source)
     
-    # It's a file path - normalize it first
-    file_path = Path(source).resolve()  # Normalize to absolute path
-    normalized_source = str(file_path)  # Convert back to string
-    
+    # It's a file path - normalize and validate it stays within the uploads directory
+    file_path = Path(source).resolve()
+    normalized_source = str(file_path)
+
+    try:
+        file_path.relative_to(_ALLOWED_ROOT)
+    except ValueError:
+        logger.warning("Blocked path traversal attempt: %s", normalized_source)
+        raise ValueError(f"Access denied: file must be inside the uploads directory.")
+
     if not file_path.exists():
         logger.error(f"File not found: {normalized_source}")
         raise FileNotFoundError(f"File does not exist: {normalized_source}")
