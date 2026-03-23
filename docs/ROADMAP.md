@@ -201,10 +201,10 @@ We are building a template-based knowledge management system ("Brains") allowing
 - [x] Pull models with: `docker exec hotak-ai-ollama ollama pull llama3.2`
 
 ### Phase 7.6 — Testing
-- [ ] **Backend:** Unit tests for core services (query, ingestion, model catalog)
-- [ ] **Backend:** Integration tests hitting real FastAPI + real ChromaDB
-- [ ] **Frontend:** Component tests for critical flows (send message, attach file, template picker)
-- [ ] Token-estimation quality tuning and summary refresh strategy tests
+- [x] **Backend:** Unit tests for core services (query, ingestion, model catalog)
+- [x] **Backend:** Integration tests hitting real FastAPI + in-memory SQLite
+- [x] **Frontend:** Component tests for critical flows (send message, attach file, template picker)
+- [x] Token-estimation quality tuning and summary refresh strategy tests
 
 ### Phase 7.7 — Observability
 - [ ] Structured logging (request IDs, user IDs, latency)
