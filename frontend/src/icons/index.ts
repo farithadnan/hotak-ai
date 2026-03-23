@@ -35,4 +35,5 @@ export {
   Globe,
   Eye,
   EyeOff,
+  ScrollText,
 } from 'lucide-react'

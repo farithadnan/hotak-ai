@@ -48,6 +48,23 @@ export async function resetUserPassword(userId: string, newPassword: string): Pr
   return res.data
 }
 
+export type ActivityLog = {
+  id: string
+  user_id: string | null
+  username: string | null
+  method: string
+  path: string
+  status_code: number
+  latency_ms: number
+  request_id: string | null
+  created_at: string
+}
+
+export async function getUserLogs(userId: string, limit = 100): Promise<ActivityLog[]> {
+  const res = await api.get<ActivityLog[]>(`/admin/users/${userId}/logs`, { params: { limit } })
+  return res.data
+}
+
 export async function getModelSettings(): Promise<ModelSettings> {
   const res = await api.get<ModelSettings>('/admin/models')
   return res.data

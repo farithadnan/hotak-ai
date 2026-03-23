@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from ..db import get_db
+from ..models.activity_log import ActivityLogDB, ActivityLogResponse
 from ..models.user import UserCreate, UserDB, UserResponse
 from ..services.auth import get_current_admin, hash_password
 from ..services.model_settings import get_default_model, get_enabled_models, update_model_settings
@@ -173,6 +174,26 @@ def delete_user(
     db.delete(user)
     db.commit()
     logger.info(f"User deleted: {user.username}")
+
+
+@router.get("/users/{user_id}/logs", response_model=list[ActivityLogResponse])
+def get_user_logs(
+    user_id: str,
+    limit: int = 100,
+    _admin: UserDB = Depends(get_current_admin),
+    db: Session = Depends(get_db),
+):
+    """Return the most recent activity log entries for a user (admin only)."""
+    user = db.query(UserDB).filter(UserDB.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return (
+        db.query(ActivityLogDB)
+        .filter(ActivityLogDB.user_id == user_id)
+        .order_by(ActivityLogDB.created_at.desc())
+        .limit(max(1, min(limit, 500)))
+        .all()
+    )
 
 
 # ---------------------------------------------------------------------------

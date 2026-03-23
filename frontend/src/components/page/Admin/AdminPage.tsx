@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Lock, Pencil, Plus, Search, Settings, Trash2, Unlock } from '../../../icons'
+import { Lock, Pencil, Plus, ScrollText, Search, Settings, Trash2, Unlock } from '../../../icons'
 import { PasswordInput } from '../../common/PasswordInput/PasswordInput'
 import { Modal } from '../../common/Modal/Modal'
 import { ConfirmDialog } from '../../common/ConfirmDialog/ConfirmDialog'
@@ -10,6 +10,7 @@ import {
   getModelSettings,
   getProviderSettings,
   getSystemSettings,
+  getUserLogs,
   listUsers,
   lockUser,
   resetUserPassword,
@@ -19,6 +20,7 @@ import {
   updateProviderSettings,
   updateSystemSettings,
   updateUser,
+  type ActivityLog,
   type AdminUserCreate,
   type ModelSettings,
   type ProviderSettings,
@@ -42,6 +44,7 @@ function UsersTableSkeleton() {
           <th className={styles.th}>Email</th>
           <th className={styles.th}>Role</th>
           <th className={styles.th}>Status</th>
+          <th className={styles.th}>Last Login</th>
           <th className={styles.th}></th>
         </tr>
       </thead>
@@ -52,6 +55,7 @@ function UsersTableSkeleton() {
             <td className={styles.td}><span className={`skeleton-box ${styles.skeletonCell}`} style={{ width: '140px' }} /></td>
             <td className={styles.td}><span className={`skeleton-box ${styles.skeletonCell}`} style={{ width: '44px' }} /></td>
             <td className={styles.td}><span className={`skeleton-box ${styles.skeletonCell}`} style={{ width: '52px' }} /></td>
+            <td className={styles.td}><span className={`skeleton-box ${styles.skeletonCell}`} style={{ width: '100px' }} /></td>
             <td className={styles.td}></td>
           </tr>
         ))}
@@ -126,6 +130,7 @@ function UsersTab() {
   const [loading, setLoading] = useState(true)
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<AuthUser | null>(null)
+  const [logsUser, setLogsUser] = useState<AuthUser | null>(null)
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
   const [pendingDeleteName, setPendingDeleteName] = useState('')
   const [search, setSearch] = useState('')
@@ -211,13 +216,14 @@ function UsersTab() {
               <th className={styles.th}>Email</th>
               <th className={styles.th}>Role</th>
               <th className={styles.th}>Status</th>
+              <th className={styles.th}>Last Login</th>
               <th className={styles.th}></th>
             </tr>
           </thead>
           <tbody>
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={5} className={styles.td} style={{ textAlign: 'center', padding: '24px 0', color: 'var(--color-muted)', fontSize: '0.85rem' }}>
+                <td colSpan={6} className={styles.td} style={{ textAlign: 'center', padding: '24px 0', color: 'var(--color-muted)', fontSize: '0.85rem' }}>
                   No users match your search.
                 </td>
               </tr>
@@ -234,21 +240,29 @@ function UsersTab() {
                     {u.is_active ? 'Active' : 'Locked'}
                   </span>
                 </td>
+                <td className={`${styles.td} ${styles.muted} ${styles.nowrap}`}>
+                  {u.last_login_at ? new Date(u.last_login_at).toLocaleString() : '—'}
+                </td>
                 <td className={styles.td}>
-                  {canActOn(u) && (
-                    <div className={styles.actions}>
-                      <button className={styles.actionBtn} title="Edit" onClick={() => setEditingUser(u)}>
-                        <Pencil size={13} />
-                      </button>
-                      {u.is_active
-                        ? <button className={styles.actionBtn} title="Lock"   onClick={() => void handleLock(u.id)}><Lock size={13} /></button>
-                        : <button className={styles.actionBtn} title="Unlock" onClick={() => void handleUnlock(u.id)}><Unlock size={13} /></button>
-                      }
-                      <button className={`${styles.actionBtn} ${styles.danger}`} title="Delete" onClick={() => handleRequestDelete(u.id, u.username)}>
-                        <Trash2 size={13} />
-                      </button>
-                    </div>
-                  )}
+                  <div className={styles.actions}>
+                    <button className={styles.actionBtn} title="View logs" onClick={() => setLogsUser(u)}>
+                      <ScrollText size={13} />
+                    </button>
+                    {canActOn(u) && (
+                      <>
+                        <button className={styles.actionBtn} title="Edit" onClick={() => setEditingUser(u)}>
+                          <Pencil size={13} />
+                        </button>
+                        {u.is_active
+                          ? <button className={styles.actionBtn} title="Lock"   onClick={() => void handleLock(u.id)}><Lock size={13} /></button>
+                          : <button className={styles.actionBtn} title="Unlock" onClick={() => void handleUnlock(u.id)}><Unlock size={13} /></button>
+                        }
+                        <button className={`${styles.actionBtn} ${styles.danger}`} title="Delete" onClick={() => handleRequestDelete(u.id, u.username)}>
+                          <Trash2 size={13} />
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
@@ -274,6 +288,14 @@ function UsersTab() {
         />
       )}
 
+      {logsUser && (
+        <UserLogsModal
+          open={Boolean(logsUser)}
+          user={logsUser}
+          onClose={() => setLogsUser(null)}
+        />
+      )}
+
       <ConfirmDialog
         open={Boolean(pendingDeleteId)}
         title="Delete User"
@@ -284,6 +306,76 @@ function UsersTab() {
         onCancel={handleCancelDelete}
       />
     </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// User logs modal
+// ---------------------------------------------------------------------------
+
+function UserLogsModal({ open, user, onClose }: {
+  open: boolean
+  user: AuthUser
+  onClose: () => void
+}) {
+  const [logs, setLogs] = useState<ActivityLog[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!open) return
+    setLoading(true)
+    getUserLogs(user.id).then(setLogs).finally(() => setLoading(false))
+  }, [open, user.id])
+
+  const statusColor = (code: number) => {
+    if (code < 300) return 'var(--color-accent)'
+    if (code < 400) return '#f59e0b'
+    return '#f87171'
+  }
+
+  return (
+    <Modal open={open} onClose={onClose} title={`Activity Logs — ${user.username}`}>
+      <div className={styles.logsModal}>
+        {loading ? (
+          <div className={styles.logsEmpty}>Loading…</div>
+        ) : logs.length === 0 ? (
+          <div className={styles.logsEmpty}>No activity recorded yet.</div>
+        ) : (
+          <div className={styles.logsTableWrap}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th className={styles.th}>Time</th>
+                  <th className={styles.th}>Method</th>
+                  <th className={styles.th}>Path</th>
+                  <th className={styles.th}>Status</th>
+                  <th className={styles.th}>Latency</th>
+                </tr>
+              </thead>
+              <tbody>
+                {logs.map((log) => (
+                  <tr key={log.id} className={styles.tr}>
+                    <td className={`${styles.td} ${styles.muted} ${styles.nowrap}`} style={{ fontSize: '0.78rem' }}>
+                      {new Date(log.created_at).toLocaleString()}
+                    </td>
+                    <td className={`${styles.td} ${styles.nowrap}`} style={{ fontFamily: 'monospace', fontSize: '0.78rem' }}>
+                      {log.method}
+                    </td>
+                    <td className={`${styles.td} ${styles.logPath}`}>{log.path}</td>
+                    <td className={styles.td} style={{ color: statusColor(log.status_code), fontFamily: 'monospace', fontSize: '0.82rem' }}>
+                      {log.status_code}
+                    </td>
+                    <td className={`${styles.td} ${styles.muted}`} style={{ fontSize: '0.82rem' }}>
+                      {log.latency_ms}ms
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </Modal>
   )
 }
 

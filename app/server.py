@@ -13,6 +13,8 @@ if __package__ in (None, ""):
 
 import logging
 
+from datetime import datetime, timezone
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -30,6 +32,8 @@ os.environ.setdefault("USER_AGENT", "Hotak-AI/1.0")
 # chromadb still tries to fire events, catches the posthog error, and logs it at WARNING.
 logging.getLogger("chromadb.telemetry.product.posthog").setLevel(logging.ERROR)
 
+_START_TIME = datetime.now(timezone.utc)
+
 app = FastAPI(
     title="Hotak AI Server",
     description="API server for Hotak AI application.",
@@ -46,6 +50,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Add activity-log middleware (must come after CORS so CORS headers appear first)
+from app.config.settings import JWT_SECRET_KEY, JWT_ALGORITHM  # noqa: E402
+from app.middleware.activity import ActivityLogMiddleware        # noqa: E402
+app.add_middleware(ActivityLogMiddleware, jwt_secret=JWT_SECRET_KEY, jwt_algorithm=JWT_ALGORITHM)
 
 async def startup_event():
     """Actions to perform on server startup."""
@@ -146,6 +155,51 @@ async def startup_event():
 @app.on_event("startup")
 async def on_startup():
     await startup_event()
+
+
+@app.get("/health", tags=["system"])
+async def health_check():
+    """Return service health status including DB, vector store, and Ollama reachability."""
+    import httpx
+    from sqlalchemy import text as sa_text
+    from app.db import engine
+
+    # Database
+    db_ok = False
+    try:
+        with engine.connect() as conn:
+            conn.execute(sa_text("SELECT 1"))
+        db_ok = True
+    except Exception:
+        pass
+
+    # Vector store
+    vs_ok = getattr(app.state, "vector_store", None) is not None
+
+    # Ollama
+    ollama_ok = False
+    try:
+        from app.services.provider_settings import get_effective_ollama_url
+        url = get_effective_ollama_url()
+        async with httpx.AsyncClient(timeout=3.0) as client:
+            resp = await client.get(f"{url.rstrip('/')}/api/tags")
+            ollama_ok = resp.status_code == 200
+    except Exception:
+        pass
+
+    uptime_seconds = int((datetime.now(timezone.utc) - _START_TIME).total_seconds())
+
+    status = "ok" if (db_ok and vs_ok) else "degraded"
+    return {
+        "status": status,
+        "version": app.version,
+        "uptime_seconds": uptime_seconds,
+        "checks": {
+            "database": "ok" if db_ok else "error",
+            "vector_store": "ok" if vs_ok else "error",
+            "ollama": "ok" if ollama_ok else "unreachable",
+        },
+    }
 
 
 app.include_router(router)

@@ -1,6 +1,7 @@
 """Auth API routes — login, current user, profile management."""
 
 import json
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -43,6 +44,9 @@ def login(credentials: UserLogin, db: Session = Depends(get_db)):
             detail="Account is locked. Contact an administrator.",
         )
 
+    user.last_login_at = datetime.utcnow()
+    db.commit()
+    db.refresh(user)
     logger.info(f"User logged in: {user.username}")
     token = create_access_token({"sub": user.id})
     return TokenResponse(access_token=token, user=UserResponse.model_validate(user))

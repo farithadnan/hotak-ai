@@ -319,3 +319,36 @@
   opacity: 0.4;
   cursor: not-allowed;
 }
+
+/* ── User logs modal ───────────────────────────────────────────────────── */
+
+.logsModal {
+  min-width: 560px;
+  max-width: 780px;
+}
+
+.logsEmpty {
+  padding: 24px 0;
+  text-align: center;
+  color: var(--color-muted);
+  font-size: 0.86rem;
+}
+
+.logsTableWrap {
+  max-height: 440px;
+  overflow-y: auto;
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+.logPath {
+  font-family: monospace;
+  font-size: 0.78rem;
+  color: var(--color-muted);
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

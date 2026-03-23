@@ -36,6 +36,7 @@ class UserDB(Base):
     role = Column(String, nullable=False, default="user")       # "admin" | "user"
     is_active = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+    last_login_at = Column(DateTime, nullable=True, default=None)
     preferences = Column(Text, nullable=True, default=None)     # JSON string
 
 
@@ -62,6 +63,7 @@ class UserResponse(BaseModel):
     role: str
     is_active: bool
     created_at: datetime
+    last_login_at: datetime | None = None
     preferences: dict = Field(default_factory=lambda: DEFAULT_PREFERENCES.copy())
 
     model_config = {"from_attributes": True}

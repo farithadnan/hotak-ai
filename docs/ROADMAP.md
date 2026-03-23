@@ -1,6 +1,6 @@
 # Hotak AI - Development Roadmap (Active)
 
-## 🎯 Current Status: Phase 7.5 Complete (incl. Ollama) — Next: Phase 7.6 (Testing)
+## 🎯 Current Status: Phase 7.6 Complete (Testing) — Next: Phase 7.7 (Observability)
 
 We are building a template-based knowledge management system ("Brains") allowing users to create reusable knowledge templates for chat sessions.
 
@@ -206,10 +206,13 @@ We are building a template-based knowledge management system ("Brains") allowing
 - [x] **Frontend:** Component tests for critical flows (send message, attach file, template picker)
 - [x] Token-estimation quality tuning and summary refresh strategy tests
 
-### Phase 7.7 — Observability
-- [ ] Structured logging (request IDs, user IDs, latency)
+### Phase 7.7 — Observability ✅ Done
+- [x] **Request ID middleware** — UUID stamped on every request; returned as `X-Request-ID` response header
+- [x] **Activity log table** — every API request recorded with user_id, username, method, path, status, latency_ms
+- [x] **`last_login_at` tracking** — timestamp updated on every successful login; shown in Admin → Users table
+- [x] **Admin user logs viewer** — per-user activity log modal (timestamp, method, path, status, latency)
+- [x] **Enhanced `/health` endpoint** — reports DB, vector store, Ollama reachability + uptime + version
 - [ ] Token usage tracking per user/chat
-- [ ] Health check endpoint (`/health`)
 - [ ] Advanced monitoring & alerting
 
 ---

@@ -47,4 +47,9 @@ def _migrate():
             conn.execute(__import__("sqlalchemy").text(
                 "ALTER TABLE users ADD COLUMN preferences TEXT"
             ))
+        # Phase 7.7: add last_login_at column
+        if "last_login_at" not in existing:
+            conn.execute(__import__("sqlalchemy").text(
+                "ALTER TABLE users ADD COLUMN last_login_at DATETIME"
+            ))
         conn.commit()
