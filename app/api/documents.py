@@ -58,7 +58,8 @@ def _save_upload(file: UploadFile) -> tuple[Path | None, str | None]:
                     return None, "File exceeds size limit"
                 out_file.write(chunk)
     except Exception as exc:
-        return None, str(exc)
+        logger.error("Failed to save uploaded file: %s", exc)
+        return None, "Failed to save file."
 
     return target_path, None
 

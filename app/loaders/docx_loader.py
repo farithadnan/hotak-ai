@@ -23,18 +23,17 @@ def load_docx_document(file_path: str) -> List[Document]:
     Returns:
         List[Document]: Loaded documents.
     """
-    resolved_path = Path(file_path).resolve()
-    try:
-        resolved_path.relative_to(_ALLOWED_ROOT)
-    except ValueError:
-        logger.warning("Blocked path traversal attempt in DOCX loader: %s", resolved_path)
+    # Construct path from trusted root using only the filename component.
+    safe_path = (_ALLOWED_ROOT / Path(file_path).name).resolve()
+    if not safe_path.is_relative_to(_ALLOWED_ROOT):
+        logger.warning("Blocked path traversal attempt in DOCX loader: %s", file_path)
         raise ValueError("Access denied: file must be inside the uploads directory.")
 
     try:
-        logger.info(f"Loading DOCX document from: {resolved_path}")
+        logger.info(f"Loading DOCX document from: {safe_path}")
 
         # Read the DOCX file
-        docx = DocxDocument(str(resolved_path))
+        docx = DocxDocument(str(safe_path))
         full_text = []
         for para in docx.paragraphs:
             if para.text.strip():
@@ -42,12 +41,11 @@ def load_docx_document(file_path: str) -> List[Document]:
         content = "\n\n".join(full_text)
 
         # Create a single Document
-        file_name = resolved_path.name
         doc = Document(
             page_content=content,
             metadata={
-                "source": str(resolved_path),
-                "file_name": file_name,
+                "source": str(safe_path),
+                "file_name": safe_path.name,
                 "source_type": "docx",
             }
         )
@@ -58,5 +56,5 @@ def load_docx_document(file_path: str) -> List[Document]:
 
         return [doc]
     except Exception as e:
-        logger.error(f"Failed to load DOCX document from {resolved_path}: {e}")
+        logger.error(f"Failed to load DOCX document from {safe_path}: {e}")
         raise

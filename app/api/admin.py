@@ -338,7 +338,8 @@ async def test_provider(body: ProviderTestRequest, _admin: UserDB = Depends(get_
         except AuthenticationError:
             return {"ok": False, "message": "Invalid API key."}
         except Exception as e:
-            return {"ok": False, "message": f"Connection failed: {e}"}
+            logger.warning("OpenAI connection test failed: %s", e)
+            return {"ok": False, "message": "Connection failed. Check server logs for details."}
 
     elif body.provider == "ollama":
         import httpx
@@ -351,6 +352,7 @@ async def test_provider(body: ProviderTestRequest, _admin: UserDB = Depends(get_
                 msg = f"Ollama reachable. {len(names)} model(s) installed: {', '.join(names) or 'none'}."
                 return {"ok": True, "message": msg}
         except Exception as e:
-            return {"ok": False, "message": f"Cannot reach Ollama at {body.value}: {e}"}
+            logger.warning("Ollama connection test failed for %s: %s", body.value, e)
+            return {"ok": False, "message": "Cannot reach Ollama at the given URL. Check server logs for details."}
 
     raise HTTPException(status_code=400, detail=f"Unknown provider: {body.provider}")

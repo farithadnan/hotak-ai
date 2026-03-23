@@ -25,27 +25,25 @@ def load_md_document(file_path: str) -> List[Document]:
         FileNotFoundError: If file doesn't exist
         Exception: For reading errors
     """
-    logger.info(f"Loading MD file: {file_path}")
-
-    resolved_path = Path(file_path).resolve()
-    try:
-        resolved_path.relative_to(_ALLOWED_ROOT)
-    except ValueError:
-        logger.warning("Blocked path traversal attempt in MD loader: %s", resolved_path)
+    # Construct path from trusted root using only the filename component.
+    safe_path = (_ALLOWED_ROOT / Path(file_path).name).resolve()
+    if not safe_path.is_relative_to(_ALLOWED_ROOT):
+        logger.warning("Blocked path traversal attempt in MD loader: %s", file_path)
         raise ValueError("Access denied: file must be inside the uploads directory.")
+
+    logger.info(f"Loading MD file: {safe_path}")
 
     try:
         # Read the entire file
-        with open(resolved_path, 'r', encoding='utf-8') as f:
+        with open(safe_path, 'r', encoding='utf-8') as f:
             content = f.read()
 
         # Create a single Document
-        file_name = resolved_path.name
         doc = Document(
             page_content=content,
             metadata={
-                "source": str(resolved_path),
-                "file_name": file_name,
+                "source": str(safe_path),
+                "file_name": safe_path.name,
                 "source_type": "md",
             }
         )
@@ -58,14 +56,14 @@ def load_md_document(file_path: str) -> List[Document]:
         return [doc]
 
     except FileNotFoundError:
-        logger.error(f"File not found: {resolved_path}")
+        logger.error(f"File not found: {safe_path}")
         raise
     except PermissionError:
-        logger.error(f"Permission denied reading file: {resolved_path}")
+        logger.error(f"Permission denied reading file: {safe_path}")
         raise
     except UnicodeDecodeError as e:
-        logger.error(f"Failed to decode file (encoding issue): {resolved_path}")
-        raise Exception(f"File encoding error. Try saving as UTF-8: {str(e)}")
+        logger.error(f"Failed to decode file (encoding issue): {safe_path}: {e}")
+        raise Exception(f"File encoding error. Try saving as UTF-8.")
     except Exception as e:
-        logger.error(f"Failed to load MD file: {str(e)}")
+        logger.error(f"Failed to load MD file: {e}")
         raise
