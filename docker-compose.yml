@@ -86,3 +86,7 @@ volumes:
   backend_data:
   backend_logs:
   ollama_data:
+
+networks:
+  default:
+    name: hotak-ai-network

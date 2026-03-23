@@ -139,6 +139,9 @@ export function Composer({
         >
           <input
             ref={fileInputRef}
+            id="file-upload"
+            name="file-upload"
+            aria-label="Upload files"
             type="file"
             multiple
             className={style['hidden-file-input']}
@@ -270,6 +273,9 @@ export function Composer({
                             <span className={style['attach-template-title']}>Attach Templates</span>
                           </div>
                           <input
+                            id="template-search"
+                            name="template-search"
+                            aria-label="Search templates"
                             className={style['attach-template-search']}
                             type="text"
                             value={templateSearchValue}

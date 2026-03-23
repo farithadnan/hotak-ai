@@ -183,6 +183,9 @@ function UsersTab() {
           <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
             <Search size={12} style={{ position: 'absolute', left: '7px', color: 'var(--color-muted)', pointerEvents: 'none' }} />
             <input
+              id="user-search"
+              name="user-search"
+              aria-label="Search users"
               className={styles.searchInput}
               style={{ paddingLeft: '24px' }}
               placeholder="Search users…"
@@ -338,23 +341,23 @@ function CreateUserModal({ open, onClose, onCreated }: {
         <form onSubmit={(e) => { e.preventDefault(); void handleSubmit() }}>
           {error && <div className="form-error">{error}</div>}
           <div className="form-group">
-            <label className="form-label">Username</label>
-            <input className={`form-input${fieldErrors.username ? ' has-error' : ''}`} value={form.username} placeholder="e.g., johndoe" onChange={(e) => { setForm((f) => ({ ...f, username: e.target.value })); clearField('username') }} />
+            <label className="form-label" htmlFor="create-username">Username</label>
+            <input id="create-username" name="username" className={`form-input${fieldErrors.username ? ' has-error' : ''}`} value={form.username} placeholder="e.g., johndoe" onChange={(e) => { setForm((f) => ({ ...f, username: e.target.value })); clearField('username') }} />
             {fieldErrors.username && <span className="field-error">{fieldErrors.username}</span>}
           </div>
           <div className="form-group">
-            <label className="form-label">Email</label>
-            <input type="email" className={`form-input${fieldErrors.email ? ' has-error' : ''}`} value={form.email} placeholder="e.g., john@example.com" onChange={(e) => { setForm((f) => ({ ...f, email: e.target.value })); clearField('email') }} />
+            <label className="form-label" htmlFor="create-email">Email</label>
+            <input id="create-email" name="email" type="email" className={`form-input${fieldErrors.email ? ' has-error' : ''}`} value={form.email} placeholder="e.g., john@example.com" onChange={(e) => { setForm((f) => ({ ...f, email: e.target.value })); clearField('email') }} />
             {fieldErrors.email && <span className="field-error">{fieldErrors.email}</span>}
           </div>
           <div className="form-group">
-            <label className="form-label">Password</label>
-            <PasswordInput className={`form-input${fieldErrors.password ? ' has-error' : ''}`} value={form.password} placeholder="Minimum 8 characters" onChange={(e) => { setForm((f) => ({ ...f, password: e.target.value })); clearField('password') }} />
+            <label className="form-label" htmlFor="create-password">Password</label>
+            <PasswordInput id="create-password" name="password" className={`form-input${fieldErrors.password ? ' has-error' : ''}`} value={form.password} placeholder="Minimum 8 characters" onChange={(e) => { setForm((f) => ({ ...f, password: e.target.value })); clearField('password') }} />
             {fieldErrors.password && <span className="field-error">{fieldErrors.password}</span>}
           </div>
           <div className="form-group">
-            <label className="form-label">Role</label>
-            <select className="form-input" value={form.role} onChange={(e) => setForm((f) => ({ ...f, role: e.target.value as 'admin' | 'user' }))}>
+            <label className="form-label" htmlFor="create-role">Role</label>
+            <select id="create-role" name="role" className="form-input" value={form.role} onChange={(e) => setForm((f) => ({ ...f, role: e.target.value as 'admin' | 'user' }))}>
               <option value="user">User</option>
               <option value="admin">Admin</option>
             </select>
@@ -457,18 +460,18 @@ function EditUserModal({ open, onClose, user, onUpdated }: {
             <form onSubmit={(e) => { e.preventDefault(); void handleSubmit() }}>
               {error && <div className="form-error">{error}</div>}
               <div className="form-group">
-                <label className="form-label">Username</label>
-                <input className={`form-input${fieldErrors.username ? ' has-error' : ''}`} value={form.username} placeholder="e.g., johndoe" onChange={(e) => { setForm((f) => ({ ...f, username: e.target.value })); setFieldErrors((f) => ({ ...f, username: undefined })) }} />
+                <label className="form-label" htmlFor="edit-username">Username</label>
+                <input id="edit-username" name="username" className={`form-input${fieldErrors.username ? ' has-error' : ''}`} value={form.username} placeholder="e.g., johndoe" onChange={(e) => { setForm((f) => ({ ...f, username: e.target.value })); setFieldErrors((f) => ({ ...f, username: undefined })) }} />
                 {fieldErrors.username && <span className="field-error">{fieldErrors.username}</span>}
               </div>
               <div className="form-group">
-                <label className="form-label">Email</label>
-                <input type="email" className={`form-input${fieldErrors.email ? ' has-error' : ''}`} value={form.email} placeholder="e.g., john@example.com" onChange={(e) => { setForm((f) => ({ ...f, email: e.target.value })); setFieldErrors((f) => ({ ...f, email: undefined })) }} />
+                <label className="form-label" htmlFor="edit-email">Email</label>
+                <input id="edit-email" name="email" type="email" className={`form-input${fieldErrors.email ? ' has-error' : ''}`} value={form.email} placeholder="e.g., john@example.com" onChange={(e) => { setForm((f) => ({ ...f, email: e.target.value })); setFieldErrors((f) => ({ ...f, email: undefined })) }} />
                 {fieldErrors.email && <span className="field-error">{fieldErrors.email}</span>}
               </div>
               <div className="form-group">
-                <label className="form-label">Role</label>
-                <select className="form-input" value={form.role} onChange={(e) => setForm((f) => ({ ...f, role: e.target.value as 'admin' | 'user' }))}>
+                <label className="form-label" htmlFor="edit-role">Role</label>
+                <select id="edit-role" name="role" className="form-input" value={form.role} onChange={(e) => setForm((f) => ({ ...f, role: e.target.value as 'admin' | 'user' }))}>
                   <option value="user">User</option>
                   <option value="admin">Admin</option>
                 </select>
@@ -484,8 +487,10 @@ function EditUserModal({ open, onClose, user, onUpdated }: {
               {pwError && <div className="form-error">{pwError}</div>}
               {pwSaved && <div className="form-success">Password reset successfully.</div>}
               <div className="form-group">
-                <label className="form-label">New Password</label>
+                <label className="form-label" htmlFor="edit-new-password">New Password</label>
                 <PasswordInput
+                  id="edit-new-password"
+                  name="new-password"
                   className={`form-input${pwFieldError ? ' has-error' : ''}`}
                   value={newPassword}
                   placeholder="Enter new password"
@@ -597,6 +602,9 @@ function ModelsTab() {
           <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
             <Search size={12} style={{ position: 'absolute', left: '7px', color: 'var(--color-muted)', pointerEvents: 'none' }} />
             <input
+              id="model-search"
+              name="model-search"
+              aria-label="Search models"
               className={styles.searchInput}
               style={{ paddingLeft: '24px' }}
               placeholder="Search models…"
@@ -766,9 +774,11 @@ function ProvidersTab() {
         }
       >
         <div className="form-group">
-          <label className="form-label">API Key</label>
+          <label className="form-label" htmlFor="openai-api-key">API Key</label>
           <div style={{ display: 'flex', gap: '8px' }}>
             <PasswordInput
+              id="openai-api-key"
+              name="openai-api-key"
               value={openaiKey}
               placeholder={settings?.openai_api_key_set ? 'Enter new key to replace…' : 'sk-…'}
               onChange={(e) => { setOpenaiKey(e.target.value); setOpenaiTest(null) }}
@@ -796,9 +806,11 @@ function ProvidersTab() {
         hint="Local/self-hosted LLM server. Pull models with: docker exec hotak-ai-ollama ollama pull llama3.2"
       >
         <div className="form-group">
-          <label className="form-label">Base URL</label>
+          <label className="form-label" htmlFor="ollama-base-url">Base URL</label>
           <div style={{ display: 'flex', gap: '8px' }}>
             <input
+              id="ollama-base-url"
+              name="ollama-base-url"
               className="form-input"
               value={ollamaUrl}
               placeholder="http://ollama:11434"
@@ -915,14 +927,16 @@ function SystemSettingsModal({ open, onClose }: { open: boolean; onClose: () => 
             <div className={styles.systemGrid}>
               {SYSTEM_FIELDS.map((f) => (
                 <div className="form-group" key={f.key}>
-                  <label className="form-label">{f.label}</label>
+                  <label className="form-label" htmlFor={`system-${f.key}`}>{f.label}</label>
                   {f.type === 'bool' ? (
                     <label className={styles.toggleRow}>
-                      <input type="checkbox" checked={values[f.key] as boolean} onChange={(e) => set(f.key, e.target.checked)} />
+                      <input id={`system-${f.key}`} name={f.key} type="checkbox" checked={values[f.key] as boolean} onChange={(e) => set(f.key, e.target.checked)} />
                       <span>{values[f.key] ? 'Enabled' : 'Disabled'}</span>
                     </label>
                   ) : (
                     <input
+                      id={`system-${f.key}`}
+                      name={f.key}
                       type="number"
                       className={`form-input${fieldErrors[f.key] ? ' has-error' : ''}`}
                       value={values[f.key] as number}

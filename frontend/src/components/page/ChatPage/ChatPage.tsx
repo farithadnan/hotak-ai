@@ -178,6 +178,9 @@ function ChatPage({
           <div className="model-search">
             <Search size={16} className="search-icon" />
             <input
+              id="chat-model-search"
+              name="chat-model-search"
+              aria-label="Search models"
               type="text"
               placeholder="Search models..."
               value={modelSearch}

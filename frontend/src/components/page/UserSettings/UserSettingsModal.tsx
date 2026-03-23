@@ -330,7 +330,7 @@ export function UserSettingsModal({ open, onClose }: UserSettingsModalProps) {
 
               {/* Theme toggle */}
               <div className="form-group">
-                <label className="form-label">Theme</label>
+                <span className="form-label" style={{ display: 'block' }}>Theme</span>
                 <div className={style.toggleRow}>
                   {(['dark', 'light'] as ThemeMode[]).map((t) => (
                     <button
@@ -347,7 +347,7 @@ export function UserSettingsModal({ open, onClose }: UserSettingsModalProps) {
 
               {/* Accent palette */}
               <div className="form-group">
-                <label className="form-label">Accent Color</label>
+                <span className="form-label" style={{ display: 'block' }}>Accent Color</span>
                 <div className={style.accentGrid}>
                   {ACCENT_KEYS.map((a) => (
                     <button
@@ -367,7 +367,7 @@ export function UserSettingsModal({ open, onClose }: UserSettingsModalProps) {
 
               {/* Chat background */}
               <div className="form-group">
-                <label className="form-label">Chat Background</label>
+                <span className="form-label" style={{ display: 'block' }}>Chat Background</span>
                 <div className={style.bgGrid}>
                   {CHAT_BG_OPTIONS.map((opt) => (
                     <button
