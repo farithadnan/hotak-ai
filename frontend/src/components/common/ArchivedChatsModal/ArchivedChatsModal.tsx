@@ -80,6 +80,9 @@ export function ArchivedChatsModal({ open, onClose, onUnarchive, onShowToastr }:
     <>
       <Modal open={open} onClose={onClose} title="Archived Chats">
         <input
+          id="archive-search"
+          name="archive-search"
+          aria-label="Search archived chats"
           className={style['search-input']}
           type="text"
           placeholder="Search archived chats…"

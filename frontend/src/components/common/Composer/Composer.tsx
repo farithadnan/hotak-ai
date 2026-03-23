@@ -197,6 +197,8 @@ export function Composer({
           )}
           <textarea
             ref={textareaRef}
+            id="chat-input"
+            name="chat-input"
             value={inputValue}
             onChange={onInputChange}
             onKeyDown={onKeyDown}

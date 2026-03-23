@@ -630,16 +630,23 @@ function ModelsTab() {
         {filteredModels.map((id) => {
           const isEnabled = settings.enabled_models.includes(id)
           const isLastEnabled = onlyOneEnabled && isEnabled
+          const isOllama = id.startsWith('ollama/')
+          const displayName = isOllama ? id.slice('ollama/'.length) : id
           return (
             <label key={id} className={styles.modelRow}>
               <input
+                id={`model-toggle-${id}`}
+                name={`model-toggle-${id}`}
                 type="checkbox"
                 checked={isEnabled}
                 onChange={() => toggleModel(id)}
                 disabled={isLastEnabled}
                 title={isLastEnabled ? 'At least one model must remain enabled' : undefined}
               />
-              <span className={styles.modelId}>{id}</span>
+              <span className={`${styles.providerBadge} ${isOllama ? styles.badgeOllama : styles.badgeOpenai}`}>
+                {isOllama ? 'Ollama' : 'OpenAI'}
+              </span>
+              <span className={styles.modelId}>{displayName}</span>
               {isEnabled && (
                 <label className={styles.defaultLabel} onClick={(e) => e.stopPropagation()}>
                   <input type="radio" name="default_model" checked={settings.default_model === id} onChange={() => setDefault(id)} />
@@ -840,7 +847,7 @@ function ProvidersTab() {
         className="form-submit"
         onClick={() => void handleSave()}
         disabled={saving}
-        style={{ marginTop: '8px' }}
+        style={{ marginTop: '8px', marginBottom: '20px' }}
       >
         {saving ? 'Saving…' : 'Save & Re-probe Models'}
       </button>

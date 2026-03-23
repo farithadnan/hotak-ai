@@ -212,7 +212,7 @@ export function UserSettingsModal({ open, onClose }: UserSettingsModalProps) {
                   }
                   <div className={style.avatarOverlay}>Change</div>
                 </div>
-                <input ref={avatarInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarFile} />
+                <input ref={avatarInputRef} id="avatar-upload" name="avatar-upload" aria-label="Upload profile picture" type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarFile} />
                 <div className={style.avatarHint}>
                   <p className="form-hint">Click to upload a profile picture.</p>
                   {avatar && (
