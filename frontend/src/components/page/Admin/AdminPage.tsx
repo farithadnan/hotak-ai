@@ -747,7 +747,7 @@ function ProvidersTab() {
   }
 
   return (
-    <div className={styles.tabContent}>
+    <div className={`${styles.tabContent} ${styles.providersTabWrap}`}>
       {saveStatus === 'saved' && (
         <div className="form-success" style={{ marginBottom: '16px' }}>
           Saved. Models re-probed with new credentials.

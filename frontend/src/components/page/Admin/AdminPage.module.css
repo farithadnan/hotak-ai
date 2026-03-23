@@ -270,6 +270,10 @@
 
 /* ── Providers tab ─────────────────────────────────────────────────────── */
 
+.providersTabWrap {
+  padding: 0 16px;
+}
+
 .providerSection {
   border: 1px solid var(--color-border);
   border-radius: 10px;
