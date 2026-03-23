@@ -43,8 +43,26 @@ def update_model_settings(enabled_models: list[str], default_model: Optional[str
 
 
 def initialize_model_settings(accessible_models: list[str]) -> None:
-    """Called at startup — if no settings exist yet, enable all accessible models."""
-    if not SETTINGS_FILE.exists() and accessible_models:
-        default = accessible_models[0] if accessible_models else None
+    """
+    Called at startup. On first run, enables all accessible models.
+    On subsequent runs, merges any newly discovered models (e.g. newly pulled
+    Ollama models) into the existing enabled list without overwriting admin changes.
+    """
+    if not accessible_models:
+        return
+
+    existing = _load()
+    existing_enabled = set(existing.get("enabled_models", []))
+
+    if not SETTINGS_FILE.exists():
+        # First run — enable everything
+        default = accessible_models[0]
         _save({"enabled_models": accessible_models, "default_model": default})
         logger.info("Model settings initialised with all accessible models.")
+        return
+
+    new_models = [m for m in accessible_models if m not in existing_enabled]
+    if new_models:
+        merged = list(existing_enabled) + new_models
+        _save({"enabled_models": merged, "default_model": existing.get("default_model")})
+        logger.info("Model settings: added %d new model(s): %s", len(new_models), new_models)

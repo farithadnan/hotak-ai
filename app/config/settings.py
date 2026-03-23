@@ -29,6 +29,7 @@ LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")  # DEBUG, INFO, WARNING, ERROR
 # SECRETS (from .env file)
 # ==========================================
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
 LANGSMITH_API_KEY = os.getenv("LANGSMITH_API_KEY", "")
 LANGSMITH_TRACING = os.getenv("LANGSMITH_TRACING", "true")
 LANGSMITH_PROJECT = os.getenv("LANGSMITH_PROJECT", APP_NAME)

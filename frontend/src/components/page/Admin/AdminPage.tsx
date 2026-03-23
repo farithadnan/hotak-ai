@@ -8,22 +8,26 @@ import {
   createUser,
   deleteUser,
   getModelSettings,
+  getProviderSettings,
   getSystemSettings,
   listUsers,
   lockUser,
   resetUserPassword,
+  testProviderConnection,
   unlockUser,
   updateModelSettings,
+  updateProviderSettings,
   updateSystemSettings,
   updateUser,
   type AdminUserCreate,
   type ModelSettings,
+  type ProviderSettings,
   type SystemSettings,
 } from '../../../services/admin'
 import type { AuthUser } from '../../../types/auth'
 import styles from './AdminPage.module.css'
 
-type Tab = 'users' | 'models'
+type Tab = 'users' | 'models' | 'providers'
 
 // ---------------------------------------------------------------------------
 // Skeletons
@@ -96,13 +100,15 @@ export function AdminPage() {
       </div>
 
       <div className="form-tabs">
-        <button className={tab === 'users'  ? 'form-tab is-active' : 'form-tab'} onClick={() => setTab('users')}>Users</button>
-        <button className={tab === 'models' ? 'form-tab is-active' : 'form-tab'} onClick={() => setTab('models')}>Models</button>
+        <button className={tab === 'users'     ? 'form-tab is-active' : 'form-tab'} onClick={() => setTab('users')}>Users</button>
+        <button className={tab === 'models'    ? 'form-tab is-active' : 'form-tab'} onClick={() => setTab('models')}>Models</button>
+        <button className={tab === 'providers' ? 'form-tab is-active' : 'form-tab'} onClick={() => setTab('providers')}>Providers</button>
       </div>
 
       <div className="form-tab-panel">
-        {tab === 'users'  && <UsersTab />}
-        {tab === 'models' && <ModelsTab />}
+        {tab === 'users'     && <UsersTab />}
+        {tab === 'models'    && <ModelsTab />}
+        {tab === 'providers' && <ProvidersTab />}
       </div>
 
       <SystemSettingsModal open={isSystemOpen} onClose={() => setIsSystemOpen(false)} />
@@ -636,6 +642,196 @@ function ModelsTab() {
           )
         })}
       </div>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Providers tab
+// ---------------------------------------------------------------------------
+
+function ProviderSection({
+  title,
+  hint,
+  children,
+}: {
+  title: string
+  hint: string
+  children: React.ReactNode
+}) {
+  return (
+    <div className={styles.providerSection}>
+      <h3 className={styles.providerTitle}>{title}</h3>
+      <p className="form-hint" style={{ marginBottom: '12px' }}>{hint}</p>
+      {children}
+    </div>
+  )
+}
+
+function ProvidersTab() {
+  const [settings, setSettings] = useState<ProviderSettings | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  const [openaiKey, setOpenaiKey] = useState('')
+  const [ollamaUrl, setOllamaUrl] = useState('')
+
+  const [openaiTest, setOpenaiTest] = useState<{ ok: boolean; message: string } | null>(null)
+  const [ollamaTest, setOllamaTest] = useState<{ ok: boolean; message: string } | null>(null)
+  const [testingOpenai, setTestingOpenai] = useState(false)
+  const [testingOllama, setTestingOllama] = useState(false)
+
+  const [saving, setSaving] = useState(false)
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saved' | 'error'>('idle')
+  const [saveError, setSaveError] = useState('')
+
+  useEffect(() => {
+    getProviderSettings().then((data) => {
+      setSettings(data)
+      setOllamaUrl(data.ollama_base_url)
+    }).finally(() => setLoading(false))
+  }, [])
+
+  const handleTestOpenai = async () => {
+    if (!openaiKey.trim()) return
+    setTestingOpenai(true)
+    setOpenaiTest(null)
+    try {
+      const result = await testProviderConnection('openai', openaiKey.trim())
+      setOpenaiTest(result)
+    } finally { setTestingOpenai(false) }
+  }
+
+  const handleTestOllama = async () => {
+    if (!ollamaUrl.trim()) return
+    setTestingOllama(true)
+    setOllamaTest(null)
+    try {
+      const result = await testProviderConnection('ollama', ollamaUrl.trim())
+      setOllamaTest(result)
+    } finally { setTestingOllama(false) }
+  }
+
+  const handleSave = async () => {
+    setSaving(true)
+    setSaveStatus('idle')
+    setSaveError('')
+    try {
+      const payload: { openai_api_key?: string; ollama_base_url?: string } = {}
+      if (openaiKey !== '') payload.openai_api_key = openaiKey
+      if (ollamaUrl !== settings?.ollama_base_url) payload.ollama_base_url = ollamaUrl
+      const updated = await updateProviderSettings(payload)
+      setSettings(updated)
+      setOpenaiKey('')
+      setSaveStatus('saved')
+      setTimeout(() => setSaveStatus('idle'), 3000)
+    } catch (err: unknown) {
+      const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
+      setSaveError(detail ?? 'Failed to save.')
+      setSaveStatus('error')
+    } finally { setSaving(false) }
+  }
+
+  if (loading) {
+    return (
+      <div className={styles.tabContent}>
+        <div className={styles.providerSection}>
+          {Array.from({ length: 3 }, (_, i) => (
+            <div key={i} className="form-group" style={{ marginBottom: '12px' }}>
+              <span className={`skeleton-box ${styles.skeletonCell}`} style={{ width: '120px', height: '11px' }} />
+              <span className={`skeleton-box ${styles.skeletonCell}`} style={{ width: '100%', height: '34px', borderRadius: '8px', marginTop: '6px' }} />
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className={styles.tabContent}>
+      {saveStatus === 'saved' && (
+        <div className="form-success" style={{ marginBottom: '16px' }}>
+          Saved. Models re-probed with new credentials.
+        </div>
+      )}
+      {saveStatus === 'error' && (
+        <div className="form-error" style={{ marginBottom: '16px' }}>{saveError}</div>
+      )}
+
+      <ProviderSection
+        title="OpenAI"
+        hint={
+          settings?.openai_api_key_set
+            ? `Current key: ${settings.openai_api_key_preview} (source: ${settings.openai_api_key_source})`
+            : 'No API key configured — OpenAI models unavailable.'
+        }
+      >
+        <div className="form-group">
+          <label className="form-label">API Key</label>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <PasswordInput
+              value={openaiKey}
+              placeholder={settings?.openai_api_key_set ? 'Enter new key to replace…' : 'sk-…'}
+              onChange={(e) => { setOpenaiKey(e.target.value); setOpenaiTest(null) }}
+              style={{ flex: 1 }}
+            />
+            <button
+              className={styles.testBtn}
+              onClick={() => void handleTestOpenai()}
+              disabled={testingOpenai || !openaiKey.trim()}
+            >
+              {testingOpenai ? 'Testing…' : 'Test'}
+            </button>
+          </div>
+          {openaiTest && (
+            <span className={openaiTest.ok ? 'form-hint' : 'field-error'} style={{ color: openaiTest.ok ? 'var(--color-accent)' : undefined }}>
+              {openaiTest.ok ? '✓ ' : '✗ '}{openaiTest.message}
+            </span>
+          )}
+          <span className="form-hint">Leave blank to keep the existing key. Set to a space to clear (fall back to env var).</span>
+        </div>
+      </ProviderSection>
+
+      <ProviderSection
+        title="Ollama"
+        hint="Local/self-hosted LLM server. Pull models with: docker exec hotak-ai-ollama ollama pull llama3.2"
+      >
+        <div className="form-group">
+          <label className="form-label">Base URL</label>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <input
+              className="form-input"
+              value={ollamaUrl}
+              placeholder="http://ollama:11434"
+              onChange={(e) => { setOllamaUrl(e.target.value); setOllamaTest(null) }}
+              style={{ flex: 1 }}
+            />
+            <button
+              className={styles.testBtn}
+              onClick={() => void handleTestOllama()}
+              disabled={testingOllama || !ollamaUrl.trim()}
+            >
+              {testingOllama ? 'Testing…' : 'Test'}
+            </button>
+          </div>
+          {ollamaTest && (
+            <span className={ollamaTest.ok ? 'form-hint' : 'field-error'} style={{ color: ollamaTest.ok ? 'var(--color-accent)' : undefined }}>
+              {ollamaTest.ok ? '✓ ' : '✗ '}{ollamaTest.message}
+            </span>
+          )}
+          <span className="form-hint">
+            Docker: <code>http://ollama:11434</code> &nbsp;|&nbsp; Local dev: <code>http://localhost:11434</code>
+          </span>
+        </div>
+      </ProviderSection>
+
+      <button
+        className="form-submit"
+        onClick={() => void handleSave()}
+        disabled={saving}
+        style={{ marginTop: '8px' }}
+      >
+        {saving ? 'Saving…' : 'Save & Re-probe Models'}
+      </button>
     </div>
   )
 }

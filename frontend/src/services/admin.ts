@@ -86,3 +86,37 @@ export async function updateModelSettings(
   const res = await api.put<ModelSettings>('/admin/models', { enabled_models, default_model })
   return res.data
 }
+
+export type ProviderSettings = {
+  openai_api_key_preview: string
+  openai_api_key_set: boolean
+  openai_api_key_source: 'db' | 'env' | 'none'
+  ollama_base_url: string
+  ollama_base_url_source: 'db' | 'env'
+}
+
+export type ProviderTestResult = {
+  ok: boolean
+  message: string
+}
+
+export async function getProviderSettings(): Promise<ProviderSettings> {
+  const res = await api.get<ProviderSettings>('/admin/providers')
+  return res.data
+}
+
+export async function updateProviderSettings(data: {
+  openai_api_key?: string
+  ollama_base_url?: string
+}): Promise<ProviderSettings> {
+  const res = await api.put<ProviderSettings>('/admin/providers', data)
+  return res.data
+}
+
+export async function testProviderConnection(
+  provider: 'openai' | 'ollama',
+  value: string,
+): Promise<ProviderTestResult> {
+  const res = await api.post<ProviderTestResult>('/admin/providers/test', { provider, value })
+  return res.data
+}

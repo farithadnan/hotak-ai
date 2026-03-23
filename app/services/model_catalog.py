@@ -10,6 +10,7 @@ the user can't use.
 """
 
 import asyncio
+import httpx
 from openai import AsyncOpenAI, OpenAI, PermissionDeniedError, NotFoundError, AuthenticationError
 
 from ..utils.logger import setup_logger
@@ -116,3 +117,42 @@ async def build_accessible_chat_models(api_key: str) -> list[dict]:
         _accessible_model_ids,
     )
     return accessible
+
+
+def _ollama_model_id(raw_name: str) -> str:
+    """Convert 'llama3.2:latest' → 'ollama/llama3.2', 'llama3.2:8b' → 'ollama/llama3.2:8b'."""
+    name = raw_name.removesuffix(":latest")
+    return f"ollama/{name}"
+
+
+async def get_ollama_models(base_url: str) -> list[dict]:
+    """
+    Return installed Ollama models as catalog dicts, or empty list if Ollama is unreachable.
+
+    Each dict: { "id": "ollama/llama3.2", "object": "model", "owned_by": "ollama", "provider": "ollama" }
+    """
+    if not base_url:
+        return []
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            response = await client.get(f"{base_url.rstrip('/')}/api/tags")
+            response.raise_for_status()
+            models = response.json().get("models", [])
+            result = [
+                {
+                    "id": _ollama_model_id(m["name"]),
+                    "object": "model",
+                    "owned_by": "ollama",
+                    "provider": "ollama",
+                }
+                for m in models
+                if m.get("name")
+            ]
+            if result:
+                logger.info("Ollama models available (%d): %s", len(result), [m["id"] for m in result])
+            else:
+                logger.info("Ollama reachable but no models installed at %s", base_url)
+            return result
+    except Exception as exc:
+        logger.info("Ollama not reachable at %s (%s) — skipping Ollama models", base_url, exc)
+        return []

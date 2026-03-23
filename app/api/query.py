@@ -8,8 +8,8 @@ from ..models.user import UserDB
 from ..services.auth import get_current_user
 from fastapi.responses import StreamingResponse
 from openai import PermissionDeniedError, RateLimitError
-from langchain.chat_models import init_chat_model
 from langchain_core.messages import AIMessageChunk
+from ..services.llm import create_llm_for_model
 
 from ..storage.chat_storage import get_chat
 from ..agents.rag_agent import create_rag_agent, validate_and_format_response
@@ -421,8 +421,8 @@ def _get_rag_agent_for_config(http_request: Request, runtime_config: AgentRuntim
             runtime_config.temperature,
             len(runtime_config.allowed_sources) if runtime_config.allowed_sources else "all",
         )
-        model_llm = init_chat_model(
-            model=model_name,
+        model_llm = create_llm_for_model(
+            model_name,
             temperature=runtime_config.temperature if runtime_config.temperature is not None else LLM_TEMPERATURE,
             max_tokens=LLM_MAX_TOKENS,
         )

@@ -72,7 +72,7 @@ async def startup_event():
         create_tables()
 
         from app.services.llm import initialize_models
-        from app.services.model_catalog import build_accessible_chat_models
+        from app.services.model_catalog import build_accessible_chat_models, get_ollama_models
         from app.storage.vector_storage import initialize_vector_store
         from app.agents.rag_agent import create_rag_agent
 
@@ -90,7 +90,10 @@ async def startup_event():
 
         rag_agent = create_rag_agent(llm, vector_store)
 
-        accessible_models = await build_accessible_chat_models(OPENAI_API_KEY)
+        from app.services.provider_settings import get_effective_openai_key, get_effective_ollama_url
+        openai_models = await build_accessible_chat_models(get_effective_openai_key())
+        ollama_models = await get_ollama_models(get_effective_ollama_url())
+        accessible_models = openai_models + ollama_models
 
         # Initialize model settings (enables all if no settings file yet)
         from app.services.model_settings import initialize_model_settings

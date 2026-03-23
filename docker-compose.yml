@@ -34,12 +34,36 @@ services:
       ENABLE_SUMMARY_MEMORY: ${ENABLE_SUMMARY_MEMORY:-true}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
 
+      # Ollama (optional — leave blank to disable)
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
+
       # Disable LangSmith tracing unless keys are provided
       LANGSMITH_TRACING: ${LANGSMITH_TRACING:-false}
       LANGSMITH_API_KEY: ${LANGSMITH_API_KEY:-}
 
       # Suppress ChromaDB telemetry
       ANONYMIZED_TELEMETRY: "False"
+
+    depends_on:
+      - ollama
+
+  # ── Ollama (local LLM server) ────────────────────────────────────────────
+  ollama:
+    image: ollama/ollama:latest
+    container_name: hotak-ai-ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    # Uncomment for NVIDIA GPU support:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
 
   # ── Frontend (Vite build → nginx) ───────────────────────────────────────
   frontend:
@@ -61,3 +85,4 @@ services:
 volumes:
   backend_data:
   backend_logs:
+  ollama_data:
