@@ -82,7 +82,7 @@ Each module has its own detailed documentation. Click to navigate.
 | Document | Covers |
 |---|---|
 | [DEPLOYMENT.md](./DEPLOYMENT.md) | Local dev, Docker (SQLite + PostgreSQL), VPS + nginx/HTTPS, managed DB, env vars, backups, production checklist |
-| [ROADMAP.md](./ROADMAP.md) | Feature roadmap, phase completion status, planned work |
+| [ROADMAP.md](./ROADMAP.md) | All features: completed phases (7.1–7.7), in-progress, and planned work (Phase 8+) with per-item checkboxes |
 
 ---
 
