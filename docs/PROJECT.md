@@ -12,12 +12,14 @@ Hotak AI is a **Retrieval-Augmented Generation (RAG) chat application**. Users c
 
 | Layer | Technology |
 |---|---|
-| Frontend | React 18 + TypeScript, Vite, React Router, Axios, CSS Modules |
+| Frontend | React 18 + TypeScript, Vite, React Router, Axios, CSS Modules, Tailwind CSS |
 | Backend | Python, FastAPI, Pydantic, Uvicorn |
-| LLM / Agents | LangChain, OpenAI (GPT-4o-mini default), LangSmith (tracing) |
-| Vector Store | ChromaDB (persisted to SQLite) |
+| LLM / Agents | LangChain, OpenAI (GPT-4o-mini default), Ollama (local models), LangSmith (tracing) |
+| Vector Store | ChromaDB (embedded, persisted to disk) |
+| Database | SQLite (default) or PostgreSQL via `DATABASE_URL` env var |
 | Document Loaders | PDF (PyPDF), DOCX (python-docx), TXT, Markdown, Web (BeautifulSoup) |
-| Storage | JSON files on disk (chats, templates), ChromaDB SQLite (embeddings) |
+| Auth | JWT (HS256), bcrypt password hashing, role-based access (admin / user) |
+| Deployment | Docker Compose — backend + frontend (nginx) + Ollama; see [DEPLOYMENT.md](./DEPLOYMENT.md) |
 
 ---
 
@@ -74,6 +76,13 @@ Each module has its own detailed documentation. Click to navigate.
 | Document | Covers |
 |---|---|
 | [backend.md](./backend/backend.md) | Full backend: server setup, API routes, agents, services, storage, loaders, config, utils |
+
+### Operations
+
+| Document | Covers |
+|---|---|
+| [DEPLOYMENT.md](./DEPLOYMENT.md) | Local dev, Docker (SQLite + PostgreSQL), VPS + nginx/HTTPS, managed DB, env vars, backups, production checklist |
+| [ROADMAP.md](./ROADMAP.md) | Feature roadmap, phase completion status, planned work |
 
 ---
 
@@ -177,25 +186,40 @@ The app adds messages to the UI immediately before the backend confirms them. Th
 
 ## Running the Project
 
-**Backend:**
+For full deployment instructions (Docker, PostgreSQL, VPS, HTTPS, backups) see **[DEPLOYMENT.md](./DEPLOYMENT.md)**.
+
+**Quick local start:**
+
 ```bash
-cd hotak-ai
-uvicorn app.server:app --reload
-# Runs on http://localhost:8000
+# Backend
+cp .env.sample .env          # fill in OPENAI_API_KEY + JWT_SECRET_KEY
+pip install -r requirements.txt
+uvicorn app.server:app --reload   # http://localhost:8000
+
+# Frontend (separate terminal)
+cd frontend && npm install && npm run dev   # http://localhost:5173
 ```
 
-**Frontend:**
-```bash
-cd hotak-ai/frontend
-npm install
-npm run dev
-# Runs on http://localhost:5173
-```
+**Key environment variables** (in `.env` at project root):
 
-**Environment variables** (in `.env` at project root):
-- `OPENAI_API_KEY` — required
-- `LANGSMITH_API_KEY` — optional (for tracing)
-- `LOG_LEVEL` — optional (default: `INFO`)
+| Variable | Required | Notes |
+|---|---|---|
+| `OPENAI_API_KEY` | Yes\* | \*Not needed if using Ollama only |
+| `JWT_SECRET_KEY` | Yes | Use `openssl rand -hex 32` in production |
+| `ADMIN_BOOTSTRAP_PASSWORD` | Yes | Admin account created on first start |
+| `DATABASE_URL` | No | Leave blank for SQLite; set to `postgresql://...` for Postgres |
+| `OLLAMA_BASE_URL` | No | e.g. `http://localhost:11434`; leave blank to disable |
+| `VITE_API_BASE_URL` | Docker | Build-time — baked into the frontend bundle |
+
+**Running tests:**
+
+```bash
+# Backend
+pytest
+
+# Frontend
+cd frontend && npm run test
+```
 
 ---
 
