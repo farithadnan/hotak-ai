@@ -217,6 +217,38 @@ We are building a template-based knowledge management system ("Brains") allowing
 
 ---
 
+## 🚀 Phase 8: Power User & Data Portability
+
+### Phase 8.1 — Export & Import
+- [ ] **Chat export** — download a conversation as Markdown, PDF, or JSON (full history + sources + metadata)
+- [ ] **Template export/import** — export a template (settings + source list) as a `.json` file; import on any instance
+- [ ] **Full admin backup/restore** — one-click export of all system settings, provider config, model settings, and template library as a single archive; importable on a fresh instance
+
+### Phase 8.2 — Document Management
+- [ ] **User document library** — dedicated page listing all a user's ingested sources (file name, type, size, date, status); delete individual sources and purge their vectors from ChromaDB
+- [ ] **Deduplication** — detect and skip re-ingestion of identical content (hash-based); show cache hit status in UI
+- [ ] **Scheduled URL re-ingestion** — set a refresh interval on URL sources; backend re-fetches and re-embeds on schedule
+- [ ] **Admin document view** — admin can view/purge any user's documents (for compliance / storage management)
+
+### Phase 8.3 — Collaboration & Sharing
+- [ ] **Shared/published templates** — admin can publish templates to all users; users browse a "template library" and clone to their own workspace
+- [ ] **Read-only chat sharing** — generate a shareable link to a conversation (public or token-gated); viewer sees the full thread without an account
+- [ ] **Team workspaces** — group users into workspaces with shared templates and document pools (multi-tenant)
+
+### Phase 8.4 — Usage & Quotas
+- [ ] **Token usage tracking** — record prompt + completion tokens per message; aggregate by user/day/model in the DB
+- [ ] **Per-user token quotas** — admin sets a monthly token budget per user; backend enforces with a 429 before the limit is hit
+- [ ] **Usage dashboard** — admin view of token spend per user, per model, per day; export as CSV
+
+### Phase 8.5 — Advanced AI Features
+- [ ] **Vision / image attachments** — attach images to messages; routed to GPT-4o / Ollama multimodal models
+- [ ] **Conversation branching** — fork from any message in history (creates a new chat from that point); useful for exploring different follow-ups
+- [ ] **Custom system prompt per chat** — override the global system prompt at the chat level, not just via templates
+- [ ] **Composer Tools** — web search, calculator, code execution, user-defined tool plugins (button already stubbed in UI)
+- [ ] **Global chat search** — full-text search across all of a user's conversation history
+
+---
+
 ## 🛠️ Technology Stack (Quick Reference)
 
 - **Frontend:** React 18, TypeScript, Vite, Axios, Tailwind CSS.

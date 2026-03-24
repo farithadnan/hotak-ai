@@ -124,4 +124,54 @@
 	- [ ] Composer Tools button (`Briefcase` icon) is currently disabled with `title="Tools (coming soon)"`.
 	- [ ] Planned: web search, calculator, code execution, and user-defined tool plugins.
 
-*Phase 7.5 Docker complete. Next: Phase 7.6 — Testing.*
+---
+
+## Phase 8 — Power User & Data Portability
+
+### 8.1 Export & Import
+35. [ ] **Chat export** — `GET /chats/{id}/export?format=md|pdf|json`; frontend "Export" option in chat context menu
+	- [ ] Markdown: render message history with model, timestamps, sources
+	- [ ] PDF: server-side or browser print-to-PDF via CSS `@media print`
+	- [ ] JSON: full raw chat object for programmatic use / re-import
+36. [ ] **Template export/import**
+	- [ ] `GET /templates/{id}/export` → `.json` download (name, description, settings, source list)
+	- [ ] `POST /templates/import` → parse uploaded `.json`, create template (admin or owner only)
+	- [ ] TemplateBuilder UI: "Export" button per template card; "Import from file" button on template list
+37. [ ] **Full admin backup/restore**
+	- [ ] `GET /admin/backup` → ZIP archive: system settings JSON, provider config (keys masked), model settings, all template definitions
+	- [ ] `POST /admin/restore` → upload ZIP; validate and apply each component with a dry-run preview
+	- [ ] Admin panel: "Backup" and "Restore" buttons in System Settings modal
+
+### 8.2 Document Management
+38. [ ] **User document library** — `/documents` list page showing all ingested sources per user
+	- [ ] Columns: file name / URL, type, size, date ingested, status
+	- [ ] Per-row delete: removes document record + purges ChromaDB vectors scoped to that source
+	- [ ] Bulk delete with confirmation
+39. [ ] **Deduplication** — hash-based skip on re-ingest; show "Already indexed" status in UI
+40. [ ] **Scheduled URL re-ingestion** — configurable refresh interval on URL sources; background task re-fetches + re-embeds
+41. [ ] **Admin document view** — admin sees all users' documents; can purge for compliance / storage management
+
+### 8.3 Collaboration & Sharing
+42. [ ] **Shared/published templates** — admin publishes templates to all users; users browse a library and clone
+	- [ ] `is_public: bool` field on Template model; `GET /templates/library` returns admin-published templates
+	- [ ] "Clone to My Templates" action in template library modal
+43. [ ] **Read-only chat sharing** — shareable link to a conversation (public or expiring token-gated)
+	- [ ] `POST /chats/{id}/share` → returns a `share_token`; `GET /share/{token}` → public read-only view
+	- [ ] No account required for viewer; share can be revoked
+44. [ ] **Team workspaces** *(larger scope)* — group users with shared templates and document pools
+
+### 8.4 Usage & Quotas
+45. [ ] **Token usage tracking** — record prompt + completion tokens per message in DB
+	- [ ] Add `prompt_tokens`, `completion_tokens` columns to messages table
+	- [ ] Aggregate `GET /admin/usage` endpoint: by user / model / day
+46. [ ] **Per-user token quotas** — admin sets monthly token budget per user; 429 enforced before limit
+47. [ ] **Usage dashboard** — admin UI: token spend table per user/model/day; CSV export
+
+### 8.5 Advanced AI Features
+48. [ ] **Vision / image attachments** — attach images to messages; route to GPT-4o vision / Ollama multimodal
+49. [ ] **Conversation branching** — fork from any message; creates new chat from that point in history
+	- [ ] "Fork from here" action on assistant/user message context menu
+50. [ ] **Custom system prompt per chat** — override global system prompt at chat level (not just via templates)
+51. [ ] **Global chat search** — full-text search across all user conversation history
+	- [ ] `GET /chats/search?q=...` → ranked results with snippet preview
+	- [ ] Search bar in sidebar accessible via keyboard shortcut
