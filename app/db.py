@@ -1,13 +1,25 @@
-"""SQLAlchemy database setup (SQLite) for user persistence."""
+"""SQLAlchemy database setup.
 
-from sqlalchemy import create_engine
+Supports SQLite (default / development) and PostgreSQL (production).
+Set the DATABASE_URL environment variable to switch:
+
+  SQLite (default):   sqlite:///./app/data/app.db
+  PostgreSQL:         postgresql://user:password@host:5432/dbname
+"""
+
+import os
+from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 from app.config.settings import DATA_DIRECTORY
 
-DATABASE_URL = f"sqlite:///{DATA_DIRECTORY / 'app.db'}"
+_DEFAULT_DB = f"sqlite:///{DATA_DIRECTORY / 'app.db'}"
+DATABASE_URL: str = os.getenv("DATABASE_URL", "").strip() or _DEFAULT_DB
 
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+# SQLite requires check_same_thread=False; PostgreSQL does not accept it
+_connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
+
+engine = create_engine(DATABASE_URL, connect_args=_connect_args)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
@@ -28,28 +40,38 @@ def create_tables():
 
 
 def _migrate():
-    """Apply incremental schema changes that create_all won't handle on existing tables."""
+    """Apply incremental schema changes using portable SQLAlchemy inspect()."""
+    inspector = inspect(engine)
+
+    # If the users table doesn't exist yet create_all already handled it — skip.
+    if "users" not in inspector.get_table_names():
+        return
+
+    existing = {col["name"] for col in inspector.get_columns("users")}
+
     with engine.connect() as conn:
-        # Phase 7.2: add role + is_active columns to users table if missing
-        existing = {row[1] for row in conn.execute(
-            __import__("sqlalchemy").text("PRAGMA table_info(users)")
-        )}
+        # Phase 7.2: role + is_active
         if "role" not in existing:
-            conn.execute(__import__("sqlalchemy").text(
+            conn.execute(text(
                 "ALTER TABLE users ADD COLUMN role VARCHAR NOT NULL DEFAULT 'user'"
             ))
         if "is_active" not in existing:
-            conn.execute(__import__("sqlalchemy").text(
-                "ALTER TABLE users ADD COLUMN is_active BOOLEAN NOT NULL DEFAULT 1"
+            conn.execute(text(
+                "ALTER TABLE users ADD COLUMN is_active BOOLEAN NOT NULL DEFAULT TRUE"
             ))
-        # Phase 7.4: add preferences JSON column
+        # Phase 7.4: user preferences (JSON stored as TEXT)
         if "preferences" not in existing:
-            conn.execute(__import__("sqlalchemy").text(
+            conn.execute(text(
                 "ALTER TABLE users ADD COLUMN preferences TEXT"
             ))
-        # Phase 7.7: add last_login_at column
+        # Phase 7.7: last login timestamp
         if "last_login_at" not in existing:
-            conn.execute(__import__("sqlalchemy").text(
-                "ALTER TABLE users ADD COLUMN last_login_at DATETIME"
+            conn.execute(text(
+                "ALTER TABLE users ADD COLUMN last_login_at TIMESTAMP"
             ))
+
+        # activity_logs table — created by create_all from the model, but guard here too
+        if "activity_logs" not in inspector.get_table_names():
+            pass  # create_all handles new tables; nothing to ALTER
+
         conn.commit()
