@@ -247,6 +247,12 @@ We are building a template-based knowledge management system ("Brains") allowing
 - [ ] **Composer Tools** — web search, calculator, code execution, user-defined tool plugins (button already stubbed in UI)
 - [ ] **Global chat search** — full-text search across all of a user's conversation history
 
+### Phase 8.6 — Voice
+- [ ] **Speech-to-text (STT)** — mic button in composer; record audio and transcribe to text via OpenAI Whisper API or browser Web Speech API; supports hands-free input
+- [ ] **Text-to-speech (TTS)** — read-aloud button per assistant message; OpenAI TTS API (`tts-1` / `tts-1-hd`) or browser `SpeechSynthesis`; configurable voice and speed
+- [ ] **Auto-speak mode** — user preference to automatically speak every assistant reply (useful for accessibility / kiosk deployments)
+- [ ] **Voice selection** — admin configures default TTS voice/model; users can override in User Settings → Preferences
+
 ---
 
 ## 🛠️ Technology Stack (Quick Reference)

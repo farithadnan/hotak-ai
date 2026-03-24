@@ -175,3 +175,21 @@
 51. [ ] **Global chat search** — full-text search across all user conversation history
 	- [ ] `GET /chats/search?q=...` → ranked results with snippet preview
 	- [ ] Search bar in sidebar accessible via keyboard shortcut
+
+### 8.6 Voice
+52. [ ] **Speech-to-text (STT)** — mic button in composer; transcribe to text before sending
+	- [ ] Primary: OpenAI Whisper API (`POST /audio/transcriptions`) — best accuracy
+	- [ ] Fallback: browser `SpeechRecognition` Web Speech API (no server cost, limited browser support)
+	- [ ] Mic button in composer toolbar; recording indicator while capturing; auto-send or paste-to-input option
+	- [ ] Backend: `POST /audio/transcribe` proxies to Whisper; returns `{ text: string }`
+53. [ ] **Text-to-speech (TTS)** — read-aloud button per assistant message
+	- [ ] Primary: OpenAI TTS API (`tts-1` / `tts-1-hd`) — `POST /audio/speech`; streamed audio response
+	- [ ] Fallback: browser `SpeechSynthesis` (no API key needed)
+	- [ ] Speaker icon on assistant message bubble; plays audio inline; stop button while playing
+	- [ ] Backend: `POST /audio/speak` proxies to OpenAI TTS; streams audio back to browser
+54. [ ] **Auto-speak mode** — user preference to auto-play TTS on every assistant reply
+	- [ ] Toggle in User Settings → Preferences
+	- [ ] Respects per-chat mute override
+55. [ ] **Voice selection** — configurable TTS voice and speed
+	- [ ] Admin sets default voice/model in System Settings
+	- [ ] User can override in User Settings → Preferences (voice: alloy / echo / fable / onyx / nova / shimmer; speed: 0.25–4.0)
